@@ -12,6 +12,8 @@ See [docs/awx-external-postgres.md](docs/awx-external-postgres.md) for how AWX's
 
 See [docs/proxmox-smb-share.md](docs/proxmox-smb-share.md) for the Samba file share hosted on the Proxmox 1TB WD drive.
 
+See [docs/proxmox-upgrade.md](docs/proxmox-upgrade.md) for the Proxmox major version upgrade guide and issues log.
+
 ## Cluster Overview
 
 | Role | Hostname | IP |
