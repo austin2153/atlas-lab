@@ -114,7 +114,7 @@ cores: 1
 features: nesting=1
 hostname: atlas-pihole
 memory: 512
-net0: name=eth0,bridge=vmbr0,firewall=1,hwaddr=BC:24:11:00:00:02,ip=192.168.0.102/24,gw=192.168.0.1,type=veth
+net0: name=eth0,bridge=vmbr0,firewall=1,hwaddr=BC:24:11:00:00:02,ip=192.168.0.101/24,gw=192.168.0.1,type=veth
 onboot: 1
 ostype: debian
 rootfs: CRUCIAL_SSD_512GB:subvol-102-disk-0,size=8G
@@ -254,7 +254,7 @@ Create a new API token in the Proxmox UI:
 
 | VMID | Name | IP | Purpose |
 |---|---|---|---|
-| 102 | `atlas-pihole` | `192.168.0.102` | Pi-hole DNS for home network |
+| 102 | `atlas-pihole` | `192.168.0.101` | Pi-hole DNS for home network |
 | 105 | `awx-postgres.atlas.local` | `192.168.20.12` | AWX external PostgreSQL database |
 | 106 | `share.atlas.local` | `192.168.20.13` | Samba SMB share on WD_SATA_1TB |
 
