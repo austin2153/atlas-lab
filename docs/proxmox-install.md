@@ -54,7 +54,24 @@ Boot the Proxmox server from the USB stick (may need to set boot order in BIOS).
 
 ## Post-Install Configuration
 
-### 1. Add non-free-firmware apt sources
+### 1. Restore Claude SSH access (Mac)
+
+The host key changed with the reinstall — clear the old one first:
+```bash
+ssh-keygen -R 192.168.0.100
+```
+
+Copy Claude's key to the new install (use your own password when prompted):
+```bash
+ssh-copy-id -i ~/.ssh/proxmox-claude.pub -o StrictHostKeyChecking=accept-new root@192.168.0.100
+```
+
+Test:
+```bash
+ssh -i ~/.ssh/proxmox-claude root@192.168.0.100 "echo connected"
+```
+
+### 2. Add non-free-firmware apt sources
 
 Edit `/etc/apt/sources.list` to add `non-free-firmware`:
 
@@ -64,14 +81,14 @@ deb http://deb.debian.org/debian trixie-updates main contrib non-free-firmware
 deb http://security.debian.org/debian-security trixie-security main contrib non-free-firmware
 ```
 
-### 2. Update packages and install intel-microcode
+### 3. Update packages and install intel-microcode
 
 ```bash
 apt-get update && apt-get upgrade -y
 apt-get install intel-microcode -y
 ```
 
-### 3. Reimport ZFS pools
+### 5. Reimport ZFS pools
 
 After install the data drives are present but pools need to be imported. If the pools were last used by a different Proxmox install (different hostid), force-import with `-f`:
 
@@ -85,7 +102,7 @@ Verify:
 zpool status
 ```
 
-### 4. Register ZFS pools as Proxmox storage
+### 6. Register ZFS pools as Proxmox storage
 
 A fresh install only has `local` and `local-zfs`. The data pools must be registered so Proxmox can see VMs and LXCs stored on them:
 
@@ -99,7 +116,7 @@ Verify:
 pvesm status
 ```
 
-### 5. Recreate VM and LXC config files
+### 7. Recreate VM and LXC config files
 
 After a fresh install, the config files in `/etc/pve/nodes/proxmox/lxc/` and `/etc/pve/nodes/proxmox/qemu-server/` are gone — only the ZFS data survives. Recreate them (the ZFS datasets tell you what exists):
 
@@ -187,46 +204,30 @@ onboot: 1
 
 > **Note**: Do NOT use `pre-enrolled-keys=1` on the EFI disk for Talos VMs — Microsoft Secure Boot will block Talos from booting.
 
-### 6. Restore Claude SSH access
+### 8. Start Pi-hole LXC
 
-First clear any old host key on the Mac (if this is a reinstall):
+Pi-hole must come up first — everything else depends on DNS:
+
 ```bash
-ssh-keygen -R 192.168.0.100
+pct start 102
+pct exec 102 -- systemctl is-active pihole-FTL   # should print "active"
 ```
 
-Then connect once with your own key to accept the new fingerprint, and copy Claude's key:
-```bash
-ssh-copy-id -i ~/.ssh/proxmox-claude.pub -o StrictHostKeyChecking=accept-new root@192.168.0.100
-```
+### 9. Switch Proxmox DNS from temporary to Pi-hole
 
-Test:
-```bash
-ssh -i ~/.ssh/proxmox-claude root@192.168.0.100 "echo connected"
-```
-
-### 7. Switch DNS from temporary to Pi-hole
-
-After step 8 starts Pi-hole, switch Proxmox DNS away from the temporary 8.8.8.8:
 ```bash
 pvesh set /nodes/proxmox/dns --search atlas.local --dns1 192.168.0.101
 ```
 
-### 8. Start LXC containers
-
-Start Pi-hole first (everything else needs DNS):
+### 10. Start remaining LXC containers
 
 ```bash
-pct start 102   # atlas-pihole — start first, it provides DNS
 pct start 105   # awx-postgres
 pct start 106   # share (requires WD_SATA_1TB pool to be imported)
-```
-
-Verify each is healthy:
-```bash
 pct list
 ```
 
-### 9. Start Kubernetes VMs
+### 11. Start Kubernetes VMs
 
 ```bash
 qm start 200    # talos-cp
@@ -239,16 +240,17 @@ TALOSCONFIG=~/.talos/atlas-talos.talosconfig talosctl --nodes 192.168.20.10 heal
 kubectl get nodes
 ```
 
-If nodes come up `NotReady,SchedulingDisabled`, uncordon them (they were cordoned during shutdown):
+If nodes come up `NotReady,SchedulingDisabled`, uncordon them (they were cordoned on the last clean shutdown):
 ```bash
 kubectl uncordon talos-cp talos-worker-01
 ```
 
-### 10. Restore Proxmox API token
+### 12. Restore Proxmox API token
 
-Create a new API token in the Proxmox UI:
-- Datacenter → Permissions → API Tokens → Add
-- Save the token to `~/.proxmox-credentials` on the Mac (chmod 600)
+The API token is tied to the Proxmox install and does not survive a reinstall. Create a new one:
+- Proxmox UI → Datacenter → Permissions → API Tokens → Add
+- User: `root@pam`, Token ID: `terraform` (or whatever was used before), uncheck "Privilege Separation"
+- Save the token secret to `~/.proxmox-credentials` on the Mac (chmod 600)
 
 ## LXC Reference
 
