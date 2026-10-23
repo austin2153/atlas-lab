@@ -9,7 +9,7 @@ This document covers how to install and configure Proxmox VE from scratch on the
 | Server | Desktop PC |
 | OS Drive | PNY CS900 250GB 2.5" SATA SSD |
 | Data Drive 1 | Crucial CT512MX100SSD1 512GB SATA SSD (`CRUCIAL_SSD_512GB` ZFS pool) |
-| Data Drive 2 | WDC WD10EURS 1TB HDD (`WD_SATA_1TB` ZFS pool) |
+| Data Drive 2 | WDC WD10EURS 1TB HDD (`WD_SATA_1TB` ZFS pool) — **not detected by the OS as of 2026-10-23**; see [proxmox-smb-share.md](proxmox-smb-share.md) |
 | Network | `192.168.0.100` on main LAN |
 | Hostname | `proxmox` |
 
@@ -71,21 +71,57 @@ Test:
 ssh -i ~/.ssh/proxmox-claude root@192.168.0.100 "echo connected"
 ```
 
-### 2. Add non-free-firmware apt sources
+### 2. Check non-free-firmware apt sources
 
-Edit `/etc/apt/sources.list` to add `non-free-firmware`:
-
-```
-deb http://deb.debian.org/debian trixie main contrib non-free-firmware
-deb http://deb.debian.org/debian trixie-updates main contrib non-free-firmware
-deb http://security.debian.org/debian-security trixie-security main contrib non-free-firmware
-```
-
-### 3. Update packages and install intel-microcode
+PVE 9 uses deb822 `.sources` files — there is no `/etc/apt/sources.list`. The installer's `/etc/apt/sources.list.d/debian.sources` should already include `non-free-firmware`; confirm:
 
 ```bash
-apt-get update && apt-get upgrade -y
+grep Components /etc/apt/sources.list.d/debian.sources
+# Components: main contrib non-free-firmware
+```
+
+If it's missing, add `non-free-firmware` to both `Components:` lines.
+
+### 3. Switch from enterprise to no-subscription repos
+
+A fresh install enables the Proxmox **enterprise** repos, which require a paid subscription. Without one, `apt-get update` fails with `401 Unauthorized` and every update task in the UI shows `TASK ERROR: command 'apt-get update' failed: exit code 100`.
+
+Disable the enterprise repos (`Enabled: no` keeps the files, so it's easy to revert) and add the free no-subscription repos:
+
+```bash
+cd /etc/apt/sources.list.d
+echo "Enabled: no" >> pve-enterprise.sources
+echo "Enabled: no" >> ceph.sources
+
+cat > proxmox.sources <<EOF
+Types: deb
+URIs: http://download.proxmox.com/debian/pve
+Suites: trixie
+Components: pve-no-subscription
+Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+EOF
+
+cat > ceph-no-subscription.sources <<EOF
+Types: deb
+URIs: http://download.proxmox.com/debian/ceph-squid
+Suites: trixie
+Components: no-subscription
+Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+EOF
+
+apt-get update   # must finish with no errors
+```
+
+The "No valid subscription" popup at UI login is cosmetic and unrelated.
+
+### 4. Update packages and install intel-microcode
+
+Use `dist-upgrade` (not `upgrade`) so new kernel and PVE packages are pulled in:
+
+```bash
+apt-get update && apt-get dist-upgrade -y
 apt-get install intel-microcode -y
+reboot
 ```
 
 ### 5. Reimport ZFS pools
@@ -133,6 +169,7 @@ hostname: atlas-pihole
 memory: 512
 net0: name=eth0,bridge=vmbr0,firewall=1,hwaddr=BC:24:11:00:00:02,ip=192.168.0.101/24,gw=192.168.0.1,type=veth
 onboot: 1
+startup: order=1,up=15
 ostype: debian
 rootfs: CRUCIAL_SSD_512GB:subvol-102-disk-0,size=8G
 swap: 512
@@ -147,6 +184,7 @@ hostname: awx-postgres
 memory: 1024
 net0: name=eth0,bridge=vmbr0,firewall=1,hwaddr=BC:24:11:00:00:05,ip=192.168.20.12/24,gw=192.168.20.1,tag=20,type=veth
 onboot: 1
+startup: order=2,up=15
 ostype: debian
 rootfs: CRUCIAL_SSD_512GB:subvol-105-disk-0,size=8G
 swap: 512
@@ -183,6 +221,7 @@ net0: virtio,bridge=vmbr0,tag=20,macaddr=BC:24:11:00:02:00
 boot: order=scsi0
 ostype: l26
 onboot: 1
+startup: order=3,up=60
 ```
 
 Create `/etc/pve/nodes/proxmox/qemu-server/201.conf`:
@@ -200,7 +239,10 @@ net0: virtio,bridge=vmbr0,tag=20,macaddr=BC:24:11:00:02:01
 boot: order=scsi0
 ostype: l26
 onboot: 1
+startup: order=4
 ```
+
+> **Boot order**: the `startup:` lines make guests start in dependency order on every host boot — Pi-hole (DNS) first, then awx-postgres, then the control plane (with a 60s head start), then the worker. Shutdown runs in reverse. For existing guests, set it with `pct set <id> --startup order=N,up=S` / `qm set <id> --startup ...`.
 
 > **Note**: Do NOT use `pre-enrolled-keys=1` on the EFI disk for Talos VMs — Microsoft Secure Boot will block Talos from booting.
 

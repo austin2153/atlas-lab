@@ -10,9 +10,9 @@ This document describes the design decisions, infrastructure layout, and rationa
 
 | Component | Choice | Reason |
 |---|---|---|
-| Hypervisor | Proxmox VE 8.4.1 | Existing single-node homelab server |
+| Hypervisor | Proxmox VE 9.2 (Debian 13 Trixie) | Existing single-node homelab server |
 | OS | Talos Linux v1.12 | Immutable, Kubernetes-native, minimal attack surface |
-| Terraform provider (Proxmox) | [`bpg/proxmox`](https://registry.terraform.io/providers/bpg/proxmox) | Best-maintained provider for PVE 8.x with full VM lifecycle support |
+| Terraform provider (Proxmox) | [`bpg/proxmox`](https://registry.terraform.io/providers/bpg/proxmox) | Best-maintained provider for PVE 8.x/9.x with full VM lifecycle support |
 | Terraform provider (Talos) | [`siderolabs/talos`](https://registry.terraform.io/providers/siderolabs/talos) | Official provider for generating and applying Talos machine configs |
 | CNI | Flannel | Simplest standard CNI; easy to migrate to Cilium later if needed |
 | Terraform state backend | Terraform Cloud (local exec mode) | State versioned and locked in the cloud; plan/apply runs locally to reach Proxmox |
@@ -27,7 +27,7 @@ This document describes the design decisions, infrastructure layout, and rationa
 
 ```
 ┌───────────────────────────────────┐
-│         Proxmox VE 8.4.1          │
+│         Proxmox VE 9.2            │
 │         (single node)             │
 │                                   │
 │  ┌────────────────────────────┐   │
@@ -60,7 +60,7 @@ Starting with 1 control plane and 1 worker. The worker count is designed to scal
 | Control plane | `talos-cp.atlas.local` → `192.168.20.10` |
 | Worker 01 | `talos-worker-01.atlas.local` → `192.168.20.11` |
 | AWX Postgres LXC | `awx-postgres.atlas.local` → `192.168.20.12` |
-| SMB Share LXC | `share.atlas.local` → `192.168.20.13` |
+| SMB Share LXC | `share.atlas.local` → `192.168.20.13` (offline — WD drive not detected, see [proxmox-smb-share.md](proxmox-smb-share.md)) |
 
 DNS entries are managed in Pi-hole (`atlas-pihole.atlas.local`). Static IPs are configured directly in the Talos machine configs rather than via DHCP reservations.
 

@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Atlas Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; }
+/* Layout: one reading column; a wide topology diagram up top, then reference tables grouped by layer (network → host → cluster). VLANs are colour-coded throughout. */
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --ink: #17202b;
+  --muted: #5a6675;
+  --line: #d6dde5;
+  --accent: #2f4fd6;
+  --v1: #4f6d8c;
+  --v10: #a86a12;
+  --v20: #157a80;
+  --ok: #1f8a4c;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141b; --surface: #161d26; --ink: #e5eaf0; --muted: #98a5b4; --line: #2a3542;
+    --accent: #93a6ff; --v1: #8eb0d2; --v10: #e2aa4f; --v20: #4fc3c9; --ok: #5fd08f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141b; --surface: #161d26; --ink: #e5eaf0; --muted: #98a5b4; --line: #2a3542;
+  --accent: #93a6ff; --v1: #8eb0d2; --v10: #e2aa4f; --v20: #4fc3c9; --ok: #5fd08f;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+}
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 64px;
+  display: grid;
+  gap: 48px;
+}
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; }
+h2 { font-size: 1.45rem; font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 1.05rem; font-weight: 700; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted);
+}
+.muted { color: var(--muted); }
+
+header { display: grid; gap: 16px; }
+.lede { font-size: 1.12rem; color: var(--muted); }
+.facts {
+  display: flex; flex-wrap: wrap; gap: 8px 28px;
+  padding-top: 16px; border-top: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+.fact { display: grid; gap: 2px; }
+.fact b { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; }
+.fact span { font-size: 0.82rem; color: var(--muted); }
+
+section { display: grid; gap: 16px; }
+.section-head { display: grid; gap: 6px; }
+
+/* VLAN chips */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500;
+  padding: 1px 8px; border-radius: 999px; white-space: nowrap;
+  border: 1px solid currentColor;
+}
+.chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.c-v1 { color: var(--v1); } .c-v10 { color: var(--v10); } .c-v20 { color: var(--v20); }
+.status { color: var(--ok); font-family: var(--font-mono); font-size: 0.78rem; }
+
+/* Diagram */
+.diagram {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  overflow-x: auto; padding: 12px;
+}
+.diagram svg { display: block; width: 100%; min-width: 760px; height: auto; }
+.d-box { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.d-core { fill: color-mix(in srgb, var(--accent) 7%, var(--surface)); stroke: var(--accent); stroke-width: 1.5; }
+.d-host { fill: color-mix(in srgb, var(--ink) 3%, var(--surface)); stroke: var(--ink); stroke-width: 1.5; }
+.d-v1 { fill: color-mix(in srgb, var(--v1) 10%, var(--surface)); stroke: var(--v1); stroke-width: 1.5; }
+.d-v10 { fill: color-mix(in srgb, var(--v10) 10%, var(--surface)); stroke: var(--v10); stroke-width: 1.5; }
+.d-v20zone { fill: color-mix(in srgb, var(--v20) 6%, var(--surface)); stroke: var(--v20); stroke-width: 1.5; stroke-dasharray: 6 4; }
+.d-v20 { fill: var(--surface); stroke: var(--v20); stroke-width: 1.5; }
+.d-link { stroke: var(--muted); stroke-width: 2; fill: none; }
+.d-trunk { stroke: var(--accent); stroke-width: 3; fill: none; }
+.t-title { font-family: var(--font-display); font-weight: 700; font-size: 14px; fill: var(--ink); }
+.t-body { font-family: var(--font-body); font-size: 12px; fill: var(--muted); }
+.t-mono { font-family: var(--font-mono); font-size: 11.5px; fill: var(--ink); }
+.t-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; fill: var(--muted); }
+.t-v1 { fill: var(--v1); } .t-v10 { fill: var(--v10); } .t-v20 { fill: var(--v20); } .t-accent { fill: var(--accent); }
+
+/* Tables */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th {
+  font-family: var(--font-mono); font-size: 0.72rem; font-weight: 500; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--muted); white-space: nowrap;
+}
+tr:last-child td { border-bottom: 0; }
+td.nowrap { white-space: nowrap; }
+td .sub { display: block; color: var(--muted); font-size: 0.82rem; }
+
+/* Two-up */
+.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.split > * { min-width: 0; }
+
+/* Build flow */
+.flow { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: step; }
+.flow li {
+  counter-increment: step; display: grid; grid-template-columns: 44px 1fr; gap: 14px;
+  padding-block: 14px; border-top: 1px solid var(--line);
+}
+.flow li:first-child { border-top: 0; padding-top: 0; }
+.flow li::before {
+  content: counter(step); font-family: var(--font-display); font-weight: 800; font-size: 1.6rem;
+  color: var(--accent); line-height: 1;
+}
+.flow li > div { display: grid; gap: 4px; min-width: 0; }
+
+.notes { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.notes li { display: grid; gap: 2px; padding-left: 14px; border-left: 2px solid var(--line); }
+.notes b { font-weight: 600; }
+
+footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Homelab · as of 20 Oct 2026</div>
+  <h1>Atlas Lab</h1>
+  <p class="lede">A single Proxmox server running a two-node Talos Linux Kubernetes cluster. Terraform builds it, and everything on top is deployed with GitOps. I use it to practice platform engineering and Ansible/VMware automation.</p>
+  <div class="facts">
+    <div class="fact"><b>1</b><span>Proxmox host</span></div>
+    <div class="fact"><b>2 + 2</b><span>VMs + LXC containers</span></div>
+    <div class="fact"><b>v1.35</b><span>Kubernetes on Talos 1.12</span></div>
+    <div class="fact"><b>3</b><span>VLANs</span></div>
+    <div class="fact"><b>6</b><span>LoadBalancer services</span></div>
+  </div>
+</header>
+
+<section>
+  <div class="section-head">
+    <h2>Topology</h2>
+    <p class="muted">The gateway routes between three VLANs. Proxmox gets a trunk port, and each guest is tagged onto its VLAN at the bridge.</p>
+  </div>
+  <div class="diagram" role="img" aria-label="Network topology: Internet to UniFi gateway, to an 8-port PoE switch, which feeds three Wi-Fi access points and a Proxmox host. Proxmox runs Pi-hole on the default network and the Talos cluster, AWX Postgres and MetalLB services on VLAN 20.">
+    <svg viewBox="0 0 960 580" xmlns="http://www.w3.org/2000/svg">
+      <!-- links -->
+      <line class="d-link" x1="480" y1="62" x2="480" y2="100"/>
+      <line class="d-link" x1="480" y1="162" x2="480" y2="196"/>
+      <polyline class="d-link" points="340,226 160,226 160,280"/>
+      <line class="d-trunk" x1="480" y1="256" x2="480" y2="280"/>
+      <text class="t-label" x="172" y="218">PoE · ALL SSIDs</text>
+      <text class="t-label t-accent" x="490" y="273">TRUNK · VLAN 1/10/20</text>
+
+      <!-- internet -->
+      <rect class="d-box" x="400" y="16" width="160" height="46" rx="23"/>
+      <text class="t-title" x="480" y="44" text-anchor="middle">Internet</text>
+
+      <!-- gateway -->
+      <rect class="d-core" x="330" y="100" width="300" height="62" rx="8"/>
+      <text class="t-title" x="346" y="124">UniFi Cloud Gateway Ultra</text>
+      <text class="t-body" x="346" y="144">Router, firewall, DHCP · <tspan class="t-mono">192.168.0.1</tspan></text>
+
+      <!-- switch -->
+      <rect class="d-box" x="340" y="196" width="280" height="60" rx="8"/>
+      <text class="t-title" x="356" y="220">USW-Lite-8-PoE</text>
+      <text class="t-body" x="356" y="240">8-port switch · <tspan class="t-mono">192.168.0.2</tspan></text>
+
+      <!-- APs -->
+      <rect class="d-box" x="20" y="280" width="290" height="116" rx="8"/>
+      <text class="t-title" x="36" y="304">3 × U7 Pro access points</text>
+      <text class="t-mono" x="36" y="326">Main .0.4 · Basement .0.3</text>
+      <text class="t-mono" x="36" y="344">Office .0.5</text>
+      <text class="t-body" x="36" y="368">Wi-Fi 7 · 4 SSIDs mapped to VLANs</text>
+      <text class="t-body" x="36" y="385">(Home, Gaming → 1 · IoT → 10 · Lab → 20)</text>
+
+      <!-- IoT vlan -->
+      <rect class="d-v10" x="20" y="416" width="290" height="74" rx="8"/>
+      <text class="t-label t-v10" x="36" y="438">VLAN 10 · IOT</text>
+      <text class="t-mono" x="36" y="458">192.168.10.0/24</text>
+      <text class="t-body" x="36" y="477">Smart-home devices, kept off the lab</text>
+
+      <!-- proxmox host -->
+      <rect class="d-host" x="340" y="280" width="600" height="284" rx="10"/>
+      <text class="t-title" x="358" y="305">proxmox · Proxmox VE 9.2</text>
+      <text class="t-body" x="358" y="324"><tspan class="t-mono">192.168.0.100</tspan> · bridge vmbr0 (VLAN-aware)</text>
+
+      <!-- pihole -->
+      <text class="t-label t-v1" x="358" y="352">VLAN 1 · DEFAULT</text>
+      <rect class="d-v1" x="358" y="360" width="164" height="72" rx="6"/>
+      <text class="t-title" x="370" y="382">atlas-pihole</text>
+      <text class="t-body" x="370" y="400">LXC 102 · DNS for atlas.local</text>
+      <text class="t-mono" x="370" y="419">192.168.0.101</text>
+
+      <!-- host hw -->
+      <rect class="d-box" x="358" y="448" width="164" height="100" rx="6"/>
+      <text class="t-label" x="370" y="468">HARDWARE</text>
+      <text class="t-body" x="370" y="488">i7-4790K · 8 threads</text>
+      <text class="t-body" x="370" y="505">24 GB RAM</text>
+      <text class="t-body" x="370" y="522">512 GB SSD · ZFS guests</text>
+      <text class="t-body" x="370" y="539">250 GB SSD · OS</text>
+
+      <!-- vlan 20 zone -->
+      <rect class="d-v20zone" x="540" y="340" width="384" height="208" rx="8"/>
+      <text class="t-label t-v20" x="556" y="360">VLAN 20 · ATLAS LAB · 192.168.20.0/24</text>
+
+      <rect class="d-v20" x="556" y="372" width="172" height="66" rx="6"/>
+      <text class="t-title" x="568" y="394">talos-cp</text>
+      <text class="t-body" x="568" y="411">VM 200 · control plane</text>
+      <text class="t-mono" x="568" y="428">.20.10 · 2c / 4 GB</text>
+
+      <rect class="d-v20" x="738" y="372" width="172" height="66" rx="6"/>
+      <text class="t-title" x="750" y="394">talos-worker-01</text>
+      <text class="t-body" x="750" y="411">VM 201 · worker</text>
+      <text class="t-mono" x="750" y="428">.20.11 · 2c / 6 GB</text>
+
+      <rect class="d-v20" x="556" y="450" width="172" height="84" rx="6"/>
+      <text class="t-title" x="568" y="472">awx-postgres</text>
+      <text class="t-body" x="568" y="489">LXC 105 · PostgreSQL 16</text>
+      <text class="t-body" x="568" y="506">AWX database</text>
+      <text class="t-mono" x="568" y="523">.20.12</text>
+
+      <rect class="d-v20" x="738" y="450" width="172" height="84" rx="6"/>
+      <text class="t-title" x="750" y="472">MetalLB pool</text>
+      <text class="t-mono" x="750" y="489">.50  ArgoCD</text>
+      <text class="t-mono" x="750" y="506">.51  AWX</text>
+      <text class="t-mono" x="750" y="523">.52–.55  vcsim ×4</text>
+    </svg>
+  </div>
+</section>
+
+<section>
+  <div class="section-head">
+    <h2>Network</h2>
+    <p class="muted">UniFi handles routing, Wi-Fi and DHCP. Pi-hole is the DNS server and holds every <code>*.atlas.local</code> record.</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Network</th><th>VLAN</th><th>Subnet</th><th>What lives there</th></tr></thead>
+      <tbody>
+        <tr><td>Default</td><td><span class="chip c-v1">1</span></td><td class="mono nowrap">192.168.0.0/24</td><td>Network gear, Proxmox management, Pi-hole, everyday home devices</td></tr>
+        <tr><td>IoT</td><td><span class="chip c-v10">10</span></td><td class="mono nowrap">192.168.10.0/24</td><td>Smart speakers, lighting, printer</td></tr>
+        <tr><td>Atlas Lab</td><td><span class="chip c-v20">20</span></td><td class="mono nowrap">192.168.20.0/24</td><td>Talos nodes (<code>.10–.11</code>), lab LXCs (<code>.12+</code>), MetalLB service IPs (<code>.50–.99</code>)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Device</th><th>Model</th><th>IP</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Cloud Gateway Ultra</td><td>UCG-Ultra <span class="sub">UniFi OS 5.1.33</span></td><td class="mono">192.168.0.1</td><td><span class="status">● online</span></td></tr>
+        <tr><td>USW-Lite-8-PoE</td><td>8-port PoE switch <span class="sub">fw 7.5.15</span></td><td class="mono">192.168.0.2</td><td><span class="status">● online</span></td></tr>
+        <tr><td>U7 Pro Basement</td><td>Wi-Fi 7 AP <span class="sub">fw 8.7.11</span></td><td class="mono">192.168.0.3</td><td><span class="status">● online</span></td></tr>
+        <tr><td>U7 Pro Main</td><td>Wi-Fi 7 AP <span class="sub">fw 8.7.11</span></td><td class="mono">192.168.0.4</td><td><span class="status">● online</span></td></tr>
+        <tr><td>U7 Pro Office</td><td>Wi-Fi 7 AP <span class="sub">fw 8.7.11</span></td><td class="mono">192.168.0.5</td><td><span class="status">● online</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="section-head">
+    <h2>Proxmox guests</h2>
+    <p class="muted">An Intel i7-4790K box with 24 GB RAM. Guest disks live on a 512 GB ZFS SSD pool, and the OS has its own SSD.</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Network</th><th>Size</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">102</td><td>atlas-pihole</td><td>LXC</td><td class="nowrap"><span class="chip c-v1">1</span> <span class="mono">.0.101</span></td><td class="nowrap">1 vCPU · 512 MB</td><td>DNS and ad-blocking for the whole house and lab</td></tr>
+        <tr><td class="mono">105</td><td>awx-postgres</td><td>LXC · Alpine</td><td class="nowrap"><span class="chip c-v20">20</span> <span class="mono">.20.12</span></td><td class="nowrap">2 vCPU · 1 GB</td><td>PostgreSQL 16 for AWX, kept outside the cluster</td></tr>
+        <tr><td class="mono">200</td><td>talos-cp</td><td>VM · Talos</td><td class="nowrap"><span class="chip c-v20">20</span> <span class="mono">.20.10</span></td><td class="nowrap">2 vCPU · 4 GB · 20 GB</td><td>Kubernetes control plane and etcd</td></tr>
+        <tr><td class="mono">201</td><td>talos-worker-01</td><td>VM · Talos</td><td class="nowrap"><span class="chip c-v20">20</span> <span class="mono">.20.11</span></td><td class="nowrap">2 vCPU · 6 GB · 75 GB</td><td>Kubernetes worker; runs all workloads</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="section-head">
+    <h2>Kubernetes platform</h2>
+    <p class="muted">Talos Linux is immutable and API-only, with no SSH and no shell. Every component below is a folder under <code>platform/</code> in the repo, and ArgoCD deploys it automatically.</p>
+  </div>
+  <div class="split">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Component</th><th>Job</th></tr></thead>
+        <tbody>
+          <tr><td>ArgoCD <span class="sub">v3</span></td><td>GitOps; an ApplicationSet turns each <code>platform/</code> folder into an app</td></tr>
+          <tr><td>Flannel</td><td>Pod networking (CNI)</td></tr>
+          <tr><td>MetalLB <span class="sub">v0.15.3</span></td><td>L2 LoadBalancer IPs from <code>.20.50–.99</code></td></tr>
+          <tr><td>cert-manager <span class="sub">v1.20.2</span></td><td>Internal TLS from a self-signed <code>atlas-ca</code> chain</td></tr>
+          <tr><td>local-path-provisioner</td><td>Default StorageClass on node disk</td></tr>
+          <tr><td>Kratix <span class="sub">v0.125.0</span></td><td>Platform "promises", e.g. order a Proxmox VM as a Kubernetes resource</td></tr>
+          <tr><td>Flux <span class="sub">v2.8.5</span></td><td>Applies whatever Kratix writes to <code>state/</code></td></tr>
+          <tr><td>AWX <span class="sub">24.6.1</span></td><td>Ansible automation UI</td></tr>
+          <tr><td>vcsim</td><td>4 simulated vCenters for testing VMware playbooks</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Service</th><th>Address</th></tr></thead>
+        <tbody>
+          <tr><td>ArgoCD UI</td><td class="mono">192.168.20.50</td></tr>
+          <tr><td>AWX UI</td><td class="mono">192.168.20.51</td></tr>
+          <tr><td>vcenter-01</td><td class="mono">192.168.20.52</td></tr>
+          <tr><td>vcenter-02</td><td class="mono">192.168.20.53</td></tr>
+          <tr><td>vcenter-03</td><td class="mono">192.168.20.54</td></tr>
+          <tr><td>vcenter-04</td><td class="mono">192.168.20.55</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-head">
+    <h2>How it gets built</h2>
+  </div>
+  <ol class="flow">
+    <li><div><h3>Terraform creates the cluster</h3><p>The <code>bpg/proxmox</code> and <code>siderolabs/talos</code> providers download the Talos ISO, create both VMs on VLAN 20, apply the machine configs and bootstrap etcd. State lives in Terraform Cloud, but runs execute locally so they can reach the private network.</p></div></li>
+    <li><div><h3>ArgoCD installs the platform</h3><p>One root ApplicationSet watches <code>platform/</code>. To add a service, I add a folder and push to <code>main</code>. It's live within a few minutes, with self-heal and prune enabled.</p></div></li>
+    <li><div><h3>Kratix and Flux handle self-service requests</h3><p>A request such as "give me a Proxmox VM" goes through a Kratix promise pipeline. The pipeline writes manifests to <code>state/</code> in Git, and Flux applies them to the cluster.</p></div></li>
+  </ol>
+</section>
+
+<section>
+  <div class="split">
+    <div style="display:grid;gap:12px">
+      <h2>Lessons learned</h2>
+      <ul class="notes">
+        <li><b>Keep databases off local-path volumes.</b><span class="muted">AWX's in-cluster Postgres lost its data twice after power cuts. It now runs in its own LXC on ZFS.</span></li>
+        <li><b>Talos is read-only.</b><span class="muted">local-path-provisioner had to move to <code>/var</code>, and its namespace needed privileged PodSecurity.</span></li>
+        <li><b>Pinned MAC addresses make rebuilds painless.</b><span class="muted">Each node keeps its MAC and IP across a full destroy and rebuild.</span></li>
+      </ul>
+    </div>
+    <div style="display:grid;gap:12px">
+      <h2>Next up</h2>
+      <ul class="notes">
+        <li><b>Prometheus and Grafana</b><span class="muted">Cluster and workload monitoring</span></li>
+        <li><b>Cilium</b><span class="muted">Replace Flannel to get eBPF and network policy</span></li>
+        <li><b>More workers, then an HA control plane</b><span class="muted">Three control-plane nodes behind kube-vip</span></li>
+        <li><b>A bigger Kratix catalog</b><span class="muted">More self-service promises beyond Proxmox VMs</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>Live data pulled from the UniFi controller, the Proxmox API and <code>kubectl</code> on 20 Oct 2026. Design notes come from the atlas-talos repo.</footer>
+
+</div>
+</body>
+</html>

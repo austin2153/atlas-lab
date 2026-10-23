@@ -1,5 +1,7 @@
 # Proxmox SMB Share
 
+> **Status (2026-10-23): offline.** After the OS drive replacement and reinstall, the WD 1TB drive is not detected by the host at all (no `/dev/disk/by-id` entry, no importable `WD_SATA_1TB` pool), so LXC 106 has not been recreated. Check the drive's SATA/power cables or replace it, then follow the reinstall steps in [proxmox-install.md](proxmox-install.md) (import pool, register storage, recreate `106.conf`).
+
 This document describes the design and configuration of a Samba file share hosted on the Proxmox server, accessible from macOS via Finder.
 
 ## Why This Exists
