@@ -138,7 +138,7 @@ section { display: grid; gap: 16px; }
 .r-tiny-future { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
 .r-led { fill: var(--accent); }
 .r-jumper { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
-.r-jumper-future { stroke: var(--muted); stroke-width: 2; stroke-dasharray: 3 3; }
+.r-jumper-future { stroke: var(--muted); stroke-width: 2; stroke-dasharray: 3 3; fill: none; }
 .r-lead { stroke: var(--muted); stroke-width: 1; fill: none; }
 .t-plate { font-family: var(--font-display); font-weight: 700; font-size: 12.5px; fill: var(--ink); }
 .t-plate-muted { font-family: var(--font-display); font-weight: 700; font-size: 12.5px; fill: var(--muted); }
@@ -191,6 +191,47 @@ td.dim { color: var(--muted); }
 .meter { display: inline-block; vertical-align: middle; width: 64px; height: 6px; margin-right: 8px; border-radius: 3px; background: var(--line); overflow: hidden; }
 .meter i { display: block; height: 100%; background: var(--v20); }
 .meter.lb i { background: var(--accent); }
+/* Switch port map details and VLAN filter */
+.portinfo { margin: 0; font-size: 0.88rem; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--muted); max-width: none; }
+.portinfo.active { color: var(--ink); border-color: var(--accent); }
+.portinfo b { font-family: var(--font-mono); color: var(--accent); margin-right: 4px; }
+.legend button { font: inherit; color: inherit; background: none; border: 1px solid transparent; border-radius: 6px; padding: 2px 6px; display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+.legend button:hover { border-color: var(--line); }
+.legend button[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); }
+.legend button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pmap [data-pcol] { cursor: pointer; }
+.pmap.vfilter svg :is(rect, line, text) { opacity: 0.15; }
+.pmap.vfilter svg .von { opacity: 1; }
+/* Topology highlighting */
+.topo [data-topo] { cursor: pointer; }
+.topo svg :is(rect, line, polyline, text) { transition: opacity 0.15s ease; }
+.topo.tracing svg :is(rect, line, polyline, text) { opacity: 0.14; }
+.topo.tracing svg .on { opacity: 1; }
+.topo .d-path, .topo .d-path-label { opacity: 0; pointer-events: none; }
+.topo.tracing svg .d-path.on, .topo.tracing svg .d-path-label.on { opacity: 1; }
+.topo.tracing svg .d-path:not(.on), .topo.tracing svg .d-path-label:not(.on) { opacity: 0; }
+.d-path { stroke: var(--ok); stroke-width: 3; stroke-dasharray: 6 4; fill: none; }
+.d-path.blocked { stroke: var(--warn); }
+.d-path-label.ok { fill: var(--ok); }
+.d-path-label.bad { fill: var(--warn); }
+.topo.tracing svg :is(.d-link, .d-trunk).on { stroke: var(--accent); stroke-width: 3.5; }
+@media (prefers-reduced-motion: reduce) { .topo svg :is(rect, line, polyline, text) { transition: none; } }
+/* Rack view switch and cable tracing */
+.rackbar { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; justify-content: space-between; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 0.85rem; padding: 5px 14px; border: 0; background: var(--surface); color: var(--muted); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--ink); font-weight: 600; }
+.tracebar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.85rem; }
+.tracebar button { font: inherit; padding: 3px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.tracebar button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+.seg button:focus-visible, .tracebar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.trace [data-trace] { cursor: pointer; }
+.trace svg :is(rect, line, polyline, circle, text) { transition: opacity 0.15s ease; }
+.trace.tracing svg :is(rect, line, polyline, circle, text) { opacity: 0.16; }
+.trace.tracing svg .on { opacity: 1; }
+.trace.tracing svg :is(.r-cable, .r-jumper).on { stroke-width: 3.5; }
+@media (prefers-reduced-motion: reduce) { .trace svg :is(rect, line, polyline, circle, text) { transition: none; } }
 .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.85rem; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 8px; }
 .swatch { width: 22px; height: 12px; border-radius: 2px; border: 1.5px solid var(--ink); background: var(--surface); }
@@ -248,115 +289,136 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     <h2>Topology</h2>
     <p class="muted">Frontier fiber runs straight into the UniFi gateway, with no ISP router in between. The gateway routes between three VLANs, and the Tiny gets a trunk port where each guest is tagged onto its VLAN. Only the basement AP is wired; the other two mesh wirelessly because the house has no ethernet runs.</p>
   </div>
-  <div class="diagram" role="img" aria-label="Target network topology: Frontier fiber ONT to UniFi gateway, to an 8-port PoE switch, which feeds the wired basement access point (the other two mesh wirelessly), the Hue bridge on IoT, and the M920q Tiny Proxmox host. Proxmox runs Pi-hole on the default network and, on VLAN 20, a three-node Talos Kubernetes cluster, whose MetalLB service IPs are virtual addresses routed to pods for ArgoCD and vcsim, plus a separate planned AAP VM. The gateway zone firewall blocks traffic between VLANs by default; the personal laptop is the only default-network device allowed into VLAN 20, and the lab may only reach Pi-hole DNS and the Proxmox API.">
+  <div class="tracebar topobar" role="group" aria-label="Highlight part of the topology">
+    <span class="muted">Show:</span>
+    <button type="button" data-topo-btn="v1" aria-pressed="false">VLAN 1</button>
+    <button type="button" data-topo-btn="v10" aria-pressed="false">VLAN 10</button>
+    <button type="button" data-topo-btn="v20" aria-pressed="false">VLAN 20</button>
+    <span class="muted" style="margin-left:10px">Paths:</span>
+    <button type="button" data-topo-btn="inet" aria-pressed="false">Internet</button>
+    <button type="button" data-topo-btn="mac" aria-pressed="false">Mac → lab</button>
+    <button type="button" data-topo-btn="dns" aria-pressed="false">Lab DNS</button>
+    <button type="button" data-topo-btn="blocked" aria-pressed="false">IoT → lab (blocked)</button>
+  </div>
+  <div class="diagram topo" aria-label="Target network topology: Frontier fiber ONT to UniFi gateway, to an 8-port PoE switch, which feeds the wired basement access point (the other two mesh wirelessly), the Hue bridge on IoT, and the M920q Tiny Proxmox host. Proxmox runs Pi-hole on the default network and, on VLAN 20, a three-node Talos Kubernetes cluster, whose MetalLB service IPs are virtual addresses routed to pods for ArgoCD and vcsim, plus a separate planned AAP VM. The gateway zone firewall blocks traffic between VLANs by default; the personal laptop is the only default-network device allowed into VLAN 20, and the lab may only reach Pi-hole DNS and the Proxmox API.">
     <svg viewBox="0 0 960 690" xmlns="http://www.w3.org/2000/svg">
       <!-- links -->
-      <line class="d-link" x1="480" y1="62" x2="480" y2="100"/>
-      <line class="d-link" x1="480" y1="162" x2="480" y2="196"/>
-      <polyline class="d-link" points="340,226 160,226 160,280"/>
-      <line class="d-trunk" x1="480" y1="256" x2="480" y2="280"/>
-      <text class="t-label" x="490" y="86">WAN · 2.5 GbE</text>
-      <text class="t-label" x="490" y="184">1 GbE · SW PORT 1</text>
-      <text class="t-label" x="172" y="218">SW PORT 2 · PoE</text>
-      <text class="t-label t-accent" x="490" y="273">SW PORT 3 · VLAN 1 + 20</text>
+      <line data-topo="gw inet" class="d-link" x1="480" y1="62" x2="480" y2="100"/>
+      <line data-topo="sw gw inet mac dns blocked v1 v10 v20" class="d-link" x1="480" y1="162" x2="480" y2="196"/>
+      <polyline data-topo="ap sw mac blocked v1 v10 v20" class="d-link" points="340,226 160,226 160,280"/>
+      <line data-topo="px sw inet mac dns v1 v20" class="d-trunk" x1="480" y1="256" x2="480" y2="280"/>
+      <text data-topo="gw inet" class="t-label" x="490" y="86">WAN · 2.5 GbE</text>
+      <text data-topo="sw gw inet mac dns blocked v1 v10 v20" class="t-label" x="490" y="184">1 GbE · SW PORT 1</text>
+      <text data-topo="ap sw mac blocked v1 v10 v20" class="t-label" x="172" y="218">SW PORT 2 · PoE</text>
+      <text data-topo="px sw inet mac dns v1 v20" class="t-label t-accent" x="490" y="273">SW PORT 3 · VLAN 1 + 20</text>
 
       <!-- fiber / ONT -->
-      <rect class="d-box" x="360" y="16" width="240" height="46" rx="23"/>
-      <text class="t-title" x="480" y="44" text-anchor="middle">Frontier fiber · FRX523 ONT</text>
+      <rect data-topo="gw inet" class="d-box" x="360" y="16" width="240" height="46" rx="23"/>
+      <text data-topo="gw inet" class="t-title" x="480" y="44" text-anchor="middle">Frontier fiber · FRX523 ONT</text>
 
       <!-- gateway -->
-      <rect class="d-core" x="330" y="100" width="300" height="62" rx="8"/>
-      <text class="t-title" x="346" y="124">UniFi Cloud Gateway Ultra</text>
-      <text class="t-body" x="346" y="144">Router, firewall, DHCP · <tspan class="t-mono">192.168.0.1</tspan></text>
+      <rect data-topo="gw inet mac dns blocked v1 v10 v20" class="d-core" x="330" y="100" width="300" height="62" rx="8"/>
+      <text data-topo="gw inet mac dns blocked v1 v10 v20" class="t-title" x="346" y="124">UniFi Cloud Gateway Ultra</text>
+      <text data-topo="gw inet mac dns blocked v1 v10 v20" class="t-body" x="346" y="144">Router, firewall, DHCP · <tspan class="t-mono">192.168.0.1</tspan></text>
 
       <!-- switch -->
-      <rect class="d-box" x="340" y="196" width="280" height="60" rx="8"/>
-      <text class="t-title" x="356" y="220">USW-Lite-8-PoE</text>
-      <text class="t-body" x="356" y="240">8-port switch · <tspan class="t-mono">192.168.0.2</tspan></text>
+      <rect data-topo="sw gw ap px inet mac dns blocked v1 v10 v20" class="d-box" x="340" y="196" width="280" height="60" rx="8"/>
+      <text data-topo="sw gw ap px inet mac dns blocked v1 v10 v20" class="t-title" x="356" y="220">USW-Lite-8-PoE</text>
+      <text data-topo="sw gw ap px inet mac dns blocked v1 v10 v20" class="t-body" x="356" y="240">8-port switch · <tspan class="t-mono">192.168.0.2</tspan></text>
 
       <!-- APs -->
-      <rect class="d-box" x="20" y="280" width="290" height="116" rx="8"/>
-      <text class="t-title" x="36" y="304">3 × U7 Pro access points</text>
-      <text class="t-mono" x="36" y="326">Basement .0.3 · wired, PoE</text>
-      <text class="t-mono" x="36" y="344">Main .0.4 · Office .0.5 · mesh</text>
-      <text class="t-body" x="36" y="368">Home 5 GHz, Gaming 6 GHz → VLAN 1</text>
-      <text class="t-body" x="36" y="385">IoT 2.4 GHz → 10 · Lab 5 GHz → 20</text>
+      <rect data-topo="ap sw mac blocked v1 v10 v20" class="d-box" x="20" y="280" width="290" height="116" rx="8"/>
+      <text data-topo="ap sw mac blocked v1 v10 v20" class="t-title" x="36" y="304">3 × U7 Pro access points</text>
+      <text data-topo="ap sw mac blocked v1 v10 v20" class="t-mono" x="36" y="326">Basement .0.3 · wired, PoE</text>
+      <text data-topo="ap sw mac blocked v1 v10 v20" class="t-mono" x="36" y="344">Main .0.4 · Office .0.5 · mesh</text>
+      <text data-topo="ap sw mac blocked v1 v10 v20" class="t-body" x="36" y="368">Home 5 GHz, Gaming 6 GHz → VLAN 1</text>
+      <text data-topo="ap sw mac blocked v1 v10 v20" class="t-body" x="36" y="385">IoT 2.4 GHz → 10 · Lab 5 GHz → 20</text>
 
       <!-- IoT vlan -->
-      <rect class="d-v10" x="20" y="416" width="290" height="74" rx="8"/>
-      <text class="t-label t-v10" x="36" y="438">VLAN 10 · IOT</text>
-      <text class="t-mono" x="36" y="458">192.168.10.0/24</text>
-      <text class="t-body" x="36" y="477">Smart-home devices; Hue bridge on sw port 7</text>
+      <rect data-topo="v10 blocked" class="d-v10" x="20" y="416" width="290" height="74" rx="8"/>
+      <text data-topo="v10 blocked" class="t-label t-v10" x="36" y="438">VLAN 10 · IOT</text>
+      <text data-topo="v10 blocked" class="t-mono" x="36" y="458">192.168.10.0/24</text>
+      <text data-topo="v10 blocked" class="t-body" x="36" y="477">Smart-home devices; Hue bridge on sw port 7</text>
 
       <!-- personal laptop -->
-      <rect class="d-v1" x="20" y="506" width="290" height="74" rx="8"/>
-      <text class="t-title" x="36" y="528">austin-mac · personal laptop</text>
-      <text class="t-mono" x="36" y="547">192.168.0.58 · Wi-Fi, VLAN 1</text>
-      <text class="t-body" x="36" y="566">Only VLAN 1 device allowed into the lab</text>
+      <rect data-topo="mac v1" class="d-v1" x="20" y="506" width="290" height="74" rx="8"/>
+      <text data-topo="mac v1" class="t-title" x="36" y="528">austin-mac · personal laptop</text>
+      <text data-topo="mac v1" class="t-mono" x="36" y="547">192.168.0.58 · Wi-Fi, VLAN 1</text>
+      <text data-topo="mac v1" class="t-body" x="36" y="566">Only VLAN 1 device allowed into the lab</text>
 
       <!-- proxmox host: M920q Tiny #1 -->
-      <rect class="d-host" x="340" y="280" width="600" height="370" rx="10"/>
-      <text class="t-title" x="358" y="305">proxmox · M920q Tiny #1</text>
-      <text class="t-body" x="358" y="324"><tspan class="t-mono">192.168.0.100</tspan> · Proxmox VE 9 · bridge vmbr0 (VLAN-aware)</text>
+      <rect data-topo="px inet mac dns v1 v20" class="d-host" x="340" y="280" width="600" height="370" rx="10"/>
+      <text data-topo="px inet mac dns v1 v20" class="t-title" x="358" y="305">proxmox · M920q Tiny #1</text>
+      <text data-topo="px inet mac dns v1 v20" class="t-body" x="358" y="324"><tspan class="t-mono">192.168.0.100</tspan> · Proxmox VE 9 · bridge vmbr0 (VLAN-aware)</text>
 
       <!-- pihole -->
-      <text class="t-label t-v1" x="358" y="352">VLAN 1 · DEFAULT</text>
-      <rect class="d-v1" x="358" y="360" width="164" height="72" rx="6"/>
-      <text class="t-title" x="370" y="382">atlas-pihole</text>
-      <text class="t-body" x="370" y="400">LXC 102 · DNS for atlas.local</text>
-      <text class="t-mono" x="370" y="419">192.168.0.101</text>
+      <text data-topo="dns px v1" class="t-label t-v1" x="358" y="352">VLAN 1 · DEFAULT</text>
+      <rect data-topo="dns px v1" class="d-v1" x="358" y="360" width="164" height="72" rx="6"/>
+      <text data-topo="dns px v1" class="t-title" x="370" y="382">atlas-pihole</text>
+      <text data-topo="dns px v1" class="t-body" x="370" y="400">LXC 102 · DNS for atlas.local</text>
+      <text data-topo="dns px v1" class="t-mono" x="370" y="419">192.168.0.101</text>
 
       <!-- host hw -->
-      <rect class="d-box" x="358" y="448" width="164" height="150" rx="6"/>
-      <text class="t-label" x="370" y="468">HARDWARE</text>
-      <text class="t-body" x="370" y="488">i5-8500T · 6 cores</text>
-      <text class="t-body" x="370" y="505">32 GB RAM</text>
-      <text class="t-body t-accent" x="370" y="522">→ 64 GB for AAP</text>
-      <text class="t-body" x="370" y="539">1 TB NVMe · guests</text>
-      <text class="t-body" x="370" y="556">250 GB SATA · OS</text>
-      <text class="t-body" x="370" y="573">500 GB USB · backups</text>
+      <rect data-topo="px" class="d-box" x="358" y="448" width="164" height="150" rx="6"/>
+      <text data-topo="px" class="t-label" x="370" y="468">HARDWARE</text>
+      <text data-topo="px" class="t-body" x="370" y="488">i5-8500T · 6 cores</text>
+      <text data-topo="px" class="t-body" x="370" y="505">32 GB RAM</text>
+      <text data-topo="px" class="t-body t-accent" x="370" y="522">→ 64 GB for AAP</text>
+      <text data-topo="px" class="t-body" x="370" y="539">1 TB NVMe · guests</text>
+      <text data-topo="px" class="t-body" x="370" y="556">250 GB SATA · OS</text>
+      <text data-topo="px" class="t-body" x="370" y="573">500 GB USB · backups</text>
 
       <!-- room for more containers -->
-      <rect class="d-future" x="358" y="608" width="164" height="30" rx="6"/>
-      <text class="t-body" x="370" y="628">+ more LXCs (tbd)</text>
+      <rect data-topo="px" class="d-future" x="358" y="608" width="164" height="30" rx="6"/>
+      <text data-topo="px" class="t-body" x="370" y="628">+ more LXCs (tbd)</text>
 
       <!-- vlan 20 zone -->
-      <rect class="d-v20zone" x="540" y="340" width="384" height="296" rx="8"/>
-      <text class="t-label t-v20" x="556" y="360">VLAN 20 · ATLAS LAB · 192.168.20.0/24</text>
+      <rect data-topo="v20 px mac" class="d-v20zone" x="540" y="340" width="384" height="296" rx="8"/>
+      <text data-topo="v20 px mac" class="t-label t-v20" x="556" y="360">VLAN 20 · ATLAS LAB · 192.168.20.0/24</text>
 
       <!-- Talos Kubernetes cluster: three node VMs; MetalLB IPs are virtual, inside the cluster -->
-      <rect class="d-cluster" x="552" y="368" width="364" height="170" rx="8"/>
-      <text class="t-label t-v20" x="564" y="385">TALOS KUBERNETES CLUSTER · 3 VMS</text>
+      <rect data-topo="v20 px mac" class="d-cluster" x="552" y="368" width="364" height="170" rx="8"/>
+      <text data-topo="v20 px mac" class="t-label t-v20" x="564" y="385">TALOS KUBERNETES CLUSTER · 3 VMS</text>
 
-      <rect class="d-v20" x="562" y="394" width="110" height="66" rx="6"/>
-      <text class="t-title" x="572" y="415">talos-cp</text>
-      <text class="t-body" x="572" y="432">control plane</text>
-      <text class="t-mono" x="572" y="449">.20.10</text>
+      <rect data-topo="v20 px mac dns" class="d-v20" x="562" y="394" width="110" height="66" rx="6"/>
+      <text data-topo="v20 px mac dns" class="t-title" x="572" y="415">talos-cp</text>
+      <text data-topo="v20 px mac dns" class="t-body" x="572" y="432">control plane</text>
+      <text data-topo="v20 px mac dns" class="t-mono" x="572" y="449">.20.10</text>
 
-      <rect class="d-v20" x="680" y="394" width="110" height="66" rx="6"/>
-      <text class="t-title" x="690" y="415">worker-01</text>
-      <text class="t-body" x="690" y="432">worker</text>
-      <text class="t-mono" x="690" y="449">.20.11</text>
+      <rect data-topo="v20 px mac" class="d-v20" x="680" y="394" width="110" height="66" rx="6"/>
+      <text data-topo="v20 px mac" class="t-title" x="690" y="415">worker-01</text>
+      <text data-topo="v20 px mac" class="t-body" x="690" y="432">worker</text>
+      <text data-topo="v20 px mac" class="t-mono" x="690" y="449">.20.11</text>
 
-      <rect class="d-v20" x="798" y="394" width="110" height="66" rx="6"/>
-      <text class="t-title" x="808" y="415">worker-02</text>
-      <text class="t-body" x="808" y="432">worker (new)</text>
-      <text class="t-mono" x="808" y="449">.20.13</text>
+      <rect data-topo="v20 px mac" class="d-v20" x="798" y="394" width="110" height="66" rx="6"/>
+      <text data-topo="v20 px mac" class="t-title" x="808" y="415">worker-02</text>
+      <text data-topo="v20 px mac" class="t-body" x="808" y="432">worker (new)</text>
+      <text data-topo="v20 px mac" class="t-mono" x="808" y="449">.20.13</text>
 
-      <rect class="d-svc" x="562" y="470" width="346" height="58" rx="6"/>
-      <text class="t-label t-v20" x="572" y="487">SERVICE IPS · METALLB · .20.50–.99</text>
-      <text class="t-mono" x="572" y="504">.50 ArgoCD  ·  .52–.53 vcsim ×2  ·  + more</text>
-      <text class="t-body" x="572" y="520">Virtual IPs answered by the nodes, routed to pods</text>
+      <rect data-topo="v20 px mac" class="d-svc" x="562" y="470" width="346" height="58" rx="6"/>
+      <text data-topo="v20 px mac" class="t-label t-v20" x="572" y="487">SERVICE IPS · METALLB · .20.50–.99</text>
+      <text data-topo="v20 px mac" class="t-mono" x="572" y="504">.50 ArgoCD  ·  .52–.53 vcsim ×2  ·  + more</text>
+      <text data-topo="v20 px mac" class="t-body" x="572" y="520">Virtual IPs answered by the nodes, routed to pods</text>
 
       <!-- AAP: separate VM, outside the cluster -->
-      <rect class="d-planned" x="552" y="552" width="364" height="72" rx="6"/>
-      <text class="t-title" x="564" y="574">aap · Ansible Automation Platform</text>
-      <text class="t-body" x="564" y="592">RHEL 9 VM · 4 vCPU / 16 GB · after 64 GB RAM upgrade</text>
-      <text class="t-mono" x="564" y="610">.20.12 · aap.atlas.local</text>
+      <rect data-topo="v20 px mac" class="d-planned" x="552" y="552" width="364" height="72" rx="6"/>
+      <text data-topo="v20 px mac" class="t-title" x="564" y="574">aap · Ansible Automation Platform</text>
+      <text data-topo="v20 px mac" class="t-body" x="564" y="592">RHEL 9 VM · 4 vCPU / 16 GB · after 64 GB RAM upgrade</text>
+      <text data-topo="v20 px mac" class="t-mono" x="564" y="610">.20.12 · aap.atlas.local</text>
 
       <!-- laptop firewall exception into VLAN 20 -->
-      <polyline class="d-allow" points="310,543 326,543 326,666 733,666 733,636"/>
-      <text class="t-label t-warn" x="346" y="684">FIREWALL ALLOW · AUSTIN-MAC → VLAN 20 · ALL PORTS</text>
+      <polyline data-topo="mac" class="d-allow" points="310,543 326,543 326,666 733,666 733,636"/>
+      <text data-topo="mac" class="t-label t-warn" x="346" y="684">FIREWALL ALLOW · AUSTIN-MAC → VLAN 20 · ALL PORTS</text>
+      <!-- path overlays (hidden until a path preset is chosen) -->
+      <polyline class="d-path" data-topo="mac" points="310,520 322,520 322,340 310,340"/>
+      <text class="t-label d-path-label ok" data-topo="mac" x="646" y="134">✓ ALLOWED · AUSTIN-MAC → LAB, ALL PORTS</text>
+      <text class="t-label d-path-label ok" data-topo="inet" x="646" y="134">INTERNET · NAT AT THE GATEWAY</text>
+      <polyline class="d-path" data-topo="dns" points="562,427 540,427 540,396 522,396"/>
+      <text class="t-label d-path-label ok" data-topo="dns" x="646" y="134">✓ ALLOWED · LAB → PI-HOLE, UDP 53</text>
+      <text class="t-label d-path-label ok" data-topo="dns" x="646" y="150">ROUTED VIA THE GATEWAY BETWEEN VLANS</text>
+      <polyline class="d-path blocked" data-topo="blocked" points="165,416 165,396"/>
+      <text class="t-label d-path-label bad" data-topo="blocked" x="646" y="134">✕ BLOCKED · IOT → LAB (DEFAULT RULE)</text>
+      <text class="t-label d-path-label bad" data-topo="blocked" x="646" y="150">STOPS AT THE GATEWAY FIREWALL</text>
     </svg>
   </div>
 </section>
@@ -440,8 +502,30 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     <h2>Rack build</h2>
     <p class="muted">A DeskPi RackMate T1 (8U, 10-inch) next to the fiber drop in the basement. Low power draw is a hard requirement, so there's nothing enterprise-grade in it. The ONT (optical network terminal) is Frontier's fiber box: it converts the fiber's light signal into Ethernet for the gateway's WAN port. This is the front view; heights are to scale, so half-U slots are drawn at half height.</p>
   </div>
-  <div class="diagram rack" role="img" aria-label="Front elevation of an 8U 10-inch rack, top to bottom: 0.5U 12-port patch panel, 1U USW-Lite-8-PoE switch, 1U UCG Ultra gateway, 1U blank panel, 1U Lenovo M920q Tiny number 1 (Proxmox node), two 1U slots for future Tiny 2 and 3, and 1.5U spare. The ONT sits on top of the rack, and the power strip and Hue bridge are mounted on its side.">
-    <svg viewBox="0 -44 700 474" xmlns="http://www.w3.org/2000/svg">
+  <div class="rackbar">
+    <div class="seg" role="group" aria-label="Rack view">
+      <button type="button" id="view-front" aria-pressed="true">Front</button>
+      <button type="button" id="view-rear" aria-pressed="false">Rear</button>
+    </div>
+    <div class="tracebar" role="group" aria-label="Trace a device's cable">
+      <span class="muted">Trace:</span>
+      <button type="button" data-trace-btn="gw" aria-pressed="false">Gateway</button>
+      <button type="button" data-trace-btn="ap" aria-pressed="false">U7 Pro Basement</button>
+      <button type="button" data-trace-btn="tiny1" aria-pressed="false">Tiny #1</button>
+      <button type="button" data-trace-btn="hue" aria-pressed="false">Hue bridge</button>
+      <button type="button" data-trace-btn="ont" aria-pressed="false">ONT</button>
+    </div>
+  </div>
+  <div id="rack-front">
+  <div class="diagram rack trace" id="rack-front-diagram" aria-label="Front elevation of an 8U 10-inch rack, top to bottom: 0.5U 12-port patch panel, 1U USW-Lite-8-PoE switch, 1U UCG Ultra gateway, 1U blank panel, 1U Lenovo M920q Tiny number 1 (Proxmox node), two 1U slots for future Tiny 2 and 3, and 1.5U spare. The ONT sits on top of the rack, the power strip and Hue bridge are mounted on its side, and the Basement access point stands on a stand to the left; its cable runs round the back into patch panel port 2, and a front jumper connects it to switch port 2.">
+    <svg viewBox="-64 -44 764 474" xmlns="http://www.w3.org/2000/svg">
+      <!-- Basement U7 Pro on a stand beside the rack (left from the front); its cable enters the rack at patch-panel height and plugs into the back of panel port 2 -->
+      <line data-trace="ap" class="d-link" x1="-30" y1="69" x2="-30" y2="396"/>
+      <line data-trace="ap" class="d-link" x1="-47" y1="398" x2="-13" y2="398"/>
+      <rect data-trace="ap" class="r-plate" x="-49" y="33" width="38" height="36" rx="9"/>
+      <text data-trace="ap" class="t-u" transform="translate(-44,232) rotate(-90)" text-anchor="middle">U7 Pro Basement · 192.168.0.3</text>
+      <text data-trace="ap" class="t-u" x="-30" y="414" text-anchor="middle">AP</text>
+      <text data-trace="ap" class="t-u" x="-30" y="427" text-anchor="middle">→ port 2</text>
       <!-- U ruler: 1U = 44px, rack interior y 40–392 -->
       <g class="t-u" text-anchor="end">
         <text x="40" y="66">1</text><text x="40" y="110">2</text><text x="40" y="154">3</text><text x="40" y="198">4</text>
@@ -480,16 +564,15 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       </g>
 
       <!-- ONT on top of the rack (planned spot) -->
-      <rect class="r-tiny" x="70" y="-6" width="340" height="32" rx="4"/>
-      <circle class="r-led" cx="376" cy="14" r="2.5"/><circle class="r-led" cx="386" cy="14" r="2.5"/><circle class="r-led" cx="396" cy="14" r="2.5"/>
-      <text class="t-plate t-on-dark" x="84" y="15">ONT</text>
+      <rect data-trace="ont gw" class="r-tiny" x="70" y="-6" width="340" height="32" rx="4"/>
+      <text data-trace="ont gw" class="t-plate t-on-dark" x="84" y="15">ONT</text>
 
       <!-- 1. patch panel, 0.5U: y 40–62 -->
       <rect class="r-plate" x="78" y="41" width="324" height="20" rx="2"/>
       <g class="r-port">
-        <rect x="200" y="46" width="12" height="10" rx="1"/><rect x="216" y="46" width="12" height="10" rx="1"/><rect x="232" y="46" width="12" height="10" rx="1"/>
+        <rect data-trace="gw" x="200" y="46" width="12" height="10" rx="1"/><rect data-trace="ap" x="216" y="46" width="12" height="10" rx="1"/><rect data-trace="tiny1" x="232" y="46" width="12" height="10" rx="1"/>
         <rect x="248" y="46" width="12" height="10" rx="1"/><rect x="264" y="46" width="12" height="10" rx="1"/><rect x="280" y="46" width="12" height="10" rx="1"/>
-        <rect x="296" y="46" width="12" height="10" rx="1"/><rect x="312" y="46" width="12" height="10" rx="1"/><rect x="328" y="46" width="12" height="10" rx="1"/>
+        <rect data-trace="hue" x="296" y="46" width="12" height="10" rx="1"/><rect x="312" y="46" width="12" height="10" rx="1"/><rect x="328" y="46" width="12" height="10" rx="1"/>
         <rect x="344" y="46" width="12" height="10" rx="1"/><rect x="360" y="46" width="12" height="10" rx="1"/><rect x="376" y="46" width="12" height="10" rx="1"/>
       </g>
       <text class="t-plate" x="88" y="55">Patch panel</text>
@@ -498,22 +581,22 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <rect class="r-mount" x="78" y="63" width="324" height="42" rx="3"/>
       <text class="t-plate" x="88" y="89">USW-Lite-8-PoE</text>
       <g class="r-port">
-        <rect x="199" y="76" width="14" height="14" rx="1"/><rect x="215" y="76" width="14" height="14" rx="1"/><rect x="231" y="76" width="14" height="14" rx="1"/><rect x="247" y="76" width="14" height="14" rx="1"/><rect x="263" y="76" width="14" height="14" rx="1"/><rect x="279" y="76" width="14" height="14" rx="1"/><rect x="295" y="76" width="14" height="14" rx="1"/><rect x="311" y="76" width="14" height="14" rx="1"/>
+        <rect data-trace="gw" x="199" y="76" width="14" height="14" rx="1"/><rect data-trace="ap" x="215" y="76" width="14" height="14" rx="1"/><rect data-trace="tiny1" x="231" y="76" width="14" height="14" rx="1"/><rect x="247" y="76" width="14" height="14" rx="1"/><rect x="263" y="76" width="14" height="14" rx="1"/><rect x="279" y="76" width="14" height="14" rx="1"/><rect data-trace="hue" x="295" y="76" width="14" height="14" rx="1"/><rect x="311" y="76" width="14" height="14" rx="1"/>
       </g>
+      <g class="t-u"><text data-trace="gw" x="206" y="101" text-anchor="middle">1</text><text data-trace="ap" x="222" y="101" text-anchor="middle">2</text><text data-trace="tiny1" x="238" y="101" text-anchor="middle">3</text><text x="254" y="101" text-anchor="middle">4</text><text x="270" y="101" text-anchor="middle">5</text><text x="286" y="101" text-anchor="middle">6</text><text data-trace="hue" x="302" y="101" text-anchor="middle">7</text><text x="318" y="101" text-anchor="middle">8</text></g>
       <!-- 0.5 ft jumpers: panel port N straight down to switch port N -->
       <g>
-        <line class="r-jumper" x1="206" y1="56" x2="206" y2="77"/>
-        <line class="r-jumper" x1="222" y1="56" x2="222" y2="77"/>
-        <line class="r-jumper" x1="238" y1="56" x2="238" y2="77"/>
+        <line data-trace="gw" class="r-jumper" x1="206" y1="56" x2="206" y2="77"/>
+        <line data-trace="ap" class="r-jumper" x1="222" y1="56" x2="222" y2="77"/>
+        <line data-trace="tiny1" class="r-jumper" x1="238" y1="56" x2="238" y2="77"/>
         <line class="r-jumper-future" x1="254" y1="56" x2="254" y2="77"/>
         <line class="r-jumper-future" x1="270" y1="56" x2="270" y2="77"/>
-        <line class="r-jumper" x1="302" y1="56" x2="302" y2="77"/>
+        <line data-trace="hue" class="r-jumper" x1="302" y1="56" x2="302" y2="77"/>
       </g>
 
       <!-- 3. gateway, 1U: y 106–150 -->
-      <rect class="r-mount" x="78" y="107" width="324" height="42" rx="3"/>
-      <text class="t-plate" x="88" y="133">UCG Ultra</text>
-      <circle class="r-led" cx="190" cy="128" r="3"/>
+      <rect data-trace="gw ont" class="r-mount" x="78" y="107" width="324" height="42" rx="3"/>
+      <text data-trace="gw ont" class="t-plate" x="88" y="133">UCG Ultra</text>
       <g class="r-port">
         <rect x="305" y="120" width="16" height="14" rx="1"/><rect x="324" y="120" width="16" height="14" rx="1"/><rect x="343" y="120" width="16" height="14" rx="1"/>
         <rect x="362" y="120" width="16" height="14" rx="1"/><rect x="381" y="120" width="16" height="14" rx="1"/>
@@ -524,10 +607,9 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <text class="t-u" x="88" y="176">blank</text>
 
       <!-- 5. Tiny #1, 1U: y 194–238 -->
-      <rect class="r-mount" x="78" y="195" width="324" height="42" rx="3"/>
-      <rect class="r-tiny" x="150" y="200" width="180" height="32" rx="2"/>
-      <circle class="r-led" cx="318" cy="216" r="3"/>
-      <text class="t-plate" x="88" y="221">Tiny #1</text>
+      <rect data-trace="tiny1" class="r-mount" x="78" y="195" width="324" height="42" rx="3"/>
+      <rect data-trace="tiny1" class="r-tiny" x="150" y="200" width="180" height="32" rx="2"/>
+      <text data-trace="tiny1" class="t-plate" x="88" y="221">Tiny #1</text>
 
       <!-- 6. Tiny #2, future: y 238–282 -->
       <rect class="r-future" x="78" y="239" width="324" height="42" rx="3"/>
@@ -554,52 +636,49 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
         <line x1="428" y1="282" x2="450" y2="282"/>
         <line x1="428" y1="359" x2="450" y2="359"/>
       </g>
-      <text class="t-title" x="458" y="6">ONT · on top of the rack</text>
+      <text data-trace="ont gw" class="t-title" x="458" y="6">ONT · on top of the rack</text>
       <text class="t-body" x="458" y="21">Frontier fiber box · too wide for a tray</text>
       <text class="t-title" x="458" y="47">Patch panel · 0.5U</text>
       <text class="t-body" x="458" y="62">Ports 1–8 drop straight to the switch</text>
       <text class="t-title" x="458" y="82">Switch · 1U</text>
       <text class="t-body" x="458" y="97">192.168.0.2 · 1 GbE · PoE</text>
-      <text class="t-title" x="458" y="126">Gateway · 1U</text>
+      <text data-trace="gw ont" class="t-title" x="458" y="126">Gateway · 1U</text>
       <text class="t-body" x="458" y="141">192.168.0.1 · 2.5 GbE WAN</text>
       <text class="t-title" x="458" y="170">Blank · 1U</text>
       <text class="t-body" x="458" y="185">Spare slot, included blank panel</text>
-      <text class="t-title" x="458" y="214">M920q Tiny #1 · 1U</text>
-      <text class="t-body" x="458" y="229">Proxmox node</text>
-      <text class="t-body t-accent" x="458" y="244">+ 500 GB USB SSD behind: VM backups</text>
+      <text data-trace="tiny1" class="t-title" x="458" y="214">M920q Tiny #1 · 1U</text>
+      <text data-trace="tiny1" class="t-body" x="458" y="229">Proxmox node</text>
+      <text data-trace="tiny1" class="t-body t-accent" x="458" y="244">+ 500 GB USB SSD behind: VM backups</text>
       <text class="t-title" x="458" y="280">Tiny #2, #3 · 2U</text>
       <text class="t-body" x="458" y="295">Future; blank panels until then</text>
       <text class="t-title" x="458" y="357">Spare · 1.5U</text>
       <text class="t-body" x="458" y="372">1U vented blank · strip on the side</text>
+      <!-- U7 Pro Basement cable into the back of panel port 2 (drawn last so it shows over the frame) -->
+      <polyline data-trace="ap" class="r-cable" points="-11,40 -2,37 222,37 222,46"/>
     </svg>
   </div>
-  <div class="legend">
-    <span><i class="swatch"></i>Owned, ready to mount</span>
-    <span><i class="swatch mount"></i>Owned, 10-inch mount still to buy</span>
-    <span><i class="swatch future"></i>Future or empty</span>
   </div>
-
-  <h3>Rear view and cabling</h3>
+  <div id="rack-rear" hidden>
   <p class="muted">From behind, so left and right are mirrored: patch panel port 1 is on the right. Every device cable plugs into the back of the patch panel; only short jumpers show at the front.</p>
-  <div class="diagram rack rear" role="img" aria-label="Rear view of the rack with cables: A, ONT on top to the gateway WAN port; B, gateway LAN to patch panel port 1; C, the Basement access point cable to patch panel port 2; D, Tiny 1 network port to patch panel port 3; E, the side-mounted Hue bridge to patch panel port 7; F, Tiny 1 USB to the backup SSD. The power strip and Hue bridge are on the side panel.">
+  <div class="diagram rack rear trace" aria-label="Rear view of the rack with cables: A, ONT on top to the gateway WAN port; B, gateway LAN to patch panel port 1; C, the Basement access point cable to patch panel port 2; D, Tiny 1 network port to patch panel port 3; E, the side-mounted Hue bridge to patch panel port 7; F, Tiny 1 USB to the backup SSD. The Basement access point stands on a stand beside the rack. The power strip and Hue bridge are on the side panel.">
     <svg viewBox="-12 -50 492 480" xmlns="http://www.w3.org/2000/svg">
       <text class="t-label" x="52" y="-36">REAR VIEW · MIRRORED</text>
       <!-- ONT on top -->
-      <rect class="r-tiny" x="70" y="-6" width="340" height="32" rx="4"/>
-      <text class="t-plate t-on-dark" x="84" y="15">ONT</text>
+      <rect data-trace="ont gw" class="r-tiny" x="70" y="-6" width="340" height="32" rx="4"/>
+      <text data-trace="ont gw" class="t-plate t-on-dark" x="84" y="15">ONT</text>
       <!-- side panel: power strip + Hue -->
       <rect class="r-plate" x="-6" y="70" width="14" height="300" rx="2"/>
       <g class="r-port"><rect x="-3" y="90" width="8" height="8"/><rect x="-3" y="130" width="8" height="8"/><rect x="-3" y="170" width="8" height="8"/><rect x="-3" y="210" width="8" height="8"/><rect x="-3" y="250" width="8" height="8"/><rect x="-3" y="290" width="8" height="8"/><rect x="-3" y="330" width="8" height="8"/></g>
       <text class="t-u" transform="translate(40,300) rotate(-90)" text-anchor="middle">power strip (side)</text>
-      <rect class="r-port" x="16" y="150" width="32" height="28" rx="6"/>
-      <text class="t-u" x="32" y="168" text-anchor="middle">Hue</text>
+      <rect data-trace="hue" class="r-port" x="16" y="150" width="32" height="28" rx="6"/>
+      <text data-trace="hue" class="t-u" x="32" y="168" text-anchor="middle">Hue</text>
       <!-- frame -->
       <rect class="r-frame" x="52" y="28" width="376" height="376" rx="6"/>
       <rect class="r-rail" x="60" y="40" width="16" height="352"/>
       <rect class="r-rail" x="404" y="40" width="16" height="352"/>
       <!-- 1 patch panel rear -->
       <rect class="r-plate" x="78" y="41" width="324" height="20" rx="2"/>
-      <g class="r-port"><rect x="268" y="46" width="12" height="10" rx="1"/><rect x="252" y="46" width="12" height="10" rx="1"/><rect x="236" y="46" width="12" height="10" rx="1"/><rect x="220" y="46" width="12" height="10" rx="1"/><rect x="204" y="46" width="12" height="10" rx="1"/><rect x="188" y="46" width="12" height="10" rx="1"/><rect x="172" y="46" width="12" height="10" rx="1"/><rect x="156" y="46" width="12" height="10" rx="1"/><rect x="140" y="46" width="12" height="10" rx="1"/><rect x="124" y="46" width="12" height="10" rx="1"/><rect x="108" y="46" width="12" height="10" rx="1"/><rect x="92" y="46" width="12" height="10" rx="1"/></g>
+      <g class="r-port"><rect data-trace="gw" x="268" y="46" width="12" height="10" rx="1"/><rect data-trace="ap" x="252" y="46" width="12" height="10" rx="1"/><rect data-trace="tiny1" x="236" y="46" width="12" height="10" rx="1"/><rect x="220" y="46" width="12" height="10" rx="1"/><rect x="204" y="46" width="12" height="10" rx="1"/><rect x="188" y="46" width="12" height="10" rx="1"/><rect data-trace="hue" x="172" y="46" width="12" height="10" rx="1"/><rect x="156" y="46" width="12" height="10" rx="1"/><rect x="140" y="46" width="12" height="10" rx="1"/><rect x="124" y="46" width="12" height="10" rx="1"/><rect x="108" y="46" width="12" height="10" rx="1"/><rect x="92" y="46" width="12" height="10" rx="1"/></g>
       <text class="t-u" x="396" y="55" text-anchor="end">panel</text>
       <text class="t-u" x="274" y="39" text-anchor="middle">1</text>
       <text class="t-u" x="92" y="39" text-anchor="middle">12</text>
@@ -608,24 +687,24 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <circle class="r-port" cx="100" cy="84" r="4"/>
       <text class="t-u" x="396" y="99" text-anchor="end">switch</text>
       <!-- 3 gateway rear -->
-      <rect class="r-mount" x="78" y="107" width="324" height="42" rx="3"/>
-      <g class="r-port"><rect x="300" y="122" width="14" height="12" rx="1"/><rect x="319" y="122" width="14" height="12" rx="1"/><rect x="338" y="122" width="14" height="12" rx="1"/><rect x="357" y="122" width="14" height="12" rx="1"/><rect x="376" y="122" width="14" height="12" rx="1"/></g>
+      <rect data-trace="gw ont" class="r-mount" x="78" y="107" width="324" height="42" rx="3"/>
+      <g class="r-port"><rect data-trace="gw" x="300" y="122" width="14" height="12" rx="1"/><rect x="319" y="122" width="14" height="12" rx="1"/><rect x="338" y="122" width="14" height="12" rx="1"/><rect x="357" y="122" width="14" height="12" rx="1"/><rect data-trace="gw ont" x="376" y="122" width="14" height="12" rx="1"/></g>
       <circle class="r-port" cx="100" cy="128" r="4"/>
-      <text class="t-u" x="88" y="145">gateway</text>
-      <text class="t-u" x="383" y="146" text-anchor="middle">WAN</text>
-      <text class="t-u" x="307" y="146" text-anchor="middle">LAN</text>
+      <text data-trace="gw ont" class="t-u" x="88" y="145">gateway</text>
+      <text data-trace="gw ont" class="t-u" x="383" y="146" text-anchor="middle">WAN</text>
+      <text data-trace="gw" class="t-u" x="307" y="146" text-anchor="middle">LAN</text>
       <!-- 4 blank -->
       <rect class="r-future" x="78" y="151" width="324" height="42" rx="3"/>
       <text class="t-u" x="388" y="176" text-anchor="end">blank</text>
       <!-- 5 Tiny #1 + USB SSD -->
-      <rect class="r-mount" x="78" y="195" width="324" height="42" rx="3"/>
-      <rect class="r-tiny" x="150" y="200" width="180" height="32" rx="2"/>
-      <rect class="r-plate" x="236" y="208" width="12" height="10" rx="1"/>
-      <rect class="r-plate" x="302" y="211" width="8" height="5"/>
-      <circle class="r-plate" cx="170" cy="216" r="3"/>
-      <rect class="r-port" x="340" y="203" width="56" height="26" rx="3"/>
-      <text class="t-u" x="368" y="220" text-anchor="middle">SSD</text>
-      <text class="t-u" x="88" y="221">Tiny #1</text>
+      <rect data-trace="tiny1" class="r-mount" x="78" y="195" width="324" height="42" rx="3"/>
+      <rect data-trace="tiny1" class="r-tiny" x="150" y="200" width="180" height="32" rx="2"/>
+      <rect data-trace="tiny1" class="r-plate" x="236" y="208" width="12" height="10" rx="1"/>
+      <rect data-trace="tiny1" class="r-plate" x="302" y="211" width="8" height="5"/>
+      <circle data-trace="tiny1" class="r-plate" cx="170" cy="216" r="3"/>
+      <rect data-trace="tiny1" class="r-port" x="340" y="203" width="56" height="26" rx="3"/>
+      <text data-trace="tiny1" class="t-u" x="368" y="220" text-anchor="middle">SSD</text>
+      <text data-trace="tiny1" class="t-u" x="88" y="221">Tiny #1</text>
       <!-- 6, 7 future Tinys; 8 spare -->
       <rect class="r-future" x="78" y="239" width="324" height="42" rx="3"/>
       <text class="t-u" x="88" y="264">Tiny #2</text>
@@ -634,15 +713,21 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <rect class="r-future" x="78" y="327" width="324" height="64" rx="3"/>
       <text class="t-u" x="88" y="363">spare</text>
       <!-- cables -->
-      <polyline class="r-cable" points="383,26 383,122"/>
-      <polyline class="r-cable" points="307,122 307,72 274,72 274,56"/>
-      <polyline class="r-cable" points="440,-44 440,34 258,34 258,46"/>
-      <polyline class="r-cable" points="242,208 242,56"/>
-      <polyline class="r-cable" points="48,164 86,164 86,66 178,66 178,56"/>
-      <polyline class="r-cable" points="310,213 340,213"/>
+      <polyline data-trace="ont gw" class="r-cable" points="383,26 383,122"/>
+      <polyline data-trace="gw" class="r-cable" points="307,122 307,72 274,72 274,56"/>
+      <!-- Basement U7 Pro on a stand beside the rack -->
+      <line data-trace="ap" class="d-link" x1="457" y1="156" x2="457" y2="396"/>
+      <line data-trace="ap" class="d-link" x1="440" y1="398" x2="474" y2="398"/>
+      <rect data-trace="ap" class="r-plate" x="438" y="120" width="38" height="36" rx="9"/>
+      <text data-trace="ap" class="t-u" transform="translate(470,276) rotate(-90)" text-anchor="middle">U7 Pro Basement · 192.168.0.3</text>
+      <text data-trace="ap" class="t-u" x="457" y="416" text-anchor="middle">AP</text>
+      <polyline data-trace="ap" class="r-cable" points="457,120 457,34 258,34 258,46"/>
+      <polyline data-trace="tiny1" class="r-cable" points="242,208 242,56"/>
+      <polyline data-trace="hue" class="r-cable" points="48,164 86,164 86,66 178,66 178,56"/>
+      <polyline data-trace="tiny1" class="r-cable" points="310,213 340,213"/>
       <g class="t-label t-accent" font-weight="700">
-        <text x="388" y="40">A</text><text x="312" y="100">B</text><text x="446" y="-28">C</text>
-        <text x="247" y="180">D</text><text x="91" y="150">E</text><text x="318" y="207">F</text>
+        <text data-trace="ont gw" x="388" y="40">A</text><text data-trace="gw" x="312" y="100">B</text><text data-trace="ap" x="462" y="100">C</text>
+        <text data-trace="tiny1" x="247" y="180">D</text><text data-trace="hue" x="91" y="150">E</text><text data-trace="tiny1" x="318" y="207">F</text>
       </g>
     </svg>
   </div>
@@ -654,6 +739,15 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     <li><b>E</b> Hue bridge on the side panel → panel 7 → switch port 7</li>
     <li><b>F</b> Tiny #1 USB → 500 GB backup SSD, sitting behind the Tiny</li>
   </ul>
+  </div>
+  <div class="legend">
+    <span><i class="swatch"></i>Owned, ready to mount</span>
+    <span><i class="swatch mount"></i>Owned, 10-inch mount still to buy</span>
+    <span><i class="swatch future"></i>Future or empty slot</span>
+    <span><i class="jumper"></i>Jumper or cable in use</span>
+    <span><i class="jumper future"></i>Future jumper</span>
+  </div>
+
   <p class="muted">Not in a slot: the ONT sits on top of the rack (it's 9.7″ wide and the rails leave about 8¾″; if it ever fits the included 1U tray, it can move to slot 4). The power strip and Hue bridge are on the side panel, the power bricks sit behind the devices, and the Basement AP stands about a metre from the rack.</p>
 
   <h3>Power</h3>
@@ -661,32 +755,32 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
 
   <h3>Switch port map</h3>
   <p class="muted">Each device's cable runs through the patch panel: device to rear port N, front port N, a 0.5 ft jumper, then switch port N, so panel and switch numbers always match. The colour bar under each port shows the VLANs it carries.</p>
-  <div class="diagram" role="img" aria-label="Patch panel above the USW-Lite-8-PoE switch. Panel ports 1 to 8 sit directly above switch ports 1 to 8, joined by straight 0.5 foot jumpers; panel ports 9 to 12 are spare. Switch ports: 1 gateway uplink, 2 Basement access point with PoE carrying all VLANs, 3 Tiny 1, 4 and 5 future Tinys, each with VLAN 1 native and VLAN 20 tagged, 6 spare, 7 Hue bridge on VLAN 10, 8 spare.">
+  <div class="diagram trace pmap" aria-label="Patch panel above the USW-Lite-8-PoE switch. Panel ports 1 to 8 sit directly above switch ports 1 to 8, joined by straight 0.5 foot jumpers; panel ports 9 to 12 are spare. Switch ports: 1 gateway uplink, 2 Basement access point with PoE carrying all VLANs, 3 Tiny 1, 4 and 5 future Tinys, each with VLAN 1 native and VLAN 20 tagged, 6 spare, 7 Hue bridge on VLAN 10, 8 spare.">
     <svg viewBox="0 0 960 252" xmlns="http://www.w3.org/2000/svg">
       <text class="t-label" x="24" y="14">PATCH PANEL · 12-PORT · DEVICE CABLES PLUG IN AT THE REAR</text>
       <rect class="sw-face" x="20" y="22" width="920" height="62" rx="6"/>
-      <text class="t-label" x="62" y="37" text-anchor="middle">1</text>
-      <rect class="sw-port" x="42" y="44" width="40" height="30" rx="3"/>
-      <rect class="sw-jack" x="50" y="51" width="24" height="16" rx="2"/>
-      <text class="t-label" x="138" y="37" text-anchor="middle">2</text>
-      <rect class="sw-port" x="118" y="44" width="40" height="30" rx="3"/>
-      <rect class="sw-jack" x="126" y="51" width="24" height="16" rx="2"/>
-      <text class="t-label" x="214" y="37" text-anchor="middle">3</text>
-      <rect class="sw-port" x="194" y="44" width="40" height="30" rx="3"/>
-      <rect class="sw-jack" x="202" y="51" width="24" height="16" rx="2"/>
-      <text class="t-label" x="290" y="37" text-anchor="middle">4</text>
-      <rect class="sw-port" x="270" y="44" width="40" height="30" rx="3"/>
-      <rect class="sw-jack" x="278" y="51" width="24" height="16" rx="2"/>
-      <text class="t-label" x="366" y="37" text-anchor="middle">5</text>
-      <rect class="sw-port" x="346" y="44" width="40" height="30" rx="3"/>
-      <rect class="sw-jack" x="354" y="51" width="24" height="16" rx="2"/>
-      <text class="t-label" x="442" y="37" text-anchor="middle">6</text>
-      <rect class="sw-port-empty" x="422" y="44" width="40" height="30" rx="3"/>
-      <text class="t-label" x="518" y="37" text-anchor="middle">7</text>
-      <rect class="sw-port" x="498" y="44" width="40" height="30" rx="3"/>
-      <rect class="sw-jack" x="506" y="51" width="24" height="16" rx="2"/>
-      <text class="t-label" x="594" y="37" text-anchor="middle">8</text>
-      <rect class="sw-port-empty" x="574" y="44" width="40" height="30" rx="3"/>
+      <text data-pcol="1" data-trace="gw" class="t-label" x="62" y="37" text-anchor="middle">1</text>
+      <rect data-pcol="1" data-trace="gw" class="sw-port" x="42" y="44" width="40" height="30" rx="3"/>
+      <rect data-pcol="1" data-trace="gw" class="sw-jack" x="50" y="51" width="24" height="16" rx="2"/>
+      <text data-pcol="2" data-trace="ap" class="t-label" x="138" y="37" text-anchor="middle">2</text>
+      <rect data-pcol="2" data-trace="ap" class="sw-port" x="118" y="44" width="40" height="30" rx="3"/>
+      <rect data-pcol="2" data-trace="ap" class="sw-jack" x="126" y="51" width="24" height="16" rx="2"/>
+      <text data-pcol="3" data-trace="tiny1" class="t-label" x="214" y="37" text-anchor="middle">3</text>
+      <rect data-pcol="3" data-trace="tiny1" class="sw-port" x="194" y="44" width="40" height="30" rx="3"/>
+      <rect data-pcol="3" data-trace="tiny1" class="sw-jack" x="202" y="51" width="24" height="16" rx="2"/>
+      <text data-pcol="4" class="t-label" x="290" y="37" text-anchor="middle">4</text>
+      <rect data-pcol="4" class="sw-port" x="270" y="44" width="40" height="30" rx="3"/>
+      <rect data-pcol="4" class="sw-jack" x="278" y="51" width="24" height="16" rx="2"/>
+      <text data-pcol="5" class="t-label" x="366" y="37" text-anchor="middle">5</text>
+      <rect data-pcol="5" class="sw-port" x="346" y="44" width="40" height="30" rx="3"/>
+      <rect data-pcol="5" class="sw-jack" x="354" y="51" width="24" height="16" rx="2"/>
+      <text data-pcol="6" class="t-label" x="442" y="37" text-anchor="middle">6</text>
+      <rect data-pcol="6" class="sw-port-empty" x="422" y="44" width="40" height="30" rx="3"/>
+      <text data-pcol="7" data-trace="hue" class="t-label" x="518" y="37" text-anchor="middle">7</text>
+      <rect data-pcol="7" data-trace="hue" class="sw-port" x="498" y="44" width="40" height="30" rx="3"/>
+      <rect data-pcol="7" data-trace="hue" class="sw-jack" x="506" y="51" width="24" height="16" rx="2"/>
+      <text data-pcol="8" class="t-label" x="594" y="37" text-anchor="middle">8</text>
+      <rect data-pcol="8" class="sw-port-empty" x="574" y="44" width="40" height="30" rx="3"/>
       <text class="t-label" x="670" y="37" text-anchor="middle">9</text>
       <rect class="sw-port-empty" x="650" y="44" width="40" height="30" rx="3"/>
       <text class="t-body t-dim" x="670" y="102" text-anchor="middle">spare</text>
@@ -699,79 +793,80 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <text class="t-label" x="898" y="37" text-anchor="middle">12</text>
       <rect class="sw-port-empty" x="878" y="44" width="40" height="30" rx="3"/>
       <text class="t-body t-dim" x="898" y="102" text-anchor="middle">spare</text>
-      <line class="r-jumper" x1="62" y1="74" x2="62" y2="146"/>
-      <line class="r-jumper" x1="138" y1="74" x2="138" y2="146"/>
-      <line class="r-jumper" x1="214" y1="74" x2="214" y2="146"/>
-      <line class="r-jumper-future" x1="290" y1="74" x2="290" y2="146"/>
-      <line class="r-jumper-future" x1="366" y1="74" x2="366" y2="146"/>
-      <line class="r-jumper" x1="518" y1="74" x2="518" y2="146"/>
+      <line data-pcol="1" data-trace="gw" class="r-jumper" x1="62" y1="74" x2="62" y2="146"/>
+      <line data-pcol="2" data-trace="ap" class="r-jumper" x1="138" y1="74" x2="138" y2="146"/>
+      <line data-pcol="3" data-trace="tiny1" class="r-jumper" x1="214" y1="74" x2="214" y2="146"/>
+      <line data-pcol="4" class="r-jumper-future" x1="290" y1="74" x2="290" y2="146"/>
+      <line data-pcol="5" class="r-jumper-future" x1="366" y1="74" x2="366" y2="146"/>
+      <line data-pcol="7" data-trace="hue" class="r-jumper" x1="518" y1="74" x2="518" y2="146"/>
       <text class="t-label" x="644" y="161">USW-LITE-8-POE</text>
       <rect class="sw-face" x="20" y="118" width="616" height="78" rx="6"/>
-      <text class="t-label" x="62" y="133" text-anchor="middle">1</text>
-      <rect class="sw-port" x="34" y="140" width="56" height="36" rx="3"/>
-      <rect class="sw-jack" x="46" y="148" width="32" height="18" rx="2"/>
-      <rect class="sw-jack" x="56" y="166" width="12" height="4"/>
-      <rect class="vb-accent" x="34.0" y="182" width="56.0" height="6"/>
-      <text class="t-body" x="62" y="214" text-anchor="middle" font-weight="600">Gateway</text>
-      <text class="t-body" x="62" y="228" text-anchor="middle">uplink</text>
-      <text class="t-label" x="62" y="243" text-anchor="middle">uplink</text>
-      <text class="t-label" x="138" y="133" text-anchor="middle">2</text>
-      <rect class="sw-port" x="110" y="140" width="56" height="36" rx="3"/>
-      <rect class="sw-jack" x="122" y="148" width="32" height="18" rx="2"/>
-      <rect class="sw-jack" x="132" y="166" width="12" height="4"/>
-      <rect class="vb-v1" x="110.0" y="182" width="18.7" height="6"/>
-      <rect class="vb-v10" x="128.7" y="182" width="18.7" height="6"/>
-      <rect class="vb-v20" x="147.3" y="182" width="18.7" height="6"/>
-      <text class="t-body" x="138" y="214" text-anchor="middle" font-weight="600">U7 Pro</text>
-      <text class="t-body" x="138" y="228" text-anchor="middle">Basement</text>
-      <text class="t-label" x="138" y="243" text-anchor="middle">all · PoE</text>
-      <text class="t-label" x="214" y="133" text-anchor="middle">3</text>
-      <rect class="sw-port" x="186" y="140" width="56" height="36" rx="3"/>
-      <rect class="sw-jack" x="198" y="148" width="32" height="18" rx="2"/>
-      <rect class="sw-jack" x="208" y="166" width="12" height="4"/>
-      <rect class="vb-v1" x="186.0" y="182" width="28.0" height="6"/>
-      <rect class="vb-v20" x="214.0" y="182" width="28.0" height="6"/>
-      <text class="t-body" x="214" y="214" text-anchor="middle" font-weight="600">Tiny #1</text>
-      <text class="t-label" x="214" y="243" text-anchor="middle">1 + 20</text>
-      <text class="t-label" x="290" y="133" text-anchor="middle">4</text>
-      <rect class="sw-port-future" x="262" y="140" width="56" height="36" rx="3"/>
-      <rect class="sw-jack" x="274" y="148" width="32" height="18" rx="2"/>
-      <rect class="sw-jack" x="284" y="166" width="12" height="4"/>
-      <rect class="vb-v1" x="262.0" y="182" width="28.0" height="6" opacity="0.45"/>
-      <rect class="vb-v20" x="290.0" y="182" width="28.0" height="6" opacity="0.45"/>
-      <text class="t-body" x="290" y="214" text-anchor="middle" font-weight="600">Tiny #2</text>
-      <text class="t-body" x="290" y="228" text-anchor="middle">future</text>
-      <text class="t-label" x="290" y="243" text-anchor="middle">1 + 20</text>
-      <text class="t-label" x="366" y="133" text-anchor="middle">5</text>
-      <rect class="sw-port-future" x="338" y="140" width="56" height="36" rx="3"/>
-      <rect class="sw-jack" x="350" y="148" width="32" height="18" rx="2"/>
-      <rect class="sw-jack" x="360" y="166" width="12" height="4"/>
-      <rect class="vb-v1" x="338.0" y="182" width="28.0" height="6" opacity="0.45"/>
-      <rect class="vb-v20" x="366.0" y="182" width="28.0" height="6" opacity="0.45"/>
-      <text class="t-body" x="366" y="214" text-anchor="middle" font-weight="600">Tiny #3</text>
-      <text class="t-body" x="366" y="228" text-anchor="middle">future</text>
-      <text class="t-label" x="366" y="243" text-anchor="middle">1 + 20</text>
-      <text class="t-label" x="442" y="133" text-anchor="middle">6</text>
-      <rect class="sw-port-empty" x="414" y="140" width="56" height="36" rx="3"/>
-      <text class="t-body t-dim" x="442" y="214" text-anchor="middle">spare</text>
-      <text class="t-label" x="518" y="133" text-anchor="middle">7</text>
-      <rect class="sw-port" x="490" y="140" width="56" height="36" rx="3"/>
-      <rect class="sw-jack" x="502" y="148" width="32" height="18" rx="2"/>
-      <rect class="sw-jack" x="512" y="166" width="12" height="4"/>
-      <rect class="vb-v10" x="490.0" y="182" width="56.0" height="6"/>
-      <text class="t-body" x="518" y="214" text-anchor="middle" font-weight="600">Hue bridge</text>
-      <text class="t-body" x="518" y="228" text-anchor="middle">side</text>
-      <text class="t-label" x="518" y="243" text-anchor="middle">10 IoT</text>
-      <text class="t-label" x="594" y="133" text-anchor="middle">8</text>
-      <rect class="sw-port-empty" x="566" y="140" width="56" height="36" rx="3"/>
-      <text class="t-body t-dim" x="594" y="214" text-anchor="middle">spare</text>
+      <text data-pcol="1" data-trace="gw" class="t-label" x="62" y="133" text-anchor="middle">1</text>
+      <rect data-pcol="1" data-trace="gw" class="sw-port" x="34" y="140" width="56" height="36" rx="3"/>
+      <rect data-pcol="1" data-trace="gw" class="sw-jack" x="46" y="148" width="32" height="18" rx="2"/>
+      <rect data-pcol="1" data-trace="gw" class="sw-jack" x="56" y="166" width="12" height="4"/>
+      <rect data-pcol="1" data-trace="gw" class="vb-accent" x="34.0" y="182" width="56.0" height="6"/>
+      <text data-pcol="1" data-trace="gw" class="t-body" x="62" y="214" text-anchor="middle" font-weight="600">Gateway</text>
+      <text data-pcol="1" data-trace="gw" class="t-body" x="62" y="228" text-anchor="middle">uplink</text>
+      <text data-pcol="1" data-trace="gw" class="t-label" x="62" y="243" text-anchor="middle">uplink</text>
+      <text data-pcol="2" data-trace="ap" class="t-label" x="138" y="133" text-anchor="middle">2</text>
+      <rect data-pcol="2" data-trace="ap" class="sw-port" x="110" y="140" width="56" height="36" rx="3"/>
+      <rect data-pcol="2" data-trace="ap" class="sw-jack" x="122" y="148" width="32" height="18" rx="2"/>
+      <rect data-pcol="2" data-trace="ap" class="sw-jack" x="132" y="166" width="12" height="4"/>
+      <rect data-pcol="2" data-trace="ap" class="vb-v1" x="110.0" y="182" width="18.7" height="6"/>
+      <rect data-pcol="2" data-trace="ap" class="vb-v10" x="128.7" y="182" width="18.7" height="6"/>
+      <rect data-pcol="2" data-trace="ap" class="vb-v20" x="147.3" y="182" width="18.7" height="6"/>
+      <text data-pcol="2" data-trace="ap" class="t-body" x="138" y="214" text-anchor="middle" font-weight="600">U7 Pro</text>
+      <text data-pcol="2" data-trace="ap" class="t-body" x="138" y="228" text-anchor="middle">Basement</text>
+      <text data-pcol="2" data-trace="ap" class="t-label" x="138" y="243" text-anchor="middle">all · PoE</text>
+      <text data-pcol="3" data-trace="tiny1" class="t-label" x="214" y="133" text-anchor="middle">3</text>
+      <rect data-pcol="3" data-trace="tiny1" class="sw-port" x="186" y="140" width="56" height="36" rx="3"/>
+      <rect data-pcol="3" data-trace="tiny1" class="sw-jack" x="198" y="148" width="32" height="18" rx="2"/>
+      <rect data-pcol="3" data-trace="tiny1" class="sw-jack" x="208" y="166" width="12" height="4"/>
+      <rect data-pcol="3" data-trace="tiny1" class="vb-v1" x="186.0" y="182" width="28.0" height="6"/>
+      <rect data-pcol="3" data-trace="tiny1" class="vb-v20" x="214.0" y="182" width="28.0" height="6"/>
+      <text data-pcol="3" data-trace="tiny1" class="t-body" x="214" y="214" text-anchor="middle" font-weight="600">Tiny #1</text>
+      <text data-pcol="3" data-trace="tiny1" class="t-label" x="214" y="243" text-anchor="middle">1 + 20</text>
+      <text data-pcol="4" class="t-label" x="290" y="133" text-anchor="middle">4</text>
+      <rect data-pcol="4" class="sw-port-future" x="262" y="140" width="56" height="36" rx="3"/>
+      <rect data-pcol="4" class="sw-jack" x="274" y="148" width="32" height="18" rx="2"/>
+      <rect data-pcol="4" class="sw-jack" x="284" y="166" width="12" height="4"/>
+      <rect data-pcol="4" class="vb-v1" x="262.0" y="182" width="28.0" height="6" opacity="0.45"/>
+      <rect data-pcol="4" class="vb-v20" x="290.0" y="182" width="28.0" height="6" opacity="0.45"/>
+      <text data-pcol="4" class="t-body" x="290" y="214" text-anchor="middle" font-weight="600">Tiny #2</text>
+      <text data-pcol="4" class="t-body" x="290" y="228" text-anchor="middle">future</text>
+      <text data-pcol="4" class="t-label" x="290" y="243" text-anchor="middle">1 + 20</text>
+      <text data-pcol="5" class="t-label" x="366" y="133" text-anchor="middle">5</text>
+      <rect data-pcol="5" class="sw-port-future" x="338" y="140" width="56" height="36" rx="3"/>
+      <rect data-pcol="5" class="sw-jack" x="350" y="148" width="32" height="18" rx="2"/>
+      <rect data-pcol="5" class="sw-jack" x="360" y="166" width="12" height="4"/>
+      <rect data-pcol="5" class="vb-v1" x="338.0" y="182" width="28.0" height="6" opacity="0.45"/>
+      <rect data-pcol="5" class="vb-v20" x="366.0" y="182" width="28.0" height="6" opacity="0.45"/>
+      <text data-pcol="5" class="t-body" x="366" y="214" text-anchor="middle" font-weight="600">Tiny #3</text>
+      <text data-pcol="5" class="t-body" x="366" y="228" text-anchor="middle">future</text>
+      <text data-pcol="5" class="t-label" x="366" y="243" text-anchor="middle">1 + 20</text>
+      <text data-pcol="6" class="t-label" x="442" y="133" text-anchor="middle">6</text>
+      <rect data-pcol="6" class="sw-port-empty" x="414" y="140" width="56" height="36" rx="3"/>
+      <text data-pcol="6" class="t-body t-dim" x="442" y="214" text-anchor="middle">spare</text>
+      <text data-pcol="7" data-trace="hue" class="t-label" x="518" y="133" text-anchor="middle">7</text>
+      <rect data-pcol="7" data-trace="hue" class="sw-port" x="490" y="140" width="56" height="36" rx="3"/>
+      <rect data-pcol="7" data-trace="hue" class="sw-jack" x="502" y="148" width="32" height="18" rx="2"/>
+      <rect data-pcol="7" data-trace="hue" class="sw-jack" x="512" y="166" width="12" height="4"/>
+      <rect data-pcol="7" data-trace="hue" class="vb-v10" x="490.0" y="182" width="56.0" height="6"/>
+      <text data-pcol="7" data-trace="hue" class="t-body" x="518" y="214" text-anchor="middle" font-weight="600">Hue bridge</text>
+      <text data-pcol="7" data-trace="hue" class="t-body" x="518" y="228" text-anchor="middle">side</text>
+      <text data-pcol="7" data-trace="hue" class="t-label" x="518" y="243" text-anchor="middle">10 IoT</text>
+      <text data-pcol="8" class="t-label" x="594" y="133" text-anchor="middle">8</text>
+      <rect data-pcol="8" class="sw-port-empty" x="566" y="140" width="56" height="36" rx="3"/>
+      <text data-pcol="8" class="t-body t-dim" x="594" y="214" text-anchor="middle">spare</text>
     </svg>
   </div>
+  <p class="portinfo" id="portinfo" aria-live="polite">Hover over or tap a port for its details. Click a VLAN below to see which ports carry it.</p>
   <div class="legend">
-    <span><i class="vbar vb-v1"></i>VLAN 1 native</span>
-    <span><i class="vbar vb-v20"></i>VLAN 20 tagged</span>
-    <span><i class="vbar vb-v10"></i>VLAN 10 IoT</span>
-    <span><i class="vbar vb-accent"></i>Uplink to gateway</span>
+    <button type="button" data-vlan-btn="v1" aria-pressed="false"><i class="vbar vb-v1"></i>VLAN 1 native</button>
+    <button type="button" data-vlan-btn="v20" aria-pressed="false"><i class="vbar vb-v20"></i>VLAN 20 tagged</button>
+    <button type="button" data-vlan-btn="v10" aria-pressed="false"><i class="vbar vb-v10"></i>VLAN 10 IoT</button>
+    <button type="button" data-vlan-btn="uplink" aria-pressed="false"><i class="vbar vb-accent"></i>Uplink to gateway</button>
     <span><i class="jumper"></i>0.5 ft jumper</span>
     <span><i class="jumper future"></i>Future jumper</span>
   </div>
@@ -915,5 +1010,134 @@ spec:
 <footer>Target design as of 24 Oct 2026. Run <code>scripts/check-lab-overview.py</code> to compare this page with the live lab. Network and firewall settings come from the live UniFi controller; the rack and hardware plan from <code>docs/atlas-rack-design.md</code>; the platform from the rest of the atlas-talos repo.</footer>
 
 </div>
+<script>
+(function () {
+  var marked = Array.prototype.slice.call(document.querySelectorAll("[data-trace]"));
+  var diagrams = Array.prototype.slice.call(document.querySelectorAll(".trace"));
+  var buttons = Array.prototype.slice.call(document.querySelectorAll("[data-trace-btn]"));
+  var current = null;
+  function setTrace(key) {
+    current = key;
+    diagrams.forEach(function (d) { d.classList.toggle("tracing", !!key); });
+    marked.forEach(function (el) {
+      el.classList.toggle("on", !!key && el.getAttribute("data-trace").split(" ").indexOf(key) !== -1);
+    });
+    buttons.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-trace-btn") === key)); });
+  }
+  marked.forEach(function (el) {
+    var key = el.getAttribute("data-trace").split(" ")[0];
+    el.addEventListener("pointerenter", function (e) { if (e.pointerType === "mouse") setTrace(key); });
+    el.addEventListener("pointerleave", function (e) { if (e.pointerType === "mouse") setTrace(null); });
+    el.addEventListener("click", function (e) { e.stopPropagation(); setTrace(current === key ? null : key); });
+  });
+  buttons.forEach(function (b) {
+    b.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var key = b.getAttribute("data-trace-btn");
+      setTrace(current === key ? null : key);
+    });
+  });
+  document.addEventListener("click", function () { if (current) setTrace(null); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") setTrace(null); });
+
+  var front = document.getElementById("rack-front"), rear = document.getElementById("rack-rear");
+  var bf = document.getElementById("view-front"), br = document.getElementById("view-rear");
+  function showView(view) {
+    front.hidden = view !== "front"; rear.hidden = view !== "rear";
+    bf.setAttribute("aria-pressed", String(view === "front"));
+    br.setAttribute("aria-pressed", String(view === "rear"));
+  }
+  bf.addEventListener("click", function () { showView("front"); });
+  br.addEventListener("click", function () { showView("rear"); });
+})();
+</script>
+<script>
+(function () {
+  var box = document.querySelector(".topo");
+  if (!box) return;
+  var marked = Array.prototype.slice.call(box.querySelectorAll("[data-topo]"));
+  var buttons = Array.prototype.slice.call(document.querySelectorAll("[data-topo-btn]"));
+  var current = null;
+  function setKey(key) {
+    current = key;
+    box.classList.toggle("tracing", !!key);
+    marked.forEach(function (el) {
+      el.classList.toggle("on", !!key && el.getAttribute("data-topo").split(" ").indexOf(key) !== -1);
+    });
+    buttons.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-topo-btn") === key)); });
+  }
+  marked.forEach(function (el) {
+    if (el.classList.contains("d-path") || el.classList.contains("d-path-label")) return;
+    var key = el.getAttribute("data-topo").split(" ")[0];
+    el.addEventListener("pointerenter", function (e) { if (e.pointerType === "mouse" && !pinned) setKey(key); });
+    el.addEventListener("pointerleave", function (e) { if (e.pointerType === "mouse" && !pinned) setKey(null); });
+    el.addEventListener("click", function (e) { e.stopPropagation(); pinned = current !== key; setKey(pinned ? key : null); });
+  });
+  var pinned = false;
+  buttons.forEach(function (b) {
+    b.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var key = b.getAttribute("data-topo-btn");
+      pinned = current !== key;
+      setKey(pinned ? key : null);
+    });
+  });
+  document.addEventListener("click", function () { if (current) { pinned = false; setKey(null); } });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { pinned = false; setKey(null); } });
+})();
+</script>
+<script>
+(function () {
+  var box = document.querySelector(".pmap");
+  var info = document.getElementById("portinfo");
+  if (!box || !info) return;
+  var PORTS = {
+    1: ["Gateway uplink", "panel 1", "carries every VLAN (native 1, tagged 10 + 20)", "no PoE", "1 GbE"],
+    2: ["U7 Pro Basement", "panel 2", "native VLAN 1, tagged 10 + 20 for the SSIDs", "PoE", "1 GbE"],
+    3: ["M920q Tiny #1", "panel 3", "native VLAN 1 (Proxmox), tagged 20 (lab guests)", "no PoE", "1 GbE"],
+    4: ["Tiny #2 (future)", "panel 4", "native VLAN 1, tagged 20", "no PoE", "1 GbE"],
+    5: ["Tiny #3 (future)", "panel 5", "native VLAN 1, tagged 20", "no PoE", "1 GbE"],
+    6: ["Spare", "panel 6", "unused; disable until needed", "", ""],
+    7: ["Hue bridge (side panel)", "panel 7", "VLAN 10 only (IoT access port)", "no PoE", "100 Mb"],
+    8: ["Spare", "panel 8", "unused; disable until needed", "", ""]
+  };
+  var VLANS = { v1: [1, 2, 3, 4, 5], v20: [1, 2, 3, 4, 5], v10: [1, 2, 7], uplink: [1] };
+  var cells = Array.prototype.slice.call(box.querySelectorAll("[data-pcol]"));
+  var hint = info.innerHTML, pinned = null;
+  function show(n) {
+    if (!n) { info.innerHTML = hint; info.classList.remove("active"); return; }
+    var p = PORTS[n];
+    info.innerHTML = "<b>Port " + n + "</b>" + [p[0], p[1], p[2], p[3], p[4]].filter(Boolean).join(" · ");
+    info.classList.add("active");
+  }
+  cells.forEach(function (el) {
+    var n = el.getAttribute("data-pcol");
+    el.addEventListener("pointerenter", function (e) { if (e.pointerType === "mouse") show(n); });
+    el.addEventListener("pointerleave", function (e) { if (e.pointerType === "mouse") show(pinned); });
+    el.addEventListener("click", function (e) { e.stopPropagation(); pinned = pinned === n ? null : n; show(pinned); });
+  });
+  var vbtns = Array.prototype.slice.call(document.querySelectorAll("[data-vlan-btn]")), vcur = null;
+  function setVlan(k) {
+    vcur = k;
+    box.classList.toggle("vfilter", !!k);
+    cells.forEach(function (el) {
+      el.classList.toggle("von", !!k && VLANS[k].indexOf(Number(el.getAttribute("data-pcol"))) !== -1);
+    });
+    vbtns.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-vlan-btn") === k)); });
+  }
+  vbtns.forEach(function (b) {
+    b.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var k = b.getAttribute("data-vlan-btn");
+      setVlan(vcur === k ? null : k);
+    });
+  });
+  document.addEventListener("click", function () {
+    if (vcur) setVlan(null);
+    if (pinned) { pinned = null; show(null); }
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { setVlan(null); pinned = null; show(null); } });
+})();
+</script>
 </body>
 </html>
