@@ -21,7 +21,8 @@ cluster_name       = "atlas"
 
 subnet_prefix    = 24
 gateway          = "192.168.20.1"
-dns_server       = "192.168.0.101"
+dns_server          = "192.168.0.101"
+dns_fallback_server = "1.1.1.1"
 control_plane_ip = "192.168.20.10"
 
 # One IP per worker — add entries here to scale out

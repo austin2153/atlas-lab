@@ -37,7 +37,7 @@ data "talos_machine_configuration" "control_plane" {
               gateway = var.gateway
             }]
           }]
-          nameservers = [var.dns_server]
+          nameservers = [var.dns_server, var.dns_fallback_server]
         }
       }
     })
@@ -73,7 +73,7 @@ data "talos_machine_configuration" "worker" {
               gateway = var.gateway
             }]
           }]
-          nameservers = [var.dns_server]
+          nameservers = [var.dns_server, var.dns_fallback_server]
         }
       }
     })

@@ -86,6 +86,12 @@ variable "dns_server" {
   default     = "192.168.0.101"
 }
 
+variable "dns_fallback_server" {
+  description = "Fallback DNS server used if Pi-hole is down (internet names only; no atlas.local records)"
+  type        = string
+  default     = "1.1.1.1"
+}
+
 variable "control_plane_ip" {
   description = "Static IP for the control plane node"
   type        = string
