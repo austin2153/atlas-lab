@@ -45,7 +45,7 @@ Consolidate the basement network and lab gear (currently loose on a desk next to
 ## 4. Network
 
 ### Physical
-- Frontier XGS-PON fiber into FRX523 ONT (no ISP router). ONT to UCG Ultra WAN (2.5 GbE).
+- Frontier XGS-PON fiber into FRX523 ONT (no ISP router). ONT to UCG Ultra WAN (2.5 GbE) with a short direct cable (1 ft Cat6) down the back of the rack, from the ONT's network port to the gateway's rear WAN port. It does not go through the patch panel: it's the internet link between two devices in the rack and never touches the switch. The link runs at 2.5 Gb/s (the gateway's WAN port), which only matters for a plan faster than 2.5 Gig. Leave the wall fiber a gentle loop into the back of the ONT; the ONT's power plug ("Fiber Service, DO NOT REMOVE") goes to the side-mounted strip.
 - UCG Ultra to USW-Lite-8-PoE (1 GbE uplink).
 \1 The Basement AP sits on a stand beside the rack, cabled into patch panel rear port 2 (PoE). Keep it about 1 m from the rack (metal and the ONT block signal) and as high as practical, face toward the house: it is also the wireless mesh uplink for Main and Office. Ceiling-mounting it centrally with one cable back to port 2 would give the best coverage later.
 - Old eero Pro 6E retired.
@@ -62,7 +62,9 @@ Consolidate the basement network and lab gear (currently loose on a desk next to
 | 7 | Philips Hue bridge (side-mounted, via patch panel port 7) | Access, VLAN 10 IoT |
 | 8 | Spare | |
 
-Cable path for each node: device NIC -> patch panel rear port N -> patch panel front port N -> 0.5 ft jumper -> switch port N. Keep panel and switch numbers matched. The side-mounted Hue bridge follows the same path: a short (1-2 ft) cable around the rear edge into patch panel rear port 7.
+Cable path for every cable that reaches the switch, including the gateway uplink (panel 1) and the Basement AP (panel 2): device -> patch panel rear port N -> patch panel front port N -> 0.5 ft jumper -> switch port N. Keep panel and switch numbers matched so only the short jumpers show at the front. The side-mounted Hue bridge follows the same path: a short (1-2 ft) cable around the rear edge into patch panel rear port 7. The only cable that skips the panel is ONT -> gateway WAN.
+
+**Port VLAN settings (verified 2026-10-24).** No port profiles are set; ports 6 and 7 have per-port overrides. Every port's native VLAN is Default (1) except port 7 (IoT, 10), and every port still allows **all** tagged VLANs (the UniFi default), which is how VLAN 20 reaches Proxmox today. Planned tightening, in UniFi per port: port 7 (Hue) tagged VLAN management **Block All** so it's a pure IoT access port; Tiny ports (3-5, and 6 while the old tower is there) **Custom -> Atlas Lab (20) only**; unused ports disabled until needed. Change port 7 first and confirm the Hue app still works, then the Proxmox port.
 
 ### VLANs and subnets
 | VLAN | Name | Subnet | Use |
@@ -101,6 +103,12 @@ Static addresses sit outside each DHCP range (verified in UniFi 2026-10-24).
 | 20 | .14-.49 | Free for new VMs and LXCs |
 | 20 | .50-.99 | MetalLB service IPs (.50 ArgoCD, .52-.53 vcsim) |
 | 20 | .100-.254 | DHCP (lab Wi-Fi) |
+
+### MetalLB service IPs
+- Every LoadBalancer service pins its address so the address plan stays true. New services use the annotation `metallb.io/loadBalancerIPs: 192.168.20.X`; ArgoCD (.50) and vcsim (.52-.53) use the older `spec.loadBalancerIP` field, which still works.
+- ArgoCD's .50 pin was set directly in the cluster, not in this repo; a reinstall of ArgoCD could come back on a different address. To do: add it to the repo.
+- Never give a VM or LXC a static address in .50-.99: MetalLB assumes it owns the whole pool. Next free service IP: .51.
+- How MetalLB works is explained in [architecture.md](architecture.md).
 
 ### Power
 Low power draw is a hard requirement. Rated maximums: ONT 24 W (label 16 V x 1.5 A), M920q 65 W adapter (35 W CPU), USW-Lite-8-PoE 52 W PoE budget (includes the U7 Pro, ~21 W). Measure the real total with a smart plug between the wall and the power strip once the rack is built.
