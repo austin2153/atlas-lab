@@ -47,7 +47,7 @@ Consolidate the basement network and lab gear (currently loose on a desk next to
 ### Physical
 - Frontier XGS-PON fiber into FRX523 ONT (no ISP router). ONT to UCG Ultra WAN (2.5 GbE).
 - UCG Ultra to USW-Lite-8-PoE (1 GbE uplink).
-- Three U7 Pro APs: Basement (wired, PoE from switch, 192.168.0.3). Main and Office mesh wirelessly off Basement. House has no ethernet runs (has coax).
+\1 The Basement AP sits on a stand beside the rack, cabled into patch panel rear port 2 (PoE). Keep it about 1 m from the rack (metal and the ONT block signal) and as high as practical, face toward the house: it is also the wireless mesh uplink for Main and Office. Ceiling-mounting it centrally with one cable back to port 2 would give the best coverage later.
 - Old eero Pro 6E retired.
 
 ### Switch port map (PROPOSED)
@@ -67,10 +67,9 @@ Cable path for each node: device NIC -> patch panel rear port N -> patch panel f
 ### VLANs and subnets
 | VLAN | Name | Subnet | Use |
 |---|---|---|---|
-| 1 | Default | 192.168.0.0/24 | Infra, Proxmox host management. SSID "Atlas Home" (5 GHz) |
+| 1 | Default | 192.168.0.0/24 | Infra, Proxmox host management. SSIDs "Atlas Home" (5 GHz) and "Atlas Gaming" (6 GHz only, WPA3 only, so Wi-Fi 6E/7 devices only; MLO off) |
 | 10 | IoT | 192.168.10.0/24 | SSID "Atlas IoT" (2.4 GHz) |
-| 20 | Atlas Lab | 192.168.20.0/24 | Lab VMs/containers (tagged) |
-| native | Gaming | | SSID "Atlas Gaming" (6 GHz) |
+| 20 | Atlas Lab | 192.168.20.0/24 | Lab VMs/containers (tagged). SSID "Atlas Lab" (5 GHz) |
 
 ### Firewall / DNS
 - Zone firewall (verified 2026-10-24): traffic between zones blocked by default. Exceptions: LAB and IoT to Pi-hole 192.168.0.101 on UDP 53; LAB to Proxmox 192.168.0.100 on 8006; personal laptop (austin-mac, 192.168.0.58, matched by MAC) to LAB, all traffic. Return traffic allowed automatically. The laptop's MAC (ba:b0:9f:7d:1a:3b) is a macOS private Wi-Fi address set to "Fixed" for Atlas Home, stable since June 2025. It only changes if the Mac forgets the network; then update the MAC in both the rule and the .0.58 reservation.
@@ -86,6 +85,25 @@ Cable path for each node: device NIC -> patch panel rear port N -> patch panel f
 | proxmox.atlas.local (current box) | 192.168.0.100 |
 | Pi-hole | 192.168.0.101 |
 | proxmox-cgrater.atlas.local (dormant, removed from cluster) | 192.168.0.102 |
+
+### Address plan
+Static addresses sit outside each DHCP range (verified in UniFi 2026-10-24).
+
+| VLAN | Range | Use |
+|---|---|---|
+| 1 | .1 | Gateway |
+| 1 | .2-.5 | Switch and APs |
+| 1 | .10-.99 | DHCP (Mac reserved at .58) |
+| 1 | .100 / .101 | Proxmox / Pi-hole |
+| 1 | .102-.254 | Free for static |
+| 20 | .1 | Gateway |
+| 20 | .10 / .11 / .12 / .13 | talos-cp / talos-worker-01 / aap / talos-worker-02 |
+| 20 | .14-.49 | Free for new VMs and LXCs |
+| 20 | .50-.99 | MetalLB service IPs (.50 ArgoCD, .52-.53 vcsim) |
+| 20 | .100-.254 | DHCP (lab Wi-Fi) |
+
+### Power
+Low power draw is a hard requirement. Rated maximums: ONT 24 W (label 16 V x 1.5 A), M920q 65 W adapter (35 W CPU), USW-Lite-8-PoE 52 W PoE budget (includes the U7 Pro, ~21 W). Measure the real total with a smart plug between the wall and the power strip once the rack is built.
 
 ## 5. Compute: Lenovo ThinkCentre M920q Tiny #1
 
@@ -115,11 +133,10 @@ From seller photos:
 
 ## 7. Workloads
 
-Current single node (proxmox.atlas.local, Proxmox VE 9.2.2, rebuilt Oct 20 2026):
+Current single node (proxmox.atlas.local, Proxmox VE 9.2.21, rebuilt Oct 19 2026):
 | ID | Name | Type |
 |---|---|---|
 | CT 102 | atlas-pihole | LXC |
-| CT 105 | awx-postgres | LXC |
 | VM 200 | talos-cp | Talos control plane |
 | VM 201 | talos-worker-01 | Talos worker |
 
@@ -128,9 +145,23 @@ Storage there: `local-zfs` on the 250 GB, plus `CRUCIAL_SSD_512GB`.
 Target state:
 - Proxmox on M920q nodes, growing from 1 to 3 Tinys (eventual 3-node Proxmox cluster).
 - Three-node Kubernetes cluster on Talos VMs carrying most workloads: talos-cp (VM 200, 192.168.20.10), talos-worker-01 (VM 201, 192.168.20.11) and a new talos-worker-02 (VM 202, 192.168.20.13, talos-worker-02.atlas.local, 2 vCPU / 6 GB / 75 GB). Added by appending 192.168.20.13 to `worker_ips` in Terraform, which pins its MAC to BC:24:11:00:02:02; also add its Pi-hole DNS record.
-- Red Hat Ansible Automation Platform on its own RHEL 9 VM, `aap.atlas.local` at 192.168.20.12 (VLAN 20, ~4 vCPU / 16 GB / 100 GB; reuses the awx-postgres IP, so retire CT 105 first), installed with the containerized installer in the growth topology with its bundled Postgres. Not in the Talos cluster: the AAP operator is only supported on OpenShift. Replaces AWX: once AAP is up, AWX is removed from the cluster and the awx-postgres LXC (CT 105) is retired. Needs the 64 GB RAM upgrade.
-- Pi-hole and other lab services. More Kubernetes services and LXC containers are expected but not decided yet: new cluster services get MetalLB IPs from the free part of the pool (.51, .56-.99), and the 64 GB RAM upgrade leaves roughly 25 GB of headroom for them.
+- Red Hat Ansible Automation Platform on its own RHEL 9 VM, `aap.atlas.local` at 192.168.20.12 (VLAN 20, ~4 vCPU / 16 GB / 100 GB), installed with the containerized installer in the growth topology with its bundled Postgres. Not in the Talos cluster: the AAP operator is only supported on OpenShift. Replaces AWX, which was removed on 2026-10-24 along with its awx-postgres LXC (CT 105); its database and secrets are backed up in /root/awx-backup-20261024 on the Proxmox host. Needs the 64 GB RAM upgrade.
+- Pi-hole and other lab services. More Kubernetes services and LXC containers are expected but not decided yet: new cluster services get MetalLB IPs from the free part of the pool (.51, .54-.99), and the 64 GB RAM upgrade leaves roughly 25 GB of headroom for them.
 - No NAS planned (no media/data hoard; personal files live on OneDrive).
+
+## Backups (PROPOSED)
+Target: the 500 GB Crucial SSD in a USB 3 enclosure behind Tiny #1, added to Proxmox as backup storage.
+
+| What | How | When | Keep |
+|---|---|---|---|
+| Pi-hole (LXC 102) | Proxmox backup job (vzdump, snapshot mode) | Nightly | 7 daily, 4 weekly |
+| AAP VM | Proxmox backup job, plus the AAP installer's backup playbook before upgrades | Nightly | 7 daily, 4 weekly |
+| Talos VMs (200-202) | Proxmox backup job (nodes are rebuildable with Terraform) | Weekly | 2 |
+| Kubernetes state | `talosctl etcd snapshot` from a cron job on the Proxmox host | Daily | 14 |
+| Pi-hole settings | Teleporter export | After changes | Latest |
+| Code and infrastructure | Git (GitHub) and Terraform Cloud state | Every push | Full history, off-site |
+
+Restore: `pct restore` / `qmrestore` for guests; for the cluster, `terraform apply` then `talosctl bootstrap --recover-from` the latest etcd snapshot and let ArgoCD redeploy from Git. The USB SSD sits in the same rack, so sync etcd snapshots and AAP backups to OneDrive weekly for an off-site copy. Retention may need tuning once real backup sizes are known.
 
 ## 8. Migration plan
 1. Install Proxmox on the 250 GB SATA in the Tiny (or transplant the current 250 GB, still being considered).

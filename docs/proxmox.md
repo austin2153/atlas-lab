@@ -33,11 +33,10 @@ The lab runs on a single Proxmox node, `proxmox` (`192.168.0.100`), on Proxmox V
 | VMID | Name | Type | IP | Boot order | Purpose |
 |---|---|---|---|---|---|
 | 102 | `atlas-pihole` | LXC | `192.168.0.101` | 1 (up=15) | Pi-hole DNS for the house and lab |
-| 105 | `awx-postgres` | LXC | `192.168.20.12` | 2 (up=15) | External PostgreSQL for AWX — see [awx-external-postgres.md](awx-external-postgres.md) |
 | 200 | `talos-cp` | VM | `192.168.20.10` | 3 (up=60) | Talos Kubernetes control plane |
 | 201 | `talos-worker-01` | VM | `192.168.20.11` | 4 | Talos Kubernetes worker |
 
-All guests have `onboot: 1`. The `startup:` order brings DNS up first, then the database, then the control plane with a 60-second head start, then the worker. Shutdown runs in reverse.
+All guests have `onboot: 1`. The `startup:` order brings DNS up first, then the control plane with a 60-second head start, then the worker. Shutdown runs in reverse.
 
 ## Access
 
@@ -58,7 +57,7 @@ curl -sk "https://192.168.0.100:8006/api2/json/nodes/proxmox/qemu" \
   -H "Authorization: PVEAPIToken=$PROXMOX_TOKEN" | python3 -m json.tool
 ```
 
-The token doesn't survive a reinstall. Terraform reads its own copy from `terraform/terraform.tfvars`, so update both after creating a new one (see [step 12](#12-restore-the-proxmox-api-token)).
+The token doesn't survive a reinstall. Terraform reads its own copy from `terraform/terraform.tfvars`, so update both after creating a new one (see [step 11](#11-restore-the-proxmox-api-token)).
 
 ### SSH
 
@@ -75,7 +74,7 @@ The public key (`~/.ssh/proxmox-claude.pub`) goes in `root`'s `~/.ssh/authorized
 
 - TLS verification is disabled (`-sk`) because the certificate is self-signed.
 - Always source credentials from their files; never hardcode or echo secrets.
-- Per-container root passwords live in their own files, e.g. `~/.proxmox-awx-postgres-credentials`.
+- Per-container root passwords live in their own files, e.g. `~/.proxmox-<name>-credentials`.
 
 ## Rebuilding from scratch
 
@@ -207,21 +206,6 @@ swap: 512
 unprivileged: 1
 ```
 
-`/etc/pve/nodes/proxmox/lxc/105.conf`:
-```
-arch: amd64
-cores: 2
-hostname: awx-postgres
-memory: 1024
-net0: name=eth0,bridge=vmbr0,firewall=1,hwaddr=BC:24:11:00:00:05,ip=192.168.20.12/24,gw=192.168.20.1,tag=20,type=veth
-onboot: 1
-startup: order=2,up=15
-ostype: debian
-rootfs: CRUCIAL_SSD_512GB:subvol-105-disk-0,size=8G
-swap: 512
-unprivileged: 1
-```
-
 `/etc/pve/nodes/proxmox/qemu-server/200.conf`:
 ```
 name: talos-cp
@@ -277,14 +261,7 @@ pvesh set /nodes/proxmox/dns --search atlas.local --dns1 192.168.0.101 --dns2 1.
 
 Containers that don't set their own nameserver inherit this when they start.
 
-#### 10. Start the remaining containers
-
-```bash
-pct start 105   # awx-postgres
-pct list
-```
-
-#### 11. Start the Kubernetes VMs
+#### 10. Start the Kubernetes VMs
 
 ```bash
 qm start 200    # talos-cp
@@ -304,7 +281,7 @@ If the nodes come up `NotReady,SchedulingDisabled`, they were cordoned on the la
 kubectl uncordon talos-cp talos-worker-01
 ```
 
-#### 12. Restore the Proxmox API token
+#### 11. Restore the Proxmox API token
 
 The token is tied to the install. Create a new one:
 
@@ -343,6 +320,10 @@ proxmox-boot-tool kernel list
 The host boots through UEFI with `proxmox-boot-tool`, not GRUB. The `grub-probe: error: unknown filesystem` lines printed during kernel removal come from a GRUB hook that can't read the ZFS root, and are harmless.
 
 ## History
+
+### AWX removed (24 Oct 2026)
+
+AWX was removed ahead of the move to Red Hat Ansible Automation Platform: the `platform/awx` app came out of the cluster and the `awx-postgres` container (CT 105, `192.168.20.12`) was destroyed. Backups are in `/root/awx-backup-20261024/` on the host: a `pg_dump` of the database (`awx-db.dump`), the cluster secrets needed to read it (`k8s-secrets.yaml`, including the AWX secret key), the AWX instance spec, and a full ZFS copy of the container (`ct105-rootfs.zfs.zst` plus `105.conf`). The same day, vcsim was scaled down to two simulators.
 
 ### Repo fix and update to 9.2.21 (23 Oct 2026)
 

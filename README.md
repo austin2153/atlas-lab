@@ -8,8 +8,6 @@ See [docs/lab-overview.html](docs/lab-overview.html) for a one-page visual overv
 
 See [docs/unifi-access.md](docs/unifi-access.md) for how to connect to the UniFi controller.
 
-See [docs/awx-external-postgres.md](docs/awx-external-postgres.md) for how AWX's database is set up on a dedicated Proxmox LXC.
-
 See [docs/proxmox.md](docs/proxmox.md) for the Proxmox host: access, rebuild runbook, maintenance and history.
 
 ## Cluster Overview
@@ -62,9 +60,6 @@ atlas-talos/
 │   │   ├── flux.yaml            # Flux v2.8.5 upstream manifest
 │   │   ├── gitrepository.yaml   # Flux GitRepository watching atlas-talos main
 │   │   └── flux-kustomization.yaml  # Flux Kustomization applying state/ to cluster
-│   ├── awx/
-│   │   ├── awx-operator.yaml    # AWX operator manifest
-│   │   └── awx-instance.yaml    # AWX instance resource
 │   ├── kratix/
 │   │   ├── kratix.yaml          # Kratix v0.125.0 upstream manifest
 │   │   ├── git-state-store.yaml # GitStateStore pointing at state/ in this repo
@@ -184,8 +179,7 @@ From this point, any new folder added under `platform/` will be auto-discovered 
 | cert-manager | v1.20.2 | TLS certificate management with self-signed CA chain |
 | Flux | v2.8.5 | GitOps operator — watches `state/` and applies Kratix-written manifests |
 | Kratix | v0.125.0 | Platform engineering framework; writes desired state to `state/` via GitStateStore |
-| AWX | latest | Ansible automation UI (AWX operator + instance) |
-| vcsim | latest | VMware vCenter simulator instances for testing |
+| vcsim | latest | VMware vCenter simulator instances for testing (vcenter-01, vcenter-02) |
 
 ### Kratix Promises
 

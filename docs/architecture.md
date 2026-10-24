@@ -59,7 +59,6 @@ Starting with 1 control plane and 1 worker. The worker count is designed to scal
 | Proxmox bridge | `vmbr0`, VLAN tag `20` |
 | Control plane | `talos-cp.atlas.local` → `192.168.20.10` |
 | Worker 01 | `talos-worker-01.atlas.local` → `192.168.20.11` |
-| AWX Postgres LXC | `awx-postgres.atlas.local` → `192.168.20.12` |
 
 DNS entries are managed in Pi-hole (`atlas-pihole.atlas.local`). Static IPs are configured directly in the Talos machine configs rather than via DHCP reservations.
 
@@ -118,8 +117,43 @@ Once the cluster is bootstrapped, a GitOps platform layer manages all cluster se
 | `cert-manager/` | [cert-manager](https://cert-manager.io/) v1.20.2 | TLS management; bootstraps selfsigned → root CA → `atlas-ca` ClusterIssuer chain using ArgoCD sync waves |
 | `flux/` | [Flux](https://fluxcd.io/) v2.8.5 | Source-controller watches this repo; kustomize-controller applies `state/` to cluster. Auth via `flux-system-auth` secret (SSH) |
 | `kratix/` | [Kratix](https://kratix.io/) v0.125.0 | Platform engineering framework. GitStateStore writes to `state/`; Destination registers local cluster. Auth via `kratix-state-writer` secret (HTTPS PAT) |
-| `awx/` | AWX 24.6.1 | Ansible automation UI. Operator + instance pattern; postgres runs externally on a dedicated Proxmox LXC (see [awx-external-postgres.md](awx-external-postgres.md)). Admin password in `awx-admin-password` secret |
-| `vcsim/` | vmware/vcsim:latest | VMware vCenter simulator instances for testing. 4 instances: vcenter-01–04 (192.168.20.52–55) |
+| `vcsim/` | vmware/vcsim:latest | VMware vCenter simulator instances for testing. 2 instances: vcenter-01–02 (192.168.20.52–53) |
+
+### MetalLB: how service IPs work
+
+Kubernetes on bare metal has no cloud load balancer, so a `Service` of `type: LoadBalancer` stays `<pending>` forever on its own. MetalLB provides that piece.
+
+| Part | What it does |
+|---|---|
+| `controller` (1 pod, `metallb-system`) | Watches `LoadBalancer` services and assigns each an address from the pool, or the one it requests |
+| `speaker` (DaemonSet, 1 pod per node) | Announces assigned addresses on VLAN 20. In Layer 2 mode one speaker answers ARP for each address, so traffic for it goes to that node; if the node dies another speaker takes over in a few seconds |
+| `IPAddressPool` `default-pool` | `192.168.20.50-192.168.20.99`, defined in `platform/metallb/l2-config.yaml` |
+| `L2Advertisement` `default` | Tells the speakers to announce `default-pool` with ARP (Layer 2 mode) |
+
+Traffic path: client → ARP finds the node currently announcing the address → that node → kube-proxy → the service's pods, on any node. Layer 2 mode means all traffic for one address enters through a single node at a time. That's fine at lab scale; BGP mode (which spreads load) would need a BGP-capable router.
+
+**Giving a service an address.** Pin every address so the address plan in [lab-overview.html](lab-overview.html) stays true. Use the annotation for new services:
+
+```yaml
+metadata:
+  annotations:
+    metallb.io/loadBalancerIPs: 192.168.20.56
+spec:
+  type: LoadBalancer
+```
+
+ArgoCD (`.50`) and vcsim (`.52-.53`) use the older `spec.loadBalancerIP` field, which Kubernetes has deprecated but MetalLB still honours. Never give a VM or LXC a static address inside `.50-.99`: MetalLB assumes it owns the whole pool.
+
+**Checking it.**
+
+```bash
+kubectl get svc -A | grep LoadBalancer                 # addresses in use
+kubectl -n metallb-system get ipaddresspool,l2advertisement
+kubectl -n metallb-system get pods                     # 1 controller + 1 speaker per node
+kubectl -n metallb-system logs -l component=speaker    # who is announcing what
+```
+
+A service stuck at `<pending>` usually means its requested address is outside the pool or already taken.
 
 ### Talos-Specific Gotchas
 
@@ -166,7 +200,7 @@ terraform apply
 ## Future Considerations
 
 - **Kratix Promises**: First promise (`proxmox-vm`) is installed and operational — provisions Proxmox VMs on demand via a Python-based workflow. Next step is expanding the promise catalog and exercising the full loop (ResourceRequest → state/ → Flux → cluster)
-- **Stateful workload resilience**: AWX postgres was moved off the in-cluster `local-path` PV (which lost data twice after unclean Proxmox shutdowns) to a dedicated Proxmox LXC on ZFS storage — see [awx-external-postgres.md](awx-external-postgres.md). Consider applying the same pattern to any other stateful workload added to the cluster
+- **Stateful workload resilience**: don't put databases on in-cluster `local-path` PVs. AWX's in-cluster Postgres (since removed) lost its data twice after unclean Proxmox shutdowns, which is why stateful services such as AAP run as VMs or LXCs on ZFS instead
 - **Additional workers**: Add IPs to `worker_ips` variable and add Pi-hole DNS entries
 - **CNI migration**: Flannel can be replaced with Cilium for eBPF-based networking and network policy support
 - **Talos Image Factory extensions**: Consider adding the QEMU guest agent extension for better Proxmox integration

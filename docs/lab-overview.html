@@ -174,6 +174,23 @@ td.dim { color: var(--muted); }
 .jumper { width: 3px; height: 16px; border-radius: 2px; background: var(--accent); display: inline-block; }
 .jumper.future { background: none; border-left: 2px dashed var(--muted); width: 0; border-radius: 0; }
 .led { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); display: inline-block; }
+.r-cable { stroke: var(--accent); stroke-width: 2; fill: none; stroke-linejoin: round; }
+.diagram.rear svg { min-width: 420px; max-width: 520px; margin: 0 auto; }
+.diagram.strip svg { min-width: 760px; }
+.cables { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 4px; }
+.cables b { font-family: var(--font-mono); color: var(--accent); }
+/* Lab address pills */
+.addr { display: inline-block; font-family: var(--font-mono); font-size: 0.78rem; white-space: nowrap; padding: 1px 7px; margin: 2px 6px 2px 0; border-radius: 4px; border: 1px solid var(--v20); background: color-mix(in srgb, var(--v20) 14%, var(--surface)); }
+.addr.planned { border-style: dashed; background: var(--surface); }
+.addr.lb { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.addr.gw { border-color: var(--ink); background: color-mix(in srgb, var(--ink) 6%, var(--surface)); }
+.st { display: inline-block; font-family: var(--font-mono); font-size: 0.72rem; white-space: nowrap; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.st-ok { color: var(--ok); }
+.st-plan { color: var(--v20); border-style: dashed; }
+.st-retire { color: var(--warn); }
+.meter { display: inline-block; vertical-align: middle; width: 64px; height: 6px; margin-right: 8px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--v20); }
+.meter.lb i { background: var(--accent); }
 .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.85rem; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 8px; }
 .swatch { width: 22px; height: 12px; border-radius: 2px; border: 1.5px solid var(--ink); background: var(--surface); }
@@ -198,6 +215,7 @@ td.dim { color: var(--muted); }
 }
 .flow li > div { display: grid; gap: 4px; min-width: 0; }
 
+.code { margin: 0; padding: 12px 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5; background: color-mix(in srgb, var(--ink) 5%, var(--surface)); border: 1px solid var(--line); border-radius: 8px; }
 .notes { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
 .notes li { display: grid; gap: 2px; padding-left: 14px; border-left: 2px solid var(--line); }
 .notes.open li { border-left-color: var(--warn); }
@@ -251,12 +269,6 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <text class="t-title" x="346" y="124">UniFi Cloud Gateway Ultra</text>
       <text class="t-body" x="346" y="144">Router, firewall, DHCP · <tspan class="t-mono">192.168.0.1</tspan></text>
 
-      <!-- zone firewall summary -->
-      <text class="t-label t-warn" x="646" y="116">ZONE FIREWALL · VLANS BLOCKED BY DEFAULT</text>
-      <text class="t-label" x="646" y="133">EXCEPT  LAB, IOT → PI-HOLE  UDP 53</text>
-      <text class="t-label" x="646" y="148">        LAB → PROXMOX  8006</text>
-      <text class="t-label" x="646" y="163">        AUSTIN-MAC → LAB  ALL</text>
-
       <!-- switch -->
       <rect class="d-box" x="340" y="196" width="280" height="60" rx="8"/>
       <text class="t-title" x="356" y="220">USW-Lite-8-PoE</text>
@@ -267,8 +279,8 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <text class="t-title" x="36" y="304">3 × U7 Pro access points</text>
       <text class="t-mono" x="36" y="326">Basement .0.3 · wired, PoE</text>
       <text class="t-mono" x="36" y="344">Main .0.4 · Office .0.5 · mesh</text>
-      <text class="t-body" x="36" y="368">Wi-Fi 7 · 4 SSIDs mapped to VLANs</text>
-      <text class="t-body" x="36" y="385">(Home, Gaming → 1 · IoT → 10 · Lab → 20)</text>
+      <text class="t-body" x="36" y="368">Home 5 GHz, Gaming 6 GHz → VLAN 1</text>
+      <text class="t-body" x="36" y="385">IoT 2.4 GHz → 10 · Lab 5 GHz → 20</text>
 
       <!-- IoT vlan -->
       <rect class="d-v10" x="20" y="416" width="290" height="74" rx="8"/>
@@ -333,7 +345,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
 
       <rect class="d-svc" x="562" y="470" width="346" height="58" rx="6"/>
       <text class="t-label t-v20" x="572" y="487">SERVICE IPS · METALLB · .20.50–.99</text>
-      <text class="t-mono" x="572" y="504">.50 ArgoCD  ·  .52–.55 vcsim ×4  ·  + more</text>
+      <text class="t-mono" x="572" y="504">.50 ArgoCD  ·  .52–.53 vcsim ×2  ·  + more</text>
       <text class="t-body" x="572" y="520">Virtual IPs answered by the nodes, routed to pods</text>
 
       <!-- AAP: separate VM, outside the cluster -->
@@ -351,19 +363,23 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
 
 <section>
   <div class="section-head">
+    <div class="eyebrow">Verified against UniFi · 24 Oct 2026</div>
     <h2>Network</h2>
-    <p class="muted">UniFi handles routing, Wi-Fi and DHCP. Every machine uses Pi-hole first, which filters ads and holds every <code>*.atlas.local</code> record, and Cloudflare <code>1.1.1.1</code> as a fallback so internet names still resolve if Pi-hole is down. The gateway runs a zone firewall that blocks traffic between VLANs by default. The exceptions are below. Replies to allowed connections are let through automatically.</p>
+    <p class="muted">UniFi handles routing, Wi-Fi and DHCP. Every machine uses Pi-hole first, which filters ads and holds every <code>*.atlas.local</code> record, and Cloudflare <code>1.1.1.1</code> as a fallback so internet names still resolve if Pi-hole is down.</p>
   </div>
+  <h3>VLANs and Wi-Fi</h3>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Network</th><th>VLAN</th><th>Subnet</th><th>What lives there</th></tr></thead>
+      <thead><tr><th>Network</th><th>VLAN</th><th>Subnet</th><th>Wi-Fi</th><th>What lives there</th></tr></thead>
       <tbody>
-        <tr><td>Default</td><td><span class="chip c-v1">1</span></td><td class="mono nowrap">192.168.0.0/24</td><td>Network gear, Proxmox management, Pi-hole, printer, everyday home devices</td></tr>
-        <tr><td>IoT</td><td><span class="chip c-v10">10</span></td><td class="mono nowrap">192.168.10.0/24</td><td>Smart speakers, Hue lighting</td></tr>
-        <tr><td>Atlas Lab</td><td><span class="chip c-v20">20</span></td><td class="mono nowrap">192.168.20.0/24</td><td>Talos nodes (<code>.10, .11, .13</code>), AAP VM (<code>.12</code>), MetalLB service IPs (<code>.50–.99</code>)</td></tr>
+        <tr><td>Default</td><td><span class="chip c-v1">1</span></td><td class="mono nowrap">192.168.0.0/24</td><td>Atlas Home <span class="sub">5 GHz</span>Atlas Gaming <span class="sub">6 GHz only, WPA3 only: Wi-Fi 6E and 7 devices</span></td><td>Network gear, Proxmox management, Pi-hole, printer, everyday home devices</td></tr>
+        <tr><td>IoT</td><td><span class="chip c-v10">10</span></td><td class="mono nowrap">192.168.10.0/24</td><td>Atlas IoT <span class="sub">2.4 GHz</span></td><td>Smart speakers, Hue lighting</td></tr>
+        <tr><td>Atlas Lab</td><td><span class="chip c-v20">20</span></td><td class="mono nowrap">192.168.20.0/24</td><td>Atlas Lab <span class="sub">5 GHz</span></td><td>Talos nodes (<code>.10, .11, .13</code>), AAP VM (<code>.12</code>), MetalLB service IPs (<code>.50–.99</code>)</td></tr>
       </tbody>
     </table>
   </div>
+  <h3>Firewall rules</h3>
+  <p class="muted">The gateway's zone firewall blocks traffic between VLANs by default; these are the exceptions. Replies to allowed connections are let through automatically.</p>
   <div class="table-wrap">
     <table>
       <thead><tr><th>From</th><th>To</th><th>Allowed</th><th>Rule</th></tr></thead>
@@ -377,17 +393,42 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       </tbody>
     </table>
   </div>
-  <p class="muted">The Mac's rule and its <code>.0.58</code> reservation both key on its Wi-Fi address, <code>ba:b0:9f:7d:1a:3b</code>. That's a macOS private address set to "Fixed" for Atlas Home, so it stays the same unless the Mac forgets the network. If lab access stops after rejoining, update the MAC in both.</p>
+  <h3>Lab addresses</h3>
+  <p><span class="chip c-v20">VLAN 20</span> <span class="mono">192.168.20.0/24</span> <span class="muted">· Atlas Lab · gateway <span class="mono">192.168.20.1</span></span></p>
+  <p class="muted">How full each range is and the next address to use, then every lab device by IP. Service IPs are pinned in each service's manifest so they never move.</p>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Device</th><th>Model</th><th>IP</th><th>Where</th></tr></thead>
+      <thead><tr><th>Range</th><th>Use</th><th>Used</th><th>Next free</th></tr></thead>
       <tbody>
-        <tr><td>Frontier ONT</td><td>FRX523 <span class="sub">XGS-PON, bridged to gateway WAN</span></td><td class="dim">n/a</td><td>Top of the rack</td></tr>
-        <tr><td>Cloud Gateway Ultra</td><td>UCG-Ultra</td><td class="mono">192.168.0.1</td><td>Rack slot 3</td></tr>
-        <tr><td>USW-Lite-8-PoE</td><td>8-port PoE switch</td><td class="mono">192.168.0.2</td><td>Rack slot 2</td></tr>
-        <tr><td>U7 Pro Basement</td><td>Wi-Fi 7 AP <span class="sub">wired, PoE</span></td><td class="mono">192.168.0.3</td><td>Basement · switch port 2</td></tr>
-        <tr><td>U7 Pro Main</td><td>Wi-Fi 7 AP <span class="sub">wireless mesh</span></td><td class="mono">192.168.0.4</td><td>Main floor</td></tr>
-        <tr><td>U7 Pro Office</td><td>Wi-Fi 7 AP <span class="sub">wireless mesh</span></td><td class="mono">192.168.0.5</td><td>Office</td></tr>
+        <tr><td class="mono nowrap">192.168.20.2–.49</td><td>VMs and containers <span class="sub">static</span></td><td class="nowrap"><span class="meter"><i style="width:8.3%"></i></span>4 / 48</td><td class="mono">.14</td></tr>
+        <tr><td class="mono nowrap">192.168.20.50–.99</td><td>Kubernetes service IPs <span class="sub">MetalLB</span></td><td class="nowrap"><span class="meter lb"><i style="width:6%"></i></span>3 / 50</td><td class="mono">.51</td></tr>
+        <tr><td class="mono nowrap">192.168.20.100–.254</td><td>DHCP <span class="sub">lab Wi-Fi clients</span></td><td class="dim">—</td><td class="dim">assigned automatically</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>IP</th><th>Device</th><th>Type</th><th>Size</th><th>Role</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td class="mono nowrap">192.168.20.10</td><td>talos-cp <span class="sub mono">talos-cp.atlas.local</span></td><td class="nowrap">VM 200 · Talos</td><td class="nowrap">2 vCPU · 4 GB · 20 GB</td><td>Kubernetes control plane</td><td><span class="st st-ok">In use</span></td></tr>
+        <tr><td class="mono nowrap">192.168.20.11</td><td>talos-worker-01 <span class="sub mono">talos-worker-01.atlas.local</span></td><td class="nowrap">VM 201 · Talos</td><td class="nowrap">2 vCPU · 6 GB · 75 GB</td><td>Kubernetes worker</td><td><span class="st st-ok">In use</span></td></tr>
+        <tr><td class="mono nowrap">192.168.20.12</td><td><a href="https://aap.atlas.local" target="_blank" rel="noopener">aap</a> <span class="sub mono">aap.atlas.local</span></td><td class="nowrap">VM · RHEL 9</td><td class="nowrap">4 vCPU · 16 GB · 100 GB</td><td>Ansible Automation Platform</td><td><span class="st st-plan">Planned</span></td></tr>
+        <tr><td class="mono nowrap">192.168.20.13</td><td>talos-worker-02 <span class="sub mono">talos-worker-02.atlas.local</span></td><td class="nowrap">VM 202 · Talos</td><td class="nowrap">2 vCPU · 6 GB · 75 GB</td><td>Kubernetes worker</td><td><span class="st st-plan">Planned</span></td></tr>
+        <tr><td class="mono nowrap">192.168.20.50</td><td><a href="https://192.168.20.50" target="_blank" rel="noopener">argocd-server</a> <span class="sub mono">argocd.atlas.local</span></td><td class="nowrap">Service · MetalLB</td><td class="dim">—</td><td>ArgoCD UI</td><td><span class="st st-ok">In use</span></td></tr>
+        <tr><td class="mono nowrap">192.168.20.52</td><td><a href="https://vcenter-01.atlas.local" target="_blank" rel="noopener">vcenter-01</a> <span class="sub mono">vcenter-01.atlas.local</span></td><td class="nowrap">Service · MetalLB</td><td class="dim">—</td><td>vCenter simulator</td><td><span class="st st-ok">In use</span></td></tr>
+        <tr><td class="mono nowrap">192.168.20.53</td><td><a href="https://vcenter-02.atlas.local" target="_blank" rel="noopener">vcenter-02</a> <span class="sub mono">vcenter-02.atlas.local</span></td><td class="nowrap">Service · MetalLB</td><td class="dim">—</td><td>vCenter simulator</td><td><span class="st st-ok">In use</span></td></tr>
+        <tr><td class="mono nowrap dim">.14+</td><td class="dim">more VMs and containers</td><td class="dim">tbd</td><td class="dim">—</td><td class="dim">Not decided yet; room once the RAM upgrade is in</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Lab hosts on VLAN 1</th><th>Address</th><th>How it's set</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://192.168.0.1" target="_blank" rel="noopener">Gateway</a> <span class="sub">UniFi</span></td><td class="mono">192.168.0.1</td><td class="dim">UniFi</td></tr>
+        <tr><td>austin-mac <span class="sub">the only VLAN 1 device allowed into the lab</span></td><td class="mono">192.168.0.58</td><td class="dim">DHCP reservation</td></tr>
+        <tr><td><a href="https://192.168.0.100:8006" target="_blank" rel="noopener">Proxmox</a> <span class="sub">M920q Tiny #1</span></td><td class="mono">192.168.0.100</td><td class="dim">Static, on the host</td></tr>
+        <tr><td><a href="http://192.168.0.101/admin" target="_blank" rel="noopener">atlas-pihole</a> <span class="sub">LXC 102 · 1 vCPU · 512 MB · DNS for the house and lab</span></td><td class="mono">192.168.0.101</td><td class="dim">Static, container config</td></tr>
       </tbody>
     </table>
   </div>
@@ -395,6 +436,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
 
 <section id="rack">
   <div class="section-head">
+    <div class="eyebrow">Plan · 24 Oct 2026</div>
     <h2>Rack build</h2>
     <p class="muted">A DeskPi RackMate T1 (8U, 10-inch) next to the fiber drop in the basement. Low power draw is a hard requirement, so there's nothing enterprise-grade in it. The ONT (optical network terminal) is Frontier's fiber box: it converts the fiber's light signal into Ethernet for the gateway's WAN port. This is the front view; heights are to scale, so half-U slots are drawn at half height.</p>
   </div>
@@ -536,8 +578,86 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     <span><i class="swatch mount"></i>Owned, 10-inch mount still to buy</span>
     <span><i class="swatch future"></i>Future or empty</span>
   </div>
-  <p class="muted">The ONT is 9.7″ wide and the rails leave about 8¾″, so it sits on top of the rack. If it ever fits on the included 1U tray, it can move into slot 4.</p>
-  <p class="muted">On the side panel, not in a slot: the power strip and the Hue bridge. The Hue cable runs around the rear edge into patch panel port 7, like every other device.</p>
+
+  <h3>Rear view and cabling</h3>
+  <p class="muted">From behind, so left and right are mirrored: patch panel port 1 is on the right. Every device cable plugs into the back of the patch panel; only short jumpers show at the front.</p>
+  <div class="diagram rack rear" role="img" aria-label="Rear view of the rack with cables: A, ONT on top to the gateway WAN port; B, gateway LAN to patch panel port 1; C, the Basement access point cable to patch panel port 2; D, Tiny 1 network port to patch panel port 3; E, the side-mounted Hue bridge to patch panel port 7; F, Tiny 1 USB to the backup SSD. The power strip and Hue bridge are on the side panel.">
+    <svg viewBox="-12 -50 492 480" xmlns="http://www.w3.org/2000/svg">
+      <text class="t-label" x="52" y="-36">REAR VIEW · MIRRORED</text>
+      <!-- ONT on top -->
+      <rect class="r-tiny" x="70" y="-6" width="340" height="32" rx="4"/>
+      <text class="t-plate t-on-dark" x="84" y="15">ONT</text>
+      <!-- side panel: power strip + Hue -->
+      <rect class="r-plate" x="-6" y="70" width="14" height="300" rx="2"/>
+      <g class="r-port"><rect x="-3" y="90" width="8" height="8"/><rect x="-3" y="130" width="8" height="8"/><rect x="-3" y="170" width="8" height="8"/><rect x="-3" y="210" width="8" height="8"/><rect x="-3" y="250" width="8" height="8"/><rect x="-3" y="290" width="8" height="8"/><rect x="-3" y="330" width="8" height="8"/></g>
+      <text class="t-u" transform="translate(40,300) rotate(-90)" text-anchor="middle">power strip (side)</text>
+      <rect class="r-port" x="16" y="150" width="32" height="28" rx="6"/>
+      <text class="t-u" x="32" y="168" text-anchor="middle">Hue</text>
+      <!-- frame -->
+      <rect class="r-frame" x="52" y="28" width="376" height="376" rx="6"/>
+      <rect class="r-rail" x="60" y="40" width="16" height="352"/>
+      <rect class="r-rail" x="404" y="40" width="16" height="352"/>
+      <!-- 1 patch panel rear -->
+      <rect class="r-plate" x="78" y="41" width="324" height="20" rx="2"/>
+      <g class="r-port"><rect x="268" y="46" width="12" height="10" rx="1"/><rect x="252" y="46" width="12" height="10" rx="1"/><rect x="236" y="46" width="12" height="10" rx="1"/><rect x="220" y="46" width="12" height="10" rx="1"/><rect x="204" y="46" width="12" height="10" rx="1"/><rect x="188" y="46" width="12" height="10" rx="1"/><rect x="172" y="46" width="12" height="10" rx="1"/><rect x="156" y="46" width="12" height="10" rx="1"/><rect x="140" y="46" width="12" height="10" rx="1"/><rect x="124" y="46" width="12" height="10" rx="1"/><rect x="108" y="46" width="12" height="10" rx="1"/><rect x="92" y="46" width="12" height="10" rx="1"/></g>
+      <text class="t-u" x="396" y="55" text-anchor="end">panel</text>
+      <text class="t-u" x="274" y="39" text-anchor="middle">1</text>
+      <text class="t-u" x="92" y="39" text-anchor="middle">12</text>
+      <!-- 2 switch rear -->
+      <rect class="r-mount" x="78" y="63" width="324" height="42" rx="3"/>
+      <circle class="r-port" cx="100" cy="84" r="4"/>
+      <text class="t-u" x="396" y="99" text-anchor="end">switch</text>
+      <!-- 3 gateway rear -->
+      <rect class="r-mount" x="78" y="107" width="324" height="42" rx="3"/>
+      <g class="r-port"><rect x="300" y="122" width="14" height="12" rx="1"/><rect x="319" y="122" width="14" height="12" rx="1"/><rect x="338" y="122" width="14" height="12" rx="1"/><rect x="357" y="122" width="14" height="12" rx="1"/><rect x="376" y="122" width="14" height="12" rx="1"/></g>
+      <circle class="r-port" cx="100" cy="128" r="4"/>
+      <text class="t-u" x="88" y="145">gateway</text>
+      <text class="t-u" x="383" y="146" text-anchor="middle">WAN</text>
+      <text class="t-u" x="307" y="146" text-anchor="middle">LAN</text>
+      <!-- 4 blank -->
+      <rect class="r-future" x="78" y="151" width="324" height="42" rx="3"/>
+      <text class="t-u" x="388" y="176" text-anchor="end">blank</text>
+      <!-- 5 Tiny #1 + USB SSD -->
+      <rect class="r-mount" x="78" y="195" width="324" height="42" rx="3"/>
+      <rect class="r-tiny" x="150" y="200" width="180" height="32" rx="2"/>
+      <rect class="r-plate" x="236" y="208" width="12" height="10" rx="1"/>
+      <rect class="r-plate" x="302" y="211" width="8" height="5"/>
+      <circle class="r-plate" cx="170" cy="216" r="3"/>
+      <rect class="r-port" x="340" y="203" width="56" height="26" rx="3"/>
+      <text class="t-u" x="368" y="220" text-anchor="middle">SSD</text>
+      <text class="t-u" x="88" y="221">Tiny #1</text>
+      <!-- 6, 7 future Tinys; 8 spare -->
+      <rect class="r-future" x="78" y="239" width="324" height="42" rx="3"/>
+      <text class="t-u" x="88" y="264">Tiny #2</text>
+      <rect class="r-future" x="78" y="283" width="324" height="42" rx="3"/>
+      <text class="t-u" x="88" y="308">Tiny #3</text>
+      <rect class="r-future" x="78" y="327" width="324" height="64" rx="3"/>
+      <text class="t-u" x="88" y="363">spare</text>
+      <!-- cables -->
+      <polyline class="r-cable" points="383,26 383,122"/>
+      <polyline class="r-cable" points="307,122 307,72 274,72 274,56"/>
+      <polyline class="r-cable" points="440,-44 440,34 258,34 258,46"/>
+      <polyline class="r-cable" points="242,208 242,56"/>
+      <polyline class="r-cable" points="48,164 86,164 86,66 178,66 178,56"/>
+      <polyline class="r-cable" points="310,213 340,213"/>
+      <g class="t-label t-accent" font-weight="700">
+        <text x="388" y="40">A</text><text x="312" y="100">B</text><text x="446" y="-28">C</text>
+        <text x="247" y="180">D</text><text x="91" y="150">E</text><text x="318" y="207">F</text>
+      </g>
+    </svg>
+  </div>
+  <ul class="cables">
+    <li><b>A</b> ONT → gateway WAN port (2.5 GbE)</li>
+    <li><b>B</b> Gateway LAN → panel 1 → switch port 1</li>
+    <li><b>C</b> Basement AP, on a stand beside the rack → panel 2 → switch port 2 (PoE)</li>
+    <li><b>D</b> Tiny #1 network port → panel 3 → switch port 3</li>
+    <li><b>E</b> Hue bridge on the side panel → panel 7 → switch port 7</li>
+    <li><b>F</b> Tiny #1 USB → 500 GB backup SSD, sitting behind the Tiny</li>
+  </ul>
+  <p class="muted">Not in a slot: the ONT sits on top of the rack (it's 9.7″ wide and the rails leave about 8¾″; if it ever fits the included 1U tray, it can move to slot 4). The power strip and Hue bridge are on the side panel, the power bricks sit behind the devices, and the Basement AP stands about a metre from the rack.</p>
+
+  <h3>Power</h3>
+  <p class="muted">Low power draw is a hard requirement. The biggest loads are the ONT (24 W maximum, from its label) and the Tiny (35 W CPU). Measure the whole rack with a smart plug between the wall and the power strip once it's built, and record the number here.</p>
 
   <h3>Switch port map</h3>
   <p class="muted">Each device's cable runs through the patch panel: device to rear port N, front port N, a 0.5 ft jumper, then switch port N, so panel and switch numbers always match. The colour bar under each port shows the VLANs it carries.</p>
@@ -655,21 +775,6 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     <span><i class="jumper"></i>0.5 ft jumper</span>
     <span><i class="jumper future"></i>Future jumper</span>
   </div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Port</th><th>Device</th><th>VLANs</th></tr></thead>
-      <tbody>
-        <tr><td class="mono">1</td><td>Gateway uplink</td><td>Uplink</td></tr>
-        <tr><td class="mono">2</td><td>U7 Pro Basement <span class="sub">PoE</span></td><td>AP trunk, all VLANs</td></tr>
-        <tr><td class="mono">3</td><td>M920q Tiny #1</td><td><span class="chip c-v1">1</span> native · <span class="chip c-v20">20</span> tagged</td></tr>
-        <tr><td class="mono">4</td><td>Tiny #2 (future)</td><td><span class="chip c-v1">1</span> native · <span class="chip c-v20">20</span> tagged</td></tr>
-        <tr><td class="mono">5</td><td>Tiny #3 (future)</td><td><span class="chip c-v1">1</span> native · <span class="chip c-v20">20</span> tagged</td></tr>
-        <tr><td class="mono">6</td><td class="dim">spare</td><td></td></tr>
-        <tr><td class="mono">7</td><td>Hue bridge <span class="sub">side-mounted, via patch panel 7</span></td><td><span class="chip c-v10">10</span> IoT</td></tr>
-        <tr><td class="mono">8</td><td class="dim">spare</td><td></td></tr>
-      </tbody>
-    </table>
-  </div>
 </section>
 
 <section>
@@ -705,26 +810,39 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
 
 <section>
   <div class="section-head">
-    <h2>Proxmox guests</h2>
-    <p class="muted">Everything runs on Tiny #1. Guest disks live on the 1 TB NVMe and backups go to the USB SSD.</p>
+    <div class="eyebrow">Planned</div>
+    <h2>Backups</h2>
+    <p class="muted">Everything backs up to the 500 GB USB SSD behind Tiny #1. Code, Terraform and cluster config already live off the box in Git and Terraform Cloud. The Talos nodes are rebuildable with Terraform, so the cluster's real state is the etcd snapshot.</p>
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Network</th><th>Size</th><th>Role</th></tr></thead>
+      <thead><tr><th>What</th><th>How</th><th>When</th><th>Keep</th></tr></thead>
       <tbody>
-        <tr><td class="mono">102</td><td>atlas-pihole</td><td>LXC</td><td class="nowrap"><span class="chip c-v1">1</span> <span class="mono">.0.101</span></td><td class="nowrap">1 vCPU · 512 MB</td><td>DNS and ad-blocking for the whole house and lab</td></tr>
-        <tr><td class="mono">200</td><td>talos-cp</td><td>VM · Talos</td><td class="nowrap"><span class="chip c-v20">20</span> <span class="mono">.20.10</span></td><td class="nowrap">2 vCPU · 4 GB · 20 GB</td><td>Kubernetes control plane and etcd</td></tr>
-        <tr><td class="mono">201</td><td>talos-worker-01</td><td>VM · Talos</td><td class="nowrap"><span class="chip c-v20">20</span> <span class="mono">.20.11</span></td><td class="nowrap">2 vCPU · 6 GB · 75 GB</td><td>Kubernetes worker</td></tr>
-        <tr><td class="mono">202</td><td>talos-worker-02 <span class="sub">talos-worker-02.atlas.local · new</span></td><td>VM · Talos</td><td class="nowrap"><span class="chip c-v20">20</span> <span class="mono">.20.13</span></td><td class="nowrap">2 vCPU · 6 GB · 75 GB</td><td>Kubernetes worker</td></tr>
-        <tr><td class="dim">tbd</td><td class="dim">more LXCs</td><td class="dim">LXC</td><td class="dim">tbd</td><td class="dim">—</td><td class="dim">Not decided yet; room once the RAM upgrade is in</td></tr>
-        <tr><td class="dim">tbd</td><td>aap <span class="sub">aap.atlas.local · planned</span></td><td>VM · RHEL 9</td><td class="nowrap"><span class="chip c-v20">20</span> <span class="mono">.20.12</span></td><td class="nowrap">4 vCPU · 16 GB · 100 GB</td><td>Red Hat Ansible Automation Platform: containerized installer, growth topology, bundled Postgres. Needs the 64 GB RAM upgrade</td></tr>
+        <tr><td>Pi-hole <span class="sub">LXC 102</span></td><td>Proxmox backup job (vzdump, snapshot mode)</td><td>Nightly</td><td>7 daily, 4 weekly</td></tr>
+        <tr><td>AAP <span class="sub">VM</span></td><td>Proxmox backup job, plus the AAP installer's backup playbook before each upgrade</td><td>Nightly</td><td>7 daily, 4 weekly</td></tr>
+        <tr><td>Talos nodes <span class="sub">VMs 200–202</span></td><td>Proxmox backup job</td><td>Weekly</td><td>2</td></tr>
+        <tr><td>Kubernetes state</td><td><code>talosctl etcd snapshot</code> from a cron job on the Proxmox host</td><td>Daily</td><td>14</td></tr>
+        <tr><td>Pi-hole settings</td><td>Teleporter export from the Pi-hole UI</td><td>After changes</td><td>Latest</td></tr>
+        <tr><td>Code and infrastructure</td><td>Git (GitHub) and Terraform Cloud state</td><td>Every push</td><td>Full history, off-site</td></tr>
       </tbody>
     </table>
   </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>To restore</th><th>Do this</th></tr></thead>
+      <tbody>
+        <tr><td>A container or VM</td><td><code>pct restore</code> / <code>qmrestore</code> from the USB backup storage, or Restore in the Proxmox UI</td></tr>
+        <tr><td>The Kubernetes cluster</td><td><code>terraform apply</code> to rebuild the nodes, then <code>talosctl bootstrap --recover-from</code> the latest etcd snapshot; ArgoCD redeploys the platform from Git</td></tr>
+        <tr><td>The whole host</td><td>The rebuild runbook in <code>docs/proxmox.md</code>, then restore guests from the USB SSD</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">The USB SSD sits in the same rack, so a fire or theft takes the backups too. For an off-site copy, sync the etcd snapshots and AAP backups to OneDrive weekly.</p>
 </section>
 
 <section>
   <div class="section-head">
+    <div class="eyebrow">Verified against the cluster · 24 Oct 2026</div>
     <h2>Kubernetes platform</h2>
     <p class="muted">Three Talos nodes: <code>talos-cp</code> (.10) runs the control plane, and <code>talos-worker-01</code> (.11) and the new <code>talos-worker-02</code> (.13) run workloads. Each component is a folder under <code>platform/</code>; ArgoCD deploys it.</p>
   </div>
@@ -740,25 +858,32 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
           <tr><td>local-path-provisioner</td><td>Default StorageClass on node disk</td></tr>
           <tr><td>Kratix <span class="sub">v0.125.0</span></td><td>Platform "promises", e.g. order a Proxmox VM as a Kubernetes resource</td></tr>
           <tr><td>Flux <span class="sub">v2.8.5</span></td><td>Applies whatever Kratix writes to <code>state/</code></td></tr>
-          <tr><td>vcsim</td><td>4 simulated vCenters for testing VMware playbooks</td></tr>
+          <tr><td>vcsim</td><td>2 simulated vCenters for testing VMware playbooks</td></tr>
           <tr><td class="dim">More services</td><td class="dim">Not decided yet; each one is a new <code>platform/</code> folder</td></tr>
         </tbody>
       </table>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Service</th><th>Address</th></tr></thead>
-        <tbody>
-          <tr><td>ArgoCD UI</td><td class="mono">192.168.20.50</td></tr>
-          <tr><td>vcenter-01</td><td class="mono">192.168.20.52</td></tr>
-          <tr><td>vcenter-02</td><td class="mono">192.168.20.53</td></tr>
-          <tr><td>vcenter-03</td><td class="mono">192.168.20.54</td></tr>
-          <tr><td>vcenter-04</td><td class="mono">192.168.20.55</td></tr>
-          <tr><td class="dim">Free for new services</td><td class="mono dim">.51, .56–.99</td></tr>
-        </tbody>
-      </table>
-    </div>
   </div>
+  <h3>How service IPs work (MetalLB)</h3>
+  <p class="muted">On a home cluster there's no cloud load balancer, so a Kubernetes service of type <code>LoadBalancer</code> would wait for an address forever. MetalLB fills that gap:</p>
+  <ol class="flow">
+    <li><div><h3>The controller hands out an address</h3><p>One <code>controller</code> pod watches for <code>LoadBalancer</code> services and gives each one an address from <code>default-pool</code> (<code>192.168.20.50–.99</code>), or the exact one the service asks for.</p></div></li>
+    <li><div><h3>A speaker announces it on VLAN 20</h3><p>A <code>speaker</code> pod runs on every node. In Layer 2 mode, one of them answers ARP for each service address ("that IP is me"), so the gateway and your Mac send traffic for it to that node. If the node goes down, another speaker takes over within seconds.</p></div></li>
+    <li><div><h3>The node forwards to the pods</h3><p>Kubernetes passes the traffic from that node to the service's pods, wherever they run in the cluster.</p></div></li>
+  </ol>
+  <p class="muted">To give a new service an address, set <code>type: LoadBalancer</code> and pin the next free address from the table above. The config lives in <code>platform/metallb/l2-config.yaml</code>; the full refresher is in <code>docs/architecture.md</code>.</p>
+  <pre class="code">apiVersion: v1
+kind: Service
+metadata:
+  name: my-app
+  annotations:
+    metallb.io/loadBalancerIPs: 192.168.20.51   # next free
+spec:
+  type: LoadBalancer
+  selector:
+    app: my-app
+  ports:
+    - port: 443</pre>
 </section>
 
 <section>
@@ -784,25 +909,10 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
         <li><b>1 TB NVMe</b><span class="muted">When to buy it</span></li>
       </ul>
     </div>
-    <div class="stack">
-      <h2>Quick links</h2>
-      <div class="table-wrap">
-        <table>
-          <tbody>
-            <tr><td>Proxmox</td><td class="mono"><a href="https://192.168.0.100:8006" target="_blank" rel="noopener">192.168.0.100:8006</a></td></tr>
-            <tr><td>UniFi</td><td class="mono"><a href="https://192.168.0.1" target="_blank" rel="noopener">192.168.0.1</a></td></tr>
-            <tr><td>Pi-hole</td><td class="mono"><a href="http://192.168.0.101/admin" target="_blank" rel="noopener">192.168.0.101/admin</a></td></tr>
-            <tr><td>ArgoCD</td><td class="mono"><a href="https://192.168.20.50" target="_blank" rel="noopener">192.168.20.50</a></td></tr>
-            <tr><td>AAP</td><td class="mono"><a href="https://aap.atlas.local" target="_blank" rel="noopener">aap.atlas.local</a> <span class="dim">(planned)</span></td></tr>
-            <tr><td>vcsim</td><td class="mono">vcenter-01…04.atlas.local</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
   </div>
 </section>
 
-<footer>Target design as of 24 Oct 2026. Network and firewall settings come from the live UniFi controller; the rack and hardware plan from <code>docs/atlas-rack-design.md</code>; the platform from the rest of the atlas-talos repo.</footer>
+<footer>Target design as of 24 Oct 2026. Run <code>scripts/check-lab-overview.py</code> to compare this page with the live lab. Network and firewall settings come from the live UniFi controller; the rack and hardware plan from <code>docs/atlas-rack-design.md</code>; the platform from the rest of the atlas-talos repo.</footer>
 
 </div>
 </body>
