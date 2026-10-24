@@ -11,7 +11,7 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; }
-/* Layout: one reading column; a wide topology diagram up top, then reference tables grouped by layer (network → host → cluster). VLANs are colour-coded throughout. */
+/* Layout: one reading column; topology and rack diagrams lead their sections, reference tables follow, grouped by layer (network → rack → host → cluster). VLANs are colour-coded throughout. */
 :root {
   --bg: #f4f6f8;
   --surface: #ffffff;
@@ -23,6 +23,7 @@ body { margin: 0; }
   --v10: #a86a12;
   --v20: #157a80;
   --ok: #1f8a4c;
+  --warn: #b3541e;
   --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -30,13 +31,13 @@ body { margin: 0; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0f141b; --surface: #161d26; --ink: #e5eaf0; --muted: #98a5b4; --line: #2a3542;
-    --accent: #93a6ff; --v1: #8eb0d2; --v10: #e2aa4f; --v20: #4fc3c9; --ok: #5fd08f;
+    --accent: #93a6ff; --v1: #8eb0d2; --v10: #e2aa4f; --v20: #4fc3c9; --ok: #5fd08f; --warn: #f08a55;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0f141b; --surface: #161d26; --ink: #e5eaf0; --muted: #98a5b4; --line: #2a3542;
-  --accent: #93a6ff; --v1: #8eb0d2; --v10: #e2aa4f; --v20: #4fc3c9; --ok: #5fd08f;
+  --accent: #93a6ff; --v1: #8eb0d2; --v10: #e2aa4f; --v20: #4fc3c9; --ok: #5fd08f; --warn: #f08a55;
   color-scheme: dark;
 }
 
@@ -91,14 +92,18 @@ section { display: grid; gap: 16px; }
 }
 .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .c-v1 { color: var(--v1); } .c-v10 { color: var(--v10); } .c-v20 { color: var(--v20); }
+.c-warn { color: var(--warn); } .c-muted { color: var(--muted); } .c-ink { color: var(--ink); }
+.chip.dashed { border-style: dashed; }
 .status { color: var(--ok); font-family: var(--font-mono); font-size: 0.78rem; }
+.changed { color: var(--warn); font-family: var(--font-mono); font-size: 0.78rem; white-space: nowrap; }
 
-/* Diagram */
+/* Diagrams */
 .diagram {
   background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
   overflow-x: auto; padding: 12px;
 }
 .diagram svg { display: block; width: 100%; min-width: 760px; height: auto; }
+.diagram.rack svg { min-width: 600px; max-width: 760px; margin: 0 auto; }
 .d-box { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
 .d-core { fill: color-mix(in srgb, var(--accent) 7%, var(--surface)); stroke: var(--accent); stroke-width: 1.5; }
 .d-host { fill: color-mix(in srgb, var(--ink) 3%, var(--surface)); stroke: var(--ink); stroke-width: 1.5; }
@@ -108,11 +113,37 @@ section { display: grid; gap: 16px; }
 .d-v20 { fill: var(--surface); stroke: var(--v20); stroke-width: 1.5; }
 .d-link { stroke: var(--muted); stroke-width: 2; fill: none; }
 .d-trunk { stroke: var(--accent); stroke-width: 3; fill: none; }
+.d-cluster { fill: color-mix(in srgb, var(--v20) 10%, var(--surface)); stroke: var(--v20); stroke-width: 1.5; }
+.d-svc { fill: var(--surface); stroke: var(--v20); stroke-width: 1; stroke-dasharray: 2 3; }
+.d-future { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 5 4; }
+.d-planned { fill: none; stroke: var(--v20); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.d-allow { stroke: var(--warn); stroke-width: 2; stroke-dasharray: 6 4; fill: none; }
 .t-title { font-family: var(--font-display); font-weight: 700; font-size: 14px; fill: var(--ink); }
 .t-body { font-family: var(--font-body); font-size: 12px; fill: var(--muted); }
 .t-mono { font-family: var(--font-mono); font-size: 11.5px; fill: var(--ink); }
 .t-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; fill: var(--muted); }
 .t-v1 { fill: var(--v1); } .t-v10 { fill: var(--v10); } .t-v20 { fill: var(--v20); } .t-accent { fill: var(--accent); }
+.t-warn { fill: var(--warn); }
+
+/* Rack drawing */
+.r-frame { fill: color-mix(in srgb, var(--ink) 4%, var(--surface)); stroke: var(--ink); stroke-width: 2; }
+.r-rail { fill: color-mix(in srgb, var(--ink) 14%, var(--surface)); stroke: none; }
+.r-hole { fill: var(--surface); stroke: var(--muted); stroke-width: 0.8; }
+.r-tick { stroke: var(--line); stroke-width: 1; }
+.r-plate { fill: var(--surface); stroke: var(--ink); stroke-width: 1.3; }
+.r-mount { fill: var(--surface); stroke: var(--warn); stroke-width: 1.6; }
+.r-future { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 5 4; }
+.r-port { fill: color-mix(in srgb, var(--ink) 18%, var(--surface)); stroke: none; }
+.r-tiny { fill: color-mix(in srgb, var(--ink) 82%, var(--surface)); stroke: none; }
+.r-tiny-future { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.r-led { fill: var(--accent); }
+.r-jumper { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
+.r-jumper-future { stroke: var(--muted); stroke-width: 2; stroke-dasharray: 3 3; }
+.r-lead { stroke: var(--muted); stroke-width: 1; fill: none; }
+.t-plate { font-family: var(--font-display); font-weight: 700; font-size: 12.5px; fill: var(--ink); }
+.t-plate-muted { font-family: var(--font-display); font-weight: 700; font-size: 12.5px; fill: var(--muted); }
+.t-on-dark { fill: var(--surface); }
+.t-u { font-family: var(--font-mono); font-size: 10.5px; fill: var(--muted); }
 
 /* Tables */
 .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
@@ -125,12 +156,36 @@ th {
 tr:last-child td { border-bottom: 0; }
 td.nowrap { white-space: nowrap; }
 td .sub { display: block; color: var(--muted); font-size: 0.82rem; }
+td.dim { color: var(--muted); }
+
+/* Switch faceplate */
+.sw-face { fill: color-mix(in srgb, var(--ink) 4%, var(--surface)); stroke: var(--ink); stroke-width: 1.5; }
+.sw-port { fill: var(--surface); stroke: var(--ink); stroke-width: 1.3; }
+.sw-port-future { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 5 4; }
+.sw-port-empty { fill: none; stroke: var(--line); stroke-width: 1.3; stroke-dasharray: 3 3; }
+.sw-jack { fill: color-mix(in srgb, var(--ink) 70%, var(--surface)); }
+.sw-led { fill: var(--ok); }
+.sw-move { fill: none; stroke: var(--warn); stroke-width: 2; stroke-dasharray: 6 4; }
+.sw-arrowhead { fill: var(--warn); }
+.vb-v1 { fill: var(--v1); background: var(--v1); } .vb-v10 { fill: var(--v10); background: var(--v10); }
+.vb-v20 { fill: var(--v20); background: var(--v20); } .vb-accent { fill: var(--accent); background: var(--accent); }
+.t-dim { fill: var(--line); }
+.vbar { width: 22px; height: 6px; border-radius: 1px; display: inline-block; }
+.jumper { width: 3px; height: 16px; border-radius: 2px; background: var(--accent); display: inline-block; }
+.jumper.future { background: none; border-left: 2px dashed var(--muted); width: 0; border-radius: 0; }
+.led { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); display: inline-block; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.85rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.swatch { width: 22px; height: 12px; border-radius: 2px; border: 1.5px solid var(--ink); background: var(--surface); }
+.swatch.mount { border-color: var(--warn); }
+.swatch.future { border: 1.5px dashed var(--muted); background: none; }
 
 /* Two-up */
 .split { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
 .split > * { min-width: 0; }
+.stack { display: grid; gap: 12px; align-content: start; }
 
-/* Build flow */
+/* Ordered steps */
 .flow { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: step; }
 .flow li {
   counter-increment: step; display: grid; grid-template-columns: 44px 1fr; gap: 14px;
@@ -145,7 +200,10 @@ td .sub { display: block; color: var(--muted); font-size: 0.82rem; }
 
 .notes { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
 .notes li { display: grid; gap: 2px; padding-left: 14px; border-left: 2px solid var(--line); }
+.notes.open li { border-left-color: var(--warn); }
 .notes b { font-weight: 600; }
+a { color: var(--accent); text-decoration: none; }
+a:hover, a:focus-visible { text-decoration: underline; }
 
 footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
 </style>
@@ -155,41 +213,49 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
 <div class="wrap">
 
 <header>
-  <div class="eyebrow">Homelab · as of 20 Oct 2026</div>
+  <div class="eyebrow">Target design · 24 Oct 2026</div>
   <h1>Atlas Lab</h1>
-  <p class="lede">A single Proxmox server running a two-node Talos Linux Kubernetes cluster. Terraform builds it, and everything on top is deployed with GitOps. I use it to practice platform engineering and Ansible/VMware automation.</p>
+  <p class="lede">The finished lab: an 8U 10-inch rack next to the fiber drop, a low-power Lenovo M920q Tiny running Proxmox, and a three-node Talos Kubernetes cluster built with Terraform and managed with GitOps, and Red Hat Ansible Automation Platform on its own VM. Two more Tinys can be added later for a three-node Proxmox cluster.</p>
   <div class="facts">
-    <div class="fact"><b>1</b><span>Proxmox host</span></div>
-    <div class="fact"><b>2 + 2</b><span>VMs + LXC containers</span></div>
-    <div class="fact"><b>v1.35</b><span>Kubernetes on Talos 1.12</span></div>
+    <div class="fact"><b>1 → 3</b><span>Proxmox Tinys</span></div>
+    <div class="fact"><b>3</b><span>Talos nodes</span></div>
     <div class="fact"><b>3</b><span>VLANs</span></div>
-    <div class="fact"><b>6</b><span>LoadBalancer services</span></div>
+    <div class="fact"><b>8U</b><span>10-inch rack</span></div>
+    <div class="fact"><b>35 W</b><span>CPU per Tiny</span></div>
   </div>
 </header>
 
 <section>
   <div class="section-head">
     <h2>Topology</h2>
-    <p class="muted">The gateway routes between three VLANs. Proxmox gets a trunk port, and each guest is tagged onto its VLAN at the bridge.</p>
+    <p class="muted">Frontier fiber runs straight into the UniFi gateway, with no ISP router in between. The gateway routes between three VLANs, and the Tiny gets a trunk port where each guest is tagged onto its VLAN. Only the basement AP is wired; the other two mesh wirelessly because the house has no ethernet runs.</p>
   </div>
-  <div class="diagram" role="img" aria-label="Network topology: Internet to UniFi gateway, to an 8-port PoE switch, which feeds three Wi-Fi access points and a Proxmox host. Proxmox runs Pi-hole on the default network and the Talos cluster, AWX Postgres and MetalLB services on VLAN 20.">
-    <svg viewBox="0 0 960 580" xmlns="http://www.w3.org/2000/svg">
+  <div class="diagram" role="img" aria-label="Target network topology: Frontier fiber ONT to UniFi gateway, to an 8-port PoE switch, which feeds the wired basement access point (the other two mesh wirelessly), the Hue bridge on IoT, and the M920q Tiny Proxmox host. Proxmox runs Pi-hole on the default network and, on VLAN 20, a three-node Talos Kubernetes cluster, whose MetalLB service IPs are virtual addresses routed to pods for ArgoCD and vcsim, plus a separate planned AAP VM. The gateway zone firewall blocks traffic between VLANs by default; the personal laptop is the only default-network device allowed into VLAN 20, and the lab may only reach Pi-hole DNS and the Proxmox API.">
+    <svg viewBox="0 0 960 690" xmlns="http://www.w3.org/2000/svg">
       <!-- links -->
       <line class="d-link" x1="480" y1="62" x2="480" y2="100"/>
       <line class="d-link" x1="480" y1="162" x2="480" y2="196"/>
       <polyline class="d-link" points="340,226 160,226 160,280"/>
       <line class="d-trunk" x1="480" y1="256" x2="480" y2="280"/>
-      <text class="t-label" x="172" y="218">PoE · ALL SSIDs</text>
-      <text class="t-label t-accent" x="490" y="273">TRUNK · VLAN 1/10/20</text>
+      <text class="t-label" x="490" y="86">WAN · 2.5 GbE</text>
+      <text class="t-label" x="490" y="184">1 GbE · SW PORT 1</text>
+      <text class="t-label" x="172" y="218">SW PORT 2 · PoE</text>
+      <text class="t-label t-accent" x="490" y="273">SW PORT 3 · VLAN 1 + 20</text>
 
-      <!-- internet -->
-      <rect class="d-box" x="400" y="16" width="160" height="46" rx="23"/>
-      <text class="t-title" x="480" y="44" text-anchor="middle">Internet</text>
+      <!-- fiber / ONT -->
+      <rect class="d-box" x="360" y="16" width="240" height="46" rx="23"/>
+      <text class="t-title" x="480" y="44" text-anchor="middle">Frontier fiber · FRX523 ONT</text>
 
       <!-- gateway -->
       <rect class="d-core" x="330" y="100" width="300" height="62" rx="8"/>
       <text class="t-title" x="346" y="124">UniFi Cloud Gateway Ultra</text>
       <text class="t-body" x="346" y="144">Router, firewall, DHCP · <tspan class="t-mono">192.168.0.1</tspan></text>
+
+      <!-- zone firewall summary -->
+      <text class="t-label t-warn" x="646" y="116">ZONE FIREWALL · VLANS BLOCKED BY DEFAULT</text>
+      <text class="t-label" x="646" y="133">EXCEPT  LAB, IOT → PI-HOLE  UDP 53</text>
+      <text class="t-label" x="646" y="148">        LAB → PROXMOX  8006</text>
+      <text class="t-label" x="646" y="163">        AUSTIN-MAC → LAB  ALL</text>
 
       <!-- switch -->
       <rect class="d-box" x="340" y="196" width="280" height="60" rx="8"/>
@@ -199,8 +265,8 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <!-- APs -->
       <rect class="d-box" x="20" y="280" width="290" height="116" rx="8"/>
       <text class="t-title" x="36" y="304">3 × U7 Pro access points</text>
-      <text class="t-mono" x="36" y="326">Main .0.4 · Basement .0.3</text>
-      <text class="t-mono" x="36" y="344">Office .0.5</text>
+      <text class="t-mono" x="36" y="326">Basement .0.3 · wired, PoE</text>
+      <text class="t-mono" x="36" y="344">Main .0.4 · Office .0.5 · mesh</text>
       <text class="t-body" x="36" y="368">Wi-Fi 7 · 4 SSIDs mapped to VLANs</text>
       <text class="t-body" x="36" y="385">(Home, Gaming → 1 · IoT → 10 · Lab → 20)</text>
 
@@ -208,12 +274,18 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <rect class="d-v10" x="20" y="416" width="290" height="74" rx="8"/>
       <text class="t-label t-v10" x="36" y="438">VLAN 10 · IOT</text>
       <text class="t-mono" x="36" y="458">192.168.10.0/24</text>
-      <text class="t-body" x="36" y="477">Smart-home devices, kept off the lab</text>
+      <text class="t-body" x="36" y="477">Smart-home devices; Hue bridge on sw port 7</text>
 
-      <!-- proxmox host -->
-      <rect class="d-host" x="340" y="280" width="600" height="284" rx="10"/>
-      <text class="t-title" x="358" y="305">proxmox · Proxmox VE 9.2</text>
-      <text class="t-body" x="358" y="324"><tspan class="t-mono">192.168.0.100</tspan> · bridge vmbr0 (VLAN-aware)</text>
+      <!-- personal laptop -->
+      <rect class="d-v1" x="20" y="506" width="290" height="74" rx="8"/>
+      <text class="t-title" x="36" y="528">austin-mac · personal laptop</text>
+      <text class="t-mono" x="36" y="547">192.168.0.58 · Wi-Fi, VLAN 1</text>
+      <text class="t-body" x="36" y="566">Only VLAN 1 device allowed into the lab</text>
+
+      <!-- proxmox host: M920q Tiny #1 -->
+      <rect class="d-host" x="340" y="280" width="600" height="370" rx="10"/>
+      <text class="t-title" x="358" y="305">proxmox · M920q Tiny #1</text>
+      <text class="t-body" x="358" y="324"><tspan class="t-mono">192.168.0.100</tspan> · Proxmox VE 9 · bridge vmbr0 (VLAN-aware)</text>
 
       <!-- pihole -->
       <text class="t-label t-v1" x="358" y="352">VLAN 1 · DEFAULT</text>
@@ -223,38 +295,56 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <text class="t-mono" x="370" y="419">192.168.0.101</text>
 
       <!-- host hw -->
-      <rect class="d-box" x="358" y="448" width="164" height="100" rx="6"/>
+      <rect class="d-box" x="358" y="448" width="164" height="150" rx="6"/>
       <text class="t-label" x="370" y="468">HARDWARE</text>
-      <text class="t-body" x="370" y="488">i7-4790K · 8 threads</text>
-      <text class="t-body" x="370" y="505">24 GB RAM</text>
-      <text class="t-body" x="370" y="522">512 GB SSD · ZFS guests</text>
-      <text class="t-body" x="370" y="539">250 GB SSD · OS</text>
+      <text class="t-body" x="370" y="488">i5-8500T · 6 cores</text>
+      <text class="t-body" x="370" y="505">32 GB RAM</text>
+      <text class="t-body t-accent" x="370" y="522">→ 64 GB for AAP</text>
+      <text class="t-body" x="370" y="539">1 TB NVMe · guests</text>
+      <text class="t-body" x="370" y="556">250 GB SATA · OS</text>
+      <text class="t-body" x="370" y="573">500 GB USB · backups</text>
+
+      <!-- room for more containers -->
+      <rect class="d-future" x="358" y="608" width="164" height="30" rx="6"/>
+      <text class="t-body" x="370" y="628">+ more LXCs (tbd)</text>
 
       <!-- vlan 20 zone -->
-      <rect class="d-v20zone" x="540" y="340" width="384" height="208" rx="8"/>
+      <rect class="d-v20zone" x="540" y="340" width="384" height="296" rx="8"/>
       <text class="t-label t-v20" x="556" y="360">VLAN 20 · ATLAS LAB · 192.168.20.0/24</text>
 
-      <rect class="d-v20" x="556" y="372" width="172" height="66" rx="6"/>
-      <text class="t-title" x="568" y="394">talos-cp</text>
-      <text class="t-body" x="568" y="411">VM 200 · control plane</text>
-      <text class="t-mono" x="568" y="428">.20.10 · 2c / 4 GB</text>
+      <!-- Talos Kubernetes cluster: three node VMs; MetalLB IPs are virtual, inside the cluster -->
+      <rect class="d-cluster" x="552" y="368" width="364" height="170" rx="8"/>
+      <text class="t-label t-v20" x="564" y="385">TALOS KUBERNETES CLUSTER · 3 VMS</text>
 
-      <rect class="d-v20" x="738" y="372" width="172" height="66" rx="6"/>
-      <text class="t-title" x="750" y="394">talos-worker-01</text>
-      <text class="t-body" x="750" y="411">VM 201 · worker</text>
-      <text class="t-mono" x="750" y="428">.20.11 · 2c / 6 GB</text>
+      <rect class="d-v20" x="562" y="394" width="110" height="66" rx="6"/>
+      <text class="t-title" x="572" y="415">talos-cp</text>
+      <text class="t-body" x="572" y="432">control plane</text>
+      <text class="t-mono" x="572" y="449">.20.10</text>
 
-      <rect class="d-v20" x="556" y="450" width="172" height="84" rx="6"/>
-      <text class="t-title" x="568" y="472">awx-postgres</text>
-      <text class="t-body" x="568" y="489">LXC 105 · PostgreSQL 16</text>
-      <text class="t-body" x="568" y="506">AWX database</text>
-      <text class="t-mono" x="568" y="523">.20.12</text>
+      <rect class="d-v20" x="680" y="394" width="110" height="66" rx="6"/>
+      <text class="t-title" x="690" y="415">worker-01</text>
+      <text class="t-body" x="690" y="432">worker</text>
+      <text class="t-mono" x="690" y="449">.20.11</text>
 
-      <rect class="d-v20" x="738" y="450" width="172" height="84" rx="6"/>
-      <text class="t-title" x="750" y="472">MetalLB pool</text>
-      <text class="t-mono" x="750" y="489">.50  ArgoCD</text>
-      <text class="t-mono" x="750" y="506">.51  AWX</text>
-      <text class="t-mono" x="750" y="523">.52–.55  vcsim ×4</text>
+      <rect class="d-v20" x="798" y="394" width="110" height="66" rx="6"/>
+      <text class="t-title" x="808" y="415">worker-02</text>
+      <text class="t-body" x="808" y="432">worker (new)</text>
+      <text class="t-mono" x="808" y="449">.20.13</text>
+
+      <rect class="d-svc" x="562" y="470" width="346" height="58" rx="6"/>
+      <text class="t-label t-v20" x="572" y="487">SERVICE IPS · METALLB · .20.50–.99</text>
+      <text class="t-mono" x="572" y="504">.50 ArgoCD  ·  .52–.55 vcsim ×4  ·  + more</text>
+      <text class="t-body" x="572" y="520">Virtual IPs answered by the nodes, routed to pods</text>
+
+      <!-- AAP: separate VM, outside the cluster -->
+      <rect class="d-planned" x="552" y="552" width="364" height="72" rx="6"/>
+      <text class="t-title" x="564" y="574">aap · Ansible Automation Platform</text>
+      <text class="t-body" x="564" y="592">RHEL 9 VM · 4 vCPU / 16 GB · after 64 GB RAM upgrade</text>
+      <text class="t-mono" x="564" y="610">.20.12 · aap.atlas.local</text>
+
+      <!-- laptop firewall exception into VLAN 20 -->
+      <polyline class="d-allow" points="310,543 326,543 326,666 733,666 733,636"/>
+      <text class="t-label t-warn" x="346" y="684">FIREWALL ALLOW · AUSTIN-MAC → VLAN 20 · ALL PORTS</text>
     </svg>
   </div>
 </section>
@@ -262,27 +352,321 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
 <section>
   <div class="section-head">
     <h2>Network</h2>
-    <p class="muted">UniFi handles routing, Wi-Fi and DHCP. Pi-hole is the DNS server and holds every <code>*.atlas.local</code> record.</p>
+    <p class="muted">UniFi handles routing, Wi-Fi and DHCP. Every machine uses Pi-hole first, which filters ads and holds every <code>*.atlas.local</code> record, and Cloudflare <code>1.1.1.1</code> as a fallback so internet names still resolve if Pi-hole is down. The gateway runs a zone firewall that blocks traffic between VLANs by default. The exceptions are below. Replies to allowed connections are let through automatically.</p>
   </div>
   <div class="table-wrap">
     <table>
       <thead><tr><th>Network</th><th>VLAN</th><th>Subnet</th><th>What lives there</th></tr></thead>
       <tbody>
-        <tr><td>Default</td><td><span class="chip c-v1">1</span></td><td class="mono nowrap">192.168.0.0/24</td><td>Network gear, Proxmox management, Pi-hole, everyday home devices</td></tr>
-        <tr><td>IoT</td><td><span class="chip c-v10">10</span></td><td class="mono nowrap">192.168.10.0/24</td><td>Smart speakers, lighting, printer</td></tr>
-        <tr><td>Atlas Lab</td><td><span class="chip c-v20">20</span></td><td class="mono nowrap">192.168.20.0/24</td><td>Talos nodes (<code>.10–.11</code>), lab LXCs (<code>.12+</code>), MetalLB service IPs (<code>.50–.99</code>)</td></tr>
+        <tr><td>Default</td><td><span class="chip c-v1">1</span></td><td class="mono nowrap">192.168.0.0/24</td><td>Network gear, Proxmox management, Pi-hole, printer, everyday home devices</td></tr>
+        <tr><td>IoT</td><td><span class="chip c-v10">10</span></td><td class="mono nowrap">192.168.10.0/24</td><td>Smart speakers, Hue lighting</td></tr>
+        <tr><td>Atlas Lab</td><td><span class="chip c-v20">20</span></td><td class="mono nowrap">192.168.20.0/24</td><td>Talos nodes (<code>.10, .11, .13</code>), AAP VM (<code>.12</code>), MetalLB service IPs (<code>.50–.99</code>)</td></tr>
       </tbody>
     </table>
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Device</th><th>Model</th><th>IP</th><th>Status</th></tr></thead>
+      <thead><tr><th>From</th><th>To</th><th>Allowed</th><th>Rule</th></tr></thead>
       <tbody>
-        <tr><td>Cloud Gateway Ultra</td><td>UCG-Ultra <span class="sub">UniFi OS 5.1.33</span></td><td class="mono">192.168.0.1</td><td><span class="status">● online</span></td></tr>
-        <tr><td>USW-Lite-8-PoE</td><td>8-port PoE switch <span class="sub">fw 7.5.15</span></td><td class="mono">192.168.0.2</td><td><span class="status">● online</span></td></tr>
-        <tr><td>U7 Pro Basement</td><td>Wi-Fi 7 AP <span class="sub">fw 8.7.11</span></td><td class="mono">192.168.0.3</td><td><span class="status">● online</span></td></tr>
-        <tr><td>U7 Pro Main</td><td>Wi-Fi 7 AP <span class="sub">fw 8.7.11</span></td><td class="mono">192.168.0.4</td><td><span class="status">● online</span></td></tr>
-        <tr><td>U7 Pro Office</td><td>Wi-Fi 7 AP <span class="sub">fw 8.7.11</span></td><td class="mono">192.168.0.5</td><td><span class="status">● online</span></td></tr>
+        <tr><td>austin-mac <span class="sub">.0.58, matched by MAC</span></td><td><span class="chip c-v20">20</span> Lab</td><td>All traffic</td><td>Allow Austin MAC to LAB</td></tr>
+        <tr><td><span class="chip c-v20">20</span> Lab</td><td>Pi-hole <span class="mono">.0.101</span></td><td>UDP 53</td><td>Allow LAB DNS to PiHole</td></tr>
+        <tr><td><span class="chip c-v20">20</span> Lab</td><td>Proxmox <span class="mono">.0.100</span></td><td>8006</td><td>Allow LAB to Proxmox API</td></tr>
+        <tr><td><span class="chip c-v10">10</span> IoT</td><td>Pi-hole <span class="mono">.0.101</span></td><td>UDP 53</td><td>Allow IoT DNS to PiHole</td></tr>
+        <tr><td class="dim">Everything else between VLANs</td><td class="dim">—</td><td><span class="changed">blocked</span></td><td class="dim">default</td></tr>
+        <tr><td class="dim">All VLANs</td><td>Internet</td><td>All traffic</td><td class="dim">default</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">The Mac's rule and its <code>.0.58</code> reservation both key on its Wi-Fi address, <code>ba:b0:9f:7d:1a:3b</code>. That's a macOS private address set to "Fixed" for Atlas Home, so it stays the same unless the Mac forgets the network. If lab access stops after rejoining, update the MAC in both.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Device</th><th>Model</th><th>IP</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td>Frontier ONT</td><td>FRX523 <span class="sub">XGS-PON, bridged to gateway WAN</span></td><td class="dim">n/a</td><td>Top of the rack</td></tr>
+        <tr><td>Cloud Gateway Ultra</td><td>UCG-Ultra</td><td class="mono">192.168.0.1</td><td>Rack slot 3</td></tr>
+        <tr><td>USW-Lite-8-PoE</td><td>8-port PoE switch</td><td class="mono">192.168.0.2</td><td>Rack slot 2</td></tr>
+        <tr><td>U7 Pro Basement</td><td>Wi-Fi 7 AP <span class="sub">wired, PoE</span></td><td class="mono">192.168.0.3</td><td>Basement · switch port 2</td></tr>
+        <tr><td>U7 Pro Main</td><td>Wi-Fi 7 AP <span class="sub">wireless mesh</span></td><td class="mono">192.168.0.4</td><td>Main floor</td></tr>
+        <tr><td>U7 Pro Office</td><td>Wi-Fi 7 AP <span class="sub">wireless mesh</span></td><td class="mono">192.168.0.5</td><td>Office</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="rack">
+  <div class="section-head">
+    <h2>Rack build</h2>
+    <p class="muted">A DeskPi RackMate T1 (8U, 10-inch) next to the fiber drop in the basement. Low power draw is a hard requirement, so there's nothing enterprise-grade in it. The ONT (optical network terminal) is Frontier's fiber box: it converts the fiber's light signal into Ethernet for the gateway's WAN port. This is the front view; heights are to scale, so half-U slots are drawn at half height.</p>
+  </div>
+  <div class="diagram rack" role="img" aria-label="Front elevation of an 8U 10-inch rack, top to bottom: 0.5U 12-port patch panel, 1U USW-Lite-8-PoE switch, 1U UCG Ultra gateway, 1U blank panel, 1U Lenovo M920q Tiny number 1 (Proxmox node), two 1U slots for future Tiny 2 and 3, and 1.5U spare. The ONT sits on top of the rack, and the power strip and Hue bridge are mounted on its side.">
+    <svg viewBox="0 -44 700 474" xmlns="http://www.w3.org/2000/svg">
+      <!-- U ruler: 1U = 44px, rack interior y 40–392 -->
+      <g class="t-u" text-anchor="end">
+        <text x="40" y="66">1</text><text x="40" y="110">2</text><text x="40" y="154">3</text><text x="40" y="198">4</text>
+        <text x="40" y="242">5</text><text x="40" y="286">6</text><text x="40" y="330">7</text><text x="40" y="374">8</text>
+      </g>
+      <text class="t-label" x="40" y="28" text-anchor="end">U</text>
+
+      <!-- frame -->
+      <rect class="r-frame" x="52" y="28" width="376" height="376" rx="6"/>
+      <rect class="r-rail" x="60" y="40" width="16" height="352"/>
+      <rect class="r-rail" x="404" y="40" width="16" height="352"/>
+      <g class="r-hole">
+        <!-- 3 holes per U on each rail -->
+        <circle cx="68" cy="48" r="2.5"/><circle cx="68" cy="62" r="2.5"/><circle cx="68" cy="76" r="2.5"/>
+        <circle cx="68" cy="92" r="2.5"/><circle cx="68" cy="106" r="2.5"/><circle cx="68" cy="120" r="2.5"/>
+        <circle cx="68" cy="136" r="2.5"/><circle cx="68" cy="150" r="2.5"/><circle cx="68" cy="164" r="2.5"/>
+        <circle cx="68" cy="180" r="2.5"/><circle cx="68" cy="194" r="2.5"/><circle cx="68" cy="208" r="2.5"/>
+        <circle cx="68" cy="224" r="2.5"/><circle cx="68" cy="238" r="2.5"/><circle cx="68" cy="252" r="2.5"/>
+        <circle cx="68" cy="268" r="2.5"/><circle cx="68" cy="282" r="2.5"/><circle cx="68" cy="296" r="2.5"/>
+        <circle cx="68" cy="312" r="2.5"/><circle cx="68" cy="326" r="2.5"/><circle cx="68" cy="340" r="2.5"/>
+        <circle cx="68" cy="356" r="2.5"/><circle cx="68" cy="370" r="2.5"/><circle cx="68" cy="384" r="2.5"/>
+        <circle cx="412" cy="48" r="2.5"/><circle cx="412" cy="62" r="2.5"/><circle cx="412" cy="76" r="2.5"/>
+        <circle cx="412" cy="92" r="2.5"/><circle cx="412" cy="106" r="2.5"/><circle cx="412" cy="120" r="2.5"/>
+        <circle cx="412" cy="136" r="2.5"/><circle cx="412" cy="150" r="2.5"/><circle cx="412" cy="164" r="2.5"/>
+        <circle cx="412" cy="180" r="2.5"/><circle cx="412" cy="194" r="2.5"/><circle cx="412" cy="208" r="2.5"/>
+        <circle cx="412" cy="224" r="2.5"/><circle cx="412" cy="238" r="2.5"/><circle cx="412" cy="252" r="2.5"/>
+        <circle cx="412" cy="268" r="2.5"/><circle cx="412" cy="282" r="2.5"/><circle cx="412" cy="296" r="2.5"/>
+        <circle cx="412" cy="312" r="2.5"/><circle cx="412" cy="326" r="2.5"/><circle cx="412" cy="340" r="2.5"/>
+        <circle cx="412" cy="356" r="2.5"/><circle cx="412" cy="370" r="2.5"/><circle cx="412" cy="384" r="2.5"/>
+      </g>
+      <!-- U boundaries -->
+      <g class="r-tick">
+        <line x1="44" y1="40" x2="52" y2="40"/><line x1="44" y1="84" x2="52" y2="84"/><line x1="44" y1="128" x2="52" y2="128"/>
+        <line x1="44" y1="172" x2="52" y2="172"/><line x1="44" y1="216" x2="52" y2="216"/><line x1="44" y1="260" x2="52" y2="260"/>
+        <line x1="44" y1="304" x2="52" y2="304"/><line x1="44" y1="348" x2="52" y2="348"/><line x1="44" y1="392" x2="52" y2="392"/>
+      </g>
+
+      <!-- ONT on top of the rack (planned spot) -->
+      <rect class="r-tiny" x="70" y="-6" width="340" height="32" rx="4"/>
+      <circle class="r-led" cx="376" cy="14" r="2.5"/><circle class="r-led" cx="386" cy="14" r="2.5"/><circle class="r-led" cx="396" cy="14" r="2.5"/>
+      <text class="t-plate t-on-dark" x="84" y="15">ONT</text>
+
+      <!-- 1. patch panel, 0.5U: y 40–62 -->
+      <rect class="r-plate" x="78" y="41" width="324" height="20" rx="2"/>
+      <g class="r-port">
+        <rect x="200" y="46" width="12" height="10" rx="1"/><rect x="216" y="46" width="12" height="10" rx="1"/><rect x="232" y="46" width="12" height="10" rx="1"/>
+        <rect x="248" y="46" width="12" height="10" rx="1"/><rect x="264" y="46" width="12" height="10" rx="1"/><rect x="280" y="46" width="12" height="10" rx="1"/>
+        <rect x="296" y="46" width="12" height="10" rx="1"/><rect x="312" y="46" width="12" height="10" rx="1"/><rect x="328" y="46" width="12" height="10" rx="1"/>
+        <rect x="344" y="46" width="12" height="10" rx="1"/><rect x="360" y="46" width="12" height="10" rx="1"/><rect x="376" y="46" width="12" height="10" rx="1"/>
+      </g>
+      <text class="t-plate" x="88" y="55">Patch panel</text>
+
+      <!-- 2. switch, 1U: y 62–106 -->
+      <rect class="r-mount" x="78" y="63" width="324" height="42" rx="3"/>
+      <text class="t-plate" x="88" y="89">USW-Lite-8-PoE</text>
+      <g class="r-port">
+        <rect x="199" y="76" width="14" height="14" rx="1"/><rect x="215" y="76" width="14" height="14" rx="1"/><rect x="231" y="76" width="14" height="14" rx="1"/><rect x="247" y="76" width="14" height="14" rx="1"/><rect x="263" y="76" width="14" height="14" rx="1"/><rect x="279" y="76" width="14" height="14" rx="1"/><rect x="295" y="76" width="14" height="14" rx="1"/><rect x="311" y="76" width="14" height="14" rx="1"/>
+      </g>
+      <!-- 0.5 ft jumpers: panel port N straight down to switch port N -->
+      <g>
+        <line class="r-jumper" x1="206" y1="56" x2="206" y2="77"/>
+        <line class="r-jumper" x1="222" y1="56" x2="222" y2="77"/>
+        <line class="r-jumper" x1="238" y1="56" x2="238" y2="77"/>
+        <line class="r-jumper-future" x1="254" y1="56" x2="254" y2="77"/>
+        <line class="r-jumper-future" x1="270" y1="56" x2="270" y2="77"/>
+        <line class="r-jumper" x1="302" y1="56" x2="302" y2="77"/>
+      </g>
+
+      <!-- 3. gateway, 1U: y 106–150 -->
+      <rect class="r-mount" x="78" y="107" width="324" height="42" rx="3"/>
+      <text class="t-plate" x="88" y="133">UCG Ultra</text>
+      <circle class="r-led" cx="190" cy="128" r="3"/>
+      <g class="r-port">
+        <rect x="305" y="120" width="16" height="14" rx="1"/><rect x="324" y="120" width="16" height="14" rx="1"/><rect x="343" y="120" width="16" height="14" rx="1"/>
+        <rect x="362" y="120" width="16" height="14" rx="1"/><rect x="381" y="120" width="16" height="14" rx="1"/>
+      </g>
+
+      <!-- 4. blank, 1U: y 150–194 -->
+      <rect class="r-future" x="78" y="151" width="324" height="42" rx="3"/>
+      <text class="t-u" x="88" y="176">blank</text>
+
+      <!-- 5. Tiny #1, 1U: y 194–238 -->
+      <rect class="r-mount" x="78" y="195" width="324" height="42" rx="3"/>
+      <rect class="r-tiny" x="150" y="200" width="180" height="32" rx="2"/>
+      <circle class="r-led" cx="318" cy="216" r="3"/>
+      <text class="t-plate" x="88" y="221">Tiny #1</text>
+
+      <!-- 6. Tiny #2, future: y 238–282 -->
+      <rect class="r-future" x="78" y="239" width="324" height="42" rx="3"/>
+      <rect class="r-tiny-future" x="150" y="244" width="180" height="32" rx="2"/>
+      <text class="t-plate-muted" x="88" y="265">Tiny #2</text>
+
+      <!-- 7. Tiny #3, future: y 282–326 -->
+      <rect class="r-future" x="78" y="283" width="324" height="42" rx="3"/>
+      <rect class="r-tiny-future" x="150" y="288" width="180" height="32" rx="2"/>
+      <text class="t-plate-muted" x="88" y="309">Tiny #3</text>
+
+      <!-- 8. spare, 1.5U: y 326–392 (power strip is side-mounted) -->
+      <rect class="r-future" x="78" y="327" width="324" height="64" rx="3"/>
+      <text class="t-u" x="88" y="363">spare / blank</text>
+
+      <!-- callouts -->
+      <g class="r-lead">
+        <line x1="410" y1="10" x2="450" y2="10"/>
+        <line x1="428" y1="51" x2="450" y2="51"/>
+        <line x1="428" y1="84" x2="450" y2="84"/>
+        <line x1="428" y1="128" x2="450" y2="128"/>
+        <line x1="428" y1="172" x2="450" y2="172"/>
+        <line x1="428" y1="216" x2="450" y2="216"/>
+        <line x1="428" y1="282" x2="450" y2="282"/>
+        <line x1="428" y1="359" x2="450" y2="359"/>
+      </g>
+      <text class="t-title" x="458" y="6">ONT · on top of the rack</text>
+      <text class="t-body" x="458" y="21">Frontier fiber box · too wide for a tray</text>
+      <text class="t-title" x="458" y="47">Patch panel · 0.5U</text>
+      <text class="t-body" x="458" y="62">Ports 1–8 drop straight to the switch</text>
+      <text class="t-title" x="458" y="82">Switch · 1U</text>
+      <text class="t-body" x="458" y="97">192.168.0.2 · 1 GbE · PoE</text>
+      <text class="t-title" x="458" y="126">Gateway · 1U</text>
+      <text class="t-body" x="458" y="141">192.168.0.1 · 2.5 GbE WAN</text>
+      <text class="t-title" x="458" y="170">Blank · 1U</text>
+      <text class="t-body" x="458" y="185">Spare slot, included blank panel</text>
+      <text class="t-title" x="458" y="214">M920q Tiny #1 · 1U</text>
+      <text class="t-body" x="458" y="229">Proxmox node</text>
+      <text class="t-body t-accent" x="458" y="244">+ 500 GB USB SSD behind: VM backups</text>
+      <text class="t-title" x="458" y="280">Tiny #2, #3 · 2U</text>
+      <text class="t-body" x="458" y="295">Future; blank panels until then</text>
+      <text class="t-title" x="458" y="357">Spare · 1.5U</text>
+      <text class="t-body" x="458" y="372">1U vented blank · strip on the side</text>
+    </svg>
+  </div>
+  <div class="legend">
+    <span><i class="swatch"></i>Owned, ready to mount</span>
+    <span><i class="swatch mount"></i>Owned, 10-inch mount still to buy</span>
+    <span><i class="swatch future"></i>Future or empty</span>
+  </div>
+  <p class="muted">The ONT is 9.7″ wide and the rails leave about 8¾″, so it sits on top of the rack. If it ever fits on the included 1U tray, it can move into slot 4.</p>
+  <p class="muted">On the side panel, not in a slot: the power strip and the Hue bridge. The Hue cable runs around the rear edge into patch panel port 7, like every other device.</p>
+
+  <h3>Switch port map</h3>
+  <p class="muted">Each device's cable runs through the patch panel: device to rear port N, front port N, a 0.5 ft jumper, then switch port N, so panel and switch numbers always match. The colour bar under each port shows the VLANs it carries.</p>
+  <div class="diagram" role="img" aria-label="Patch panel above the USW-Lite-8-PoE switch. Panel ports 1 to 8 sit directly above switch ports 1 to 8, joined by straight 0.5 foot jumpers; panel ports 9 to 12 are spare. Switch ports: 1 gateway uplink, 2 Basement access point with PoE carrying all VLANs, 3 Tiny 1, 4 and 5 future Tinys, each with VLAN 1 native and VLAN 20 tagged, 6 spare, 7 Hue bridge on VLAN 10, 8 spare.">
+    <svg viewBox="0 0 960 252" xmlns="http://www.w3.org/2000/svg">
+      <text class="t-label" x="24" y="14">PATCH PANEL · 12-PORT · DEVICE CABLES PLUG IN AT THE REAR</text>
+      <rect class="sw-face" x="20" y="22" width="920" height="62" rx="6"/>
+      <text class="t-label" x="62" y="37" text-anchor="middle">1</text>
+      <rect class="sw-port" x="42" y="44" width="40" height="30" rx="3"/>
+      <rect class="sw-jack" x="50" y="51" width="24" height="16" rx="2"/>
+      <text class="t-label" x="138" y="37" text-anchor="middle">2</text>
+      <rect class="sw-port" x="118" y="44" width="40" height="30" rx="3"/>
+      <rect class="sw-jack" x="126" y="51" width="24" height="16" rx="2"/>
+      <text class="t-label" x="214" y="37" text-anchor="middle">3</text>
+      <rect class="sw-port" x="194" y="44" width="40" height="30" rx="3"/>
+      <rect class="sw-jack" x="202" y="51" width="24" height="16" rx="2"/>
+      <text class="t-label" x="290" y="37" text-anchor="middle">4</text>
+      <rect class="sw-port" x="270" y="44" width="40" height="30" rx="3"/>
+      <rect class="sw-jack" x="278" y="51" width="24" height="16" rx="2"/>
+      <text class="t-label" x="366" y="37" text-anchor="middle">5</text>
+      <rect class="sw-port" x="346" y="44" width="40" height="30" rx="3"/>
+      <rect class="sw-jack" x="354" y="51" width="24" height="16" rx="2"/>
+      <text class="t-label" x="442" y="37" text-anchor="middle">6</text>
+      <rect class="sw-port-empty" x="422" y="44" width="40" height="30" rx="3"/>
+      <text class="t-label" x="518" y="37" text-anchor="middle">7</text>
+      <rect class="sw-port" x="498" y="44" width="40" height="30" rx="3"/>
+      <rect class="sw-jack" x="506" y="51" width="24" height="16" rx="2"/>
+      <text class="t-label" x="594" y="37" text-anchor="middle">8</text>
+      <rect class="sw-port-empty" x="574" y="44" width="40" height="30" rx="3"/>
+      <text class="t-label" x="670" y="37" text-anchor="middle">9</text>
+      <rect class="sw-port-empty" x="650" y="44" width="40" height="30" rx="3"/>
+      <text class="t-body t-dim" x="670" y="102" text-anchor="middle">spare</text>
+      <text class="t-label" x="746" y="37" text-anchor="middle">10</text>
+      <rect class="sw-port-empty" x="726" y="44" width="40" height="30" rx="3"/>
+      <text class="t-body t-dim" x="746" y="102" text-anchor="middle">spare</text>
+      <text class="t-label" x="822" y="37" text-anchor="middle">11</text>
+      <rect class="sw-port-empty" x="802" y="44" width="40" height="30" rx="3"/>
+      <text class="t-body t-dim" x="822" y="102" text-anchor="middle">spare</text>
+      <text class="t-label" x="898" y="37" text-anchor="middle">12</text>
+      <rect class="sw-port-empty" x="878" y="44" width="40" height="30" rx="3"/>
+      <text class="t-body t-dim" x="898" y="102" text-anchor="middle">spare</text>
+      <line class="r-jumper" x1="62" y1="74" x2="62" y2="146"/>
+      <line class="r-jumper" x1="138" y1="74" x2="138" y2="146"/>
+      <line class="r-jumper" x1="214" y1="74" x2="214" y2="146"/>
+      <line class="r-jumper-future" x1="290" y1="74" x2="290" y2="146"/>
+      <line class="r-jumper-future" x1="366" y1="74" x2="366" y2="146"/>
+      <line class="r-jumper" x1="518" y1="74" x2="518" y2="146"/>
+      <text class="t-label" x="644" y="161">USW-LITE-8-POE</text>
+      <rect class="sw-face" x="20" y="118" width="616" height="78" rx="6"/>
+      <text class="t-label" x="62" y="133" text-anchor="middle">1</text>
+      <rect class="sw-port" x="34" y="140" width="56" height="36" rx="3"/>
+      <rect class="sw-jack" x="46" y="148" width="32" height="18" rx="2"/>
+      <rect class="sw-jack" x="56" y="166" width="12" height="4"/>
+      <rect class="vb-accent" x="34.0" y="182" width="56.0" height="6"/>
+      <text class="t-body" x="62" y="214" text-anchor="middle" font-weight="600">Gateway</text>
+      <text class="t-body" x="62" y="228" text-anchor="middle">uplink</text>
+      <text class="t-label" x="62" y="243" text-anchor="middle">uplink</text>
+      <text class="t-label" x="138" y="133" text-anchor="middle">2</text>
+      <rect class="sw-port" x="110" y="140" width="56" height="36" rx="3"/>
+      <rect class="sw-jack" x="122" y="148" width="32" height="18" rx="2"/>
+      <rect class="sw-jack" x="132" y="166" width="12" height="4"/>
+      <rect class="vb-v1" x="110.0" y="182" width="18.7" height="6"/>
+      <rect class="vb-v10" x="128.7" y="182" width="18.7" height="6"/>
+      <rect class="vb-v20" x="147.3" y="182" width="18.7" height="6"/>
+      <text class="t-body" x="138" y="214" text-anchor="middle" font-weight="600">U7 Pro</text>
+      <text class="t-body" x="138" y="228" text-anchor="middle">Basement</text>
+      <text class="t-label" x="138" y="243" text-anchor="middle">all · PoE</text>
+      <text class="t-label" x="214" y="133" text-anchor="middle">3</text>
+      <rect class="sw-port" x="186" y="140" width="56" height="36" rx="3"/>
+      <rect class="sw-jack" x="198" y="148" width="32" height="18" rx="2"/>
+      <rect class="sw-jack" x="208" y="166" width="12" height="4"/>
+      <rect class="vb-v1" x="186.0" y="182" width="28.0" height="6"/>
+      <rect class="vb-v20" x="214.0" y="182" width="28.0" height="6"/>
+      <text class="t-body" x="214" y="214" text-anchor="middle" font-weight="600">Tiny #1</text>
+      <text class="t-label" x="214" y="243" text-anchor="middle">1 + 20</text>
+      <text class="t-label" x="290" y="133" text-anchor="middle">4</text>
+      <rect class="sw-port-future" x="262" y="140" width="56" height="36" rx="3"/>
+      <rect class="sw-jack" x="274" y="148" width="32" height="18" rx="2"/>
+      <rect class="sw-jack" x="284" y="166" width="12" height="4"/>
+      <rect class="vb-v1" x="262.0" y="182" width="28.0" height="6" opacity="0.45"/>
+      <rect class="vb-v20" x="290.0" y="182" width="28.0" height="6" opacity="0.45"/>
+      <text class="t-body" x="290" y="214" text-anchor="middle" font-weight="600">Tiny #2</text>
+      <text class="t-body" x="290" y="228" text-anchor="middle">future</text>
+      <text class="t-label" x="290" y="243" text-anchor="middle">1 + 20</text>
+      <text class="t-label" x="366" y="133" text-anchor="middle">5</text>
+      <rect class="sw-port-future" x="338" y="140" width="56" height="36" rx="3"/>
+      <rect class="sw-jack" x="350" y="148" width="32" height="18" rx="2"/>
+      <rect class="sw-jack" x="360" y="166" width="12" height="4"/>
+      <rect class="vb-v1" x="338.0" y="182" width="28.0" height="6" opacity="0.45"/>
+      <rect class="vb-v20" x="366.0" y="182" width="28.0" height="6" opacity="0.45"/>
+      <text class="t-body" x="366" y="214" text-anchor="middle" font-weight="600">Tiny #3</text>
+      <text class="t-body" x="366" y="228" text-anchor="middle">future</text>
+      <text class="t-label" x="366" y="243" text-anchor="middle">1 + 20</text>
+      <text class="t-label" x="442" y="133" text-anchor="middle">6</text>
+      <rect class="sw-port-empty" x="414" y="140" width="56" height="36" rx="3"/>
+      <text class="t-body t-dim" x="442" y="214" text-anchor="middle">spare</text>
+      <text class="t-label" x="518" y="133" text-anchor="middle">7</text>
+      <rect class="sw-port" x="490" y="140" width="56" height="36" rx="3"/>
+      <rect class="sw-jack" x="502" y="148" width="32" height="18" rx="2"/>
+      <rect class="sw-jack" x="512" y="166" width="12" height="4"/>
+      <rect class="vb-v10" x="490.0" y="182" width="56.0" height="6"/>
+      <text class="t-body" x="518" y="214" text-anchor="middle" font-weight="600">Hue bridge</text>
+      <text class="t-body" x="518" y="228" text-anchor="middle">side</text>
+      <text class="t-label" x="518" y="243" text-anchor="middle">10 IoT</text>
+      <text class="t-label" x="594" y="133" text-anchor="middle">8</text>
+      <rect class="sw-port-empty" x="566" y="140" width="56" height="36" rx="3"/>
+      <text class="t-body t-dim" x="594" y="214" text-anchor="middle">spare</text>
+    </svg>
+  </div>
+  <div class="legend">
+    <span><i class="vbar vb-v1"></i>VLAN 1 native</span>
+    <span><i class="vbar vb-v20"></i>VLAN 20 tagged</span>
+    <span><i class="vbar vb-v10"></i>VLAN 10 IoT</span>
+    <span><i class="vbar vb-accent"></i>Uplink to gateway</span>
+    <span><i class="jumper"></i>0.5 ft jumper</span>
+    <span><i class="jumper future"></i>Future jumper</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Port</th><th>Device</th><th>VLANs</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">1</td><td>Gateway uplink</td><td>Uplink</td></tr>
+        <tr><td class="mono">2</td><td>U7 Pro Basement <span class="sub">PoE</span></td><td>AP trunk, all VLANs</td></tr>
+        <tr><td class="mono">3</td><td>M920q Tiny #1</td><td><span class="chip c-v1">1</span> native · <span class="chip c-v20">20</span> tagged</td></tr>
+        <tr><td class="mono">4</td><td>Tiny #2 (future)</td><td><span class="chip c-v1">1</span> native · <span class="chip c-v20">20</span> tagged</td></tr>
+        <tr><td class="mono">5</td><td>Tiny #3 (future)</td><td><span class="chip c-v1">1</span> native · <span class="chip c-v20">20</span> tagged</td></tr>
+        <tr><td class="mono">6</td><td class="dim">spare</td><td></td></tr>
+        <tr><td class="mono">7</td><td>Hue bridge <span class="sub">side-mounted, via patch panel 7</span></td><td><span class="chip c-v10">10</span> IoT</td></tr>
+        <tr><td class="mono">8</td><td class="dim">spare</td><td></td></tr>
       </tbody>
     </table>
   </div>
@@ -290,17 +674,50 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
 
 <section>
   <div class="section-head">
+    <h2>Lenovo M920q Tiny</h2>
+    <p class="muted">Tiny #1 of 3. Bought used on eBay, 20 Oct 2026.</p>
+  </div>
+  <div class="split">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Spec</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td>CPU</td><td>Intel Core i5-8500T <span class="sub">6 cores, 35 W TDP</span></td></tr>
+          <tr><td>RAM</td><td>32 GB, 2 × SO-DIMM <span class="sub">upgrade to 64 GB (2 × 32 GB) planned for AAP</span></td></tr>
+          <tr><td>Network</td><td>1 GbE Intel I219 <span class="sub">PCIe riser slot free for a second NIC</span></td></tr>
+          <tr><td>Expansion</td><td>2 × M.2 2280 NVMe, 1 × 2.5" SATA bay</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Drive</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td>250 GB 2.5" SATA SSD</td><td>Proxmox OS</td></tr>
+          <tr><td>1 TB NVMe in SSD1</td><td>VM and container storage</td></tr>
+          <tr><td>SSD2</td><td class="dim">free for later</td></tr>
+          <tr><td>500 GB Crucial SSD <span class="sub">USB 3 enclosure, behind the Tiny</span></td><td>VM backups</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-head">
     <h2>Proxmox guests</h2>
-    <p class="muted">An Intel i7-4790K box with 24 GB RAM. Guest disks live on a 512 GB ZFS SSD pool, and the OS has its own SSD.</p>
+    <p class="muted">Everything runs on Tiny #1. Guest disks live on the 1 TB NVMe and backups go to the USB SSD.</p>
   </div>
   <div class="table-wrap">
     <table>
       <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Network</th><th>Size</th><th>Role</th></tr></thead>
       <tbody>
         <tr><td class="mono">102</td><td>atlas-pihole</td><td>LXC</td><td class="nowrap"><span class="chip c-v1">1</span> <span class="mono">.0.101</span></td><td class="nowrap">1 vCPU · 512 MB</td><td>DNS and ad-blocking for the whole house and lab</td></tr>
-        <tr><td class="mono">105</td><td>awx-postgres</td><td>LXC · Alpine</td><td class="nowrap"><span class="chip c-v20">20</span> <span class="mono">.20.12</span></td><td class="nowrap">2 vCPU · 1 GB</td><td>PostgreSQL 16 for AWX, kept outside the cluster</td></tr>
         <tr><td class="mono">200</td><td>talos-cp</td><td>VM · Talos</td><td class="nowrap"><span class="chip c-v20">20</span> <span class="mono">.20.10</span></td><td class="nowrap">2 vCPU · 4 GB · 20 GB</td><td>Kubernetes control plane and etcd</td></tr>
-        <tr><td class="mono">201</td><td>talos-worker-01</td><td>VM · Talos</td><td class="nowrap"><span class="chip c-v20">20</span> <span class="mono">.20.11</span></td><td class="nowrap">2 vCPU · 6 GB · 75 GB</td><td>Kubernetes worker; runs all workloads</td></tr>
+        <tr><td class="mono">201</td><td>talos-worker-01</td><td>VM · Talos</td><td class="nowrap"><span class="chip c-v20">20</span> <span class="mono">.20.11</span></td><td class="nowrap">2 vCPU · 6 GB · 75 GB</td><td>Kubernetes worker</td></tr>
+        <tr><td class="mono">202</td><td>talos-worker-02 <span class="sub">talos-worker-02.atlas.local · new</span></td><td>VM · Talos</td><td class="nowrap"><span class="chip c-v20">20</span> <span class="mono">.20.13</span></td><td class="nowrap">2 vCPU · 6 GB · 75 GB</td><td>Kubernetes worker</td></tr>
+        <tr><td class="dim">tbd</td><td class="dim">more LXCs</td><td class="dim">LXC</td><td class="dim">tbd</td><td class="dim">—</td><td class="dim">Not decided yet; room once the RAM upgrade is in</td></tr>
+        <tr><td class="dim">tbd</td><td>aap <span class="sub">aap.atlas.local · planned</span></td><td>VM · RHEL 9</td><td class="nowrap"><span class="chip c-v20">20</span> <span class="mono">.20.12</span></td><td class="nowrap">4 vCPU · 16 GB · 100 GB</td><td>Red Hat Ansible Automation Platform: containerized installer, growth topology, bundled Postgres. Needs the 64 GB RAM upgrade</td></tr>
       </tbody>
     </table>
   </div>
@@ -309,7 +726,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
 <section>
   <div class="section-head">
     <h2>Kubernetes platform</h2>
-    <p class="muted">Talos Linux is immutable and API-only, with no SSH and no shell. Every component below is a folder under <code>platform/</code> in the repo, and ArgoCD deploys it automatically.</p>
+    <p class="muted">Three Talos nodes: <code>talos-cp</code> (.10) runs the control plane, and <code>talos-worker-01</code> (.11) and the new <code>talos-worker-02</code> (.13) run workloads. Each component is a folder under <code>platform/</code>; ArgoCD deploys it.</p>
   </div>
   <div class="split">
     <div class="table-wrap">
@@ -323,8 +740,8 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
           <tr><td>local-path-provisioner</td><td>Default StorageClass on node disk</td></tr>
           <tr><td>Kratix <span class="sub">v0.125.0</span></td><td>Platform "promises", e.g. order a Proxmox VM as a Kubernetes resource</td></tr>
           <tr><td>Flux <span class="sub">v2.8.5</span></td><td>Applies whatever Kratix writes to <code>state/</code></td></tr>
-          <tr><td>AWX <span class="sub">24.6.1</span></td><td>Ansible automation UI</td></tr>
           <tr><td>vcsim</td><td>4 simulated vCenters for testing VMware playbooks</td></tr>
+          <tr><td class="dim">More services</td><td class="dim">Not decided yet; each one is a new <code>platform/</code> folder</td></tr>
         </tbody>
       </table>
     </div>
@@ -333,11 +750,11 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
         <thead><tr><th>Service</th><th>Address</th></tr></thead>
         <tbody>
           <tr><td>ArgoCD UI</td><td class="mono">192.168.20.50</td></tr>
-          <tr><td>AWX UI</td><td class="mono">192.168.20.51</td></tr>
           <tr><td>vcenter-01</td><td class="mono">192.168.20.52</td></tr>
           <tr><td>vcenter-02</td><td class="mono">192.168.20.53</td></tr>
           <tr><td>vcenter-03</td><td class="mono">192.168.20.54</td></tr>
           <tr><td>vcenter-04</td><td class="mono">192.168.20.55</td></tr>
+          <tr><td class="dim">Free for new services</td><td class="mono dim">.51, .56–.99</td></tr>
         </tbody>
       </table>
     </div>
@@ -349,7 +766,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     <h2>How it gets built</h2>
   </div>
   <ol class="flow">
-    <li><div><h3>Terraform creates the cluster</h3><p>The <code>bpg/proxmox</code> and <code>siderolabs/talos</code> providers download the Talos ISO, create both VMs on VLAN 20, apply the machine configs and bootstrap etcd. State lives in Terraform Cloud, but runs execute locally so they can reach the private network.</p></div></li>
+    <li><div><h3>Terraform creates the cluster</h3><p>The <code>bpg/proxmox</code> and <code>siderolabs/talos</code> providers download the Talos ISO, create the three VMs on VLAN 20, apply the machine configs and bootstrap etcd. State lives in Terraform Cloud, but runs execute locally so they can reach the private network.</p></div></li>
     <li><div><h3>ArgoCD installs the platform</h3><p>One root ApplicationSet watches <code>platform/</code>. To add a service, I add a folder and push to <code>main</code>. It's live within a few minutes, with self-heal and prune enabled.</p></div></li>
     <li><div><h3>Kratix and Flux handle self-service requests</h3><p>A request such as "give me a Proxmox VM" goes through a Kratix promise pipeline. The pipeline writes manifests to <code>state/</code> in Git, and Flux applies them to the cluster.</p></div></li>
   </ol>
@@ -357,27 +774,35 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
 
 <section>
   <div class="split">
-    <div style="display:grid;gap:12px">
-      <h2>Lessons learned</h2>
-      <ul class="notes">
-        <li><b>Keep databases off local-path volumes.</b><span class="muted">AWX's in-cluster Postgres lost its data twice after power cuts. It now runs in its own LXC on ZFS.</span></li>
-        <li><b>Talos is read-only.</b><span class="muted">local-path-provisioner had to move to <code>/var</code>, and its namespace needed privileged PodSecurity.</span></li>
-        <li><b>Pinned MAC addresses make rebuilds painless.</b><span class="muted">Each node keeps its MAC and IP across a full destroy and rebuild.</span></li>
+    <div class="stack">
+      <h2>Open decisions</h2>
+      <ul class="notes open">
+        <li><b>Name and IP for Tiny #1</b><span class="muted">Drawn here as <code>proxmox.atlas.local</code> / .0.100, taking over from the old tower</span></li>
+        <li><b>RAM upgrade for AAP</b><span class="muted">2 × 32 GB SO-DIMMs; works in the M920q per community reports, above Lenovo's official 32 GB</span></li>
+        <li><b>Side for the power strip and Hue</b><span class="muted">Pick the side panel, and whether it keeps its acrylic plate</span></li>
+        <li><b>10-inch mounts</b><span class="muted">Models for the gateway, switch and Tiny</span></li>
+        <li><b>1 TB NVMe</b><span class="muted">When to buy it</span></li>
       </ul>
     </div>
-    <div style="display:grid;gap:12px">
-      <h2>Next up</h2>
-      <ul class="notes">
-        <li><b>Prometheus and Grafana</b><span class="muted">Cluster and workload monitoring</span></li>
-        <li><b>Cilium</b><span class="muted">Replace Flannel to get eBPF and network policy</span></li>
-        <li><b>More workers, then an HA control plane</b><span class="muted">Three control-plane nodes behind kube-vip</span></li>
-        <li><b>A bigger Kratix catalog</b><span class="muted">More self-service promises beyond Proxmox VMs</span></li>
-      </ul>
+    <div class="stack">
+      <h2>Quick links</h2>
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr><td>Proxmox</td><td class="mono"><a href="https://192.168.0.100:8006" target="_blank" rel="noopener">192.168.0.100:8006</a></td></tr>
+            <tr><td>UniFi</td><td class="mono"><a href="https://192.168.0.1" target="_blank" rel="noopener">192.168.0.1</a></td></tr>
+            <tr><td>Pi-hole</td><td class="mono"><a href="http://192.168.0.101/admin" target="_blank" rel="noopener">192.168.0.101/admin</a></td></tr>
+            <tr><td>ArgoCD</td><td class="mono"><a href="https://192.168.20.50" target="_blank" rel="noopener">192.168.20.50</a></td></tr>
+            <tr><td>AAP</td><td class="mono"><a href="https://aap.atlas.local" target="_blank" rel="noopener">aap.atlas.local</a> <span class="dim">(planned)</span></td></tr>
+            <tr><td>vcsim</td><td class="mono">vcenter-01…04.atlas.local</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </section>
 
-<footer>Live data pulled from the UniFi controller, the Proxmox API and <code>kubectl</code> on 20 Oct 2026. Design notes come from the atlas-talos repo.</footer>
+<footer>Target design as of 24 Oct 2026. Network and firewall settings come from the live UniFi controller; the rack and hardware plan from <code>docs/atlas-rack-design.md</code>; the platform from the rest of the atlas-talos repo.</footer>
 
 </div>
 </body>

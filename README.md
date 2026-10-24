@@ -8,15 +8,9 @@ See [docs/lab-overview.html](docs/lab-overview.html) for a one-page visual overv
 
 See [docs/unifi-access.md](docs/unifi-access.md) for how to connect to the UniFi controller.
 
-See [docs/proxmox-access.md](docs/proxmox-access.md) for how to connect to the Proxmox server.
-
 See [docs/awx-external-postgres.md](docs/awx-external-postgres.md) for how AWX's database is set up on a dedicated Proxmox LXC.
 
-See [docs/proxmox-smb-share.md](docs/proxmox-smb-share.md) for the Samba file share hosted on the Proxmox 1TB WD drive.
-
-See [docs/proxmox-install.md](docs/proxmox-install.md) for the Proxmox installation and configuration runbook.
-
-See [docs/proxmox-upgrade.md](docs/proxmox-upgrade.md) for the Proxmox major version upgrade guide and issues log.
+See [docs/proxmox.md](docs/proxmox.md) for the Proxmox host: access, rebuild runbook, maintenance and history.
 
 ## Cluster Overview
 
@@ -117,7 +111,8 @@ cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 | `control_plane_ip` | Control plane static IP | `192.168.20.10` |
 | `worker_ips` | List of worker static IPs | `["192.168.20.11"]` |
 | `gateway` | VLAN 20 gateway | `192.168.20.1` |
-| `dns_server` | DNS server IP | `192.168.0.101` |
+| `dns_server` | DNS server IP (Pi-hole) | `192.168.0.101` |
+| `dns_fallback_server` | Fallback DNS if Pi-hole is down | `1.1.1.1` |
 
 ## Deployment
 
