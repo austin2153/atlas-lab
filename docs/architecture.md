@@ -62,6 +62,8 @@ Starting with 1 control plane and 1 worker. The worker count is designed to scal
 
 DNS entries are managed in Pi-hole (`atlas-pihole.atlas.local`). Static IPs are configured directly in the Talos machine configs rather than via DHCP reservations.
 
+> **Planned (with the M920q, not done yet):** a network redesign puts the whole Proxmox host on VLAN 20 untagged, so the Talos VMs drop their VLAN tag (`vlan_id` unset in Terraform), and Pi-hole moves to `192.168.20.3` (`dns_server`). VLAN 1 becomes management-only and everyday devices move to a new Home VLAN 30. Details in [atlas-rack-design.md](atlas-rack-design.md).
+
 ## VM Configuration
 
 | Parameter | Value | Reason |

@@ -22,6 +22,7 @@ body { margin: 0; }
   --v1: #4f6d8c;
   --v10: #a86a12;
   --v20: #157a80;
+  --v30: #a23b72;
   --ok: #1f8a4c;
   --warn: #b3541e;
   --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
@@ -31,13 +32,13 @@ body { margin: 0; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0f141b; --surface: #161d26; --ink: #e5eaf0; --muted: #98a5b4; --line: #2a3542;
-    --accent: #93a6ff; --v1: #8eb0d2; --v10: #e2aa4f; --v20: #4fc3c9; --ok: #5fd08f; --warn: #f08a55;
+    --accent: #93a6ff; --v1: #8eb0d2; --v10: #e2aa4f; --v20: #4fc3c9; --v30: #e58cc0; --ok: #5fd08f; --warn: #f08a55;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0f141b; --surface: #161d26; --ink: #e5eaf0; --muted: #98a5b4; --line: #2a3542;
-  --accent: #93a6ff; --v1: #8eb0d2; --v10: #e2aa4f; --v20: #4fc3c9; --ok: #5fd08f; --warn: #f08a55;
+  --accent: #93a6ff; --v1: #8eb0d2; --v10: #e2aa4f; --v20: #4fc3c9; --v30: #e58cc0; --ok: #5fd08f; --warn: #f08a55;
   color-scheme: dark;
 }
 
@@ -91,7 +92,7 @@ section { display: grid; gap: 16px; }
   border: 1px solid currentColor;
 }
 .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.c-v1 { color: var(--v1); } .c-v10 { color: var(--v10); } .c-v20 { color: var(--v20); }
+.c-v1 { color: var(--v1); } .c-v10 { color: var(--v10); } .c-v20 { color: var(--v20); } .c-v30 { color: var(--v30); }
 .c-warn { color: var(--warn); } .c-muted { color: var(--muted); } .c-ink { color: var(--ink); }
 .chip.dashed { border-style: dashed; }
 .status { color: var(--ok); font-family: var(--font-mono); font-size: 0.78rem; }
@@ -108,6 +109,7 @@ section { display: grid; gap: 16px; }
 .d-core { fill: color-mix(in srgb, var(--accent) 7%, var(--surface)); stroke: var(--accent); stroke-width: 1.5; }
 .d-host { fill: color-mix(in srgb, var(--ink) 3%, var(--surface)); stroke: var(--ink); stroke-width: 1.5; }
 .d-v1 { fill: color-mix(in srgb, var(--v1) 10%, var(--surface)); stroke: var(--v1); stroke-width: 1.5; }
+.d-v30 { fill: color-mix(in srgb, var(--v30) 10%, var(--surface)); stroke: var(--v30); stroke-width: 1.5; }
 .d-v10 { fill: color-mix(in srgb, var(--v10) 10%, var(--surface)); stroke: var(--v10); stroke-width: 1.5; }
 .d-v20zone { fill: color-mix(in srgb, var(--v20) 6%, var(--surface)); stroke: var(--v20); stroke-width: 1.5; stroke-dasharray: 6 4; }
 .d-v20 { fill: var(--surface); stroke: var(--v20); stroke-width: 1.5; }
@@ -122,7 +124,7 @@ section { display: grid; gap: 16px; }
 .t-body { font-family: var(--font-body); font-size: 12px; fill: var(--muted); }
 .t-mono { font-family: var(--font-mono); font-size: 11.5px; fill: var(--ink); }
 .t-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; fill: var(--muted); }
-.t-v1 { fill: var(--v1); } .t-v10 { fill: var(--v10); } .t-v20 { fill: var(--v20); } .t-accent { fill: var(--accent); }
+.t-v1 { fill: var(--v1); } .t-v10 { fill: var(--v10); } .t-v20 { fill: var(--v20); } .t-v30 { fill: var(--v30); } .t-accent { fill: var(--accent); }
 .t-warn { fill: var(--warn); }
 
 /* Rack drawing */
@@ -168,7 +170,7 @@ td.dim { color: var(--muted); }
 .sw-move { fill: none; stroke: var(--warn); stroke-width: 2; stroke-dasharray: 6 4; }
 .sw-arrowhead { fill: var(--warn); }
 .vb-v1 { fill: var(--v1); background: var(--v1); } .vb-v10 { fill: var(--v10); background: var(--v10); }
-.vb-v20 { fill: var(--v20); background: var(--v20); } .vb-accent { fill: var(--accent); background: var(--accent); }
+.vb-v20 { fill: var(--v20); background: var(--v20); } .vb-v30 { fill: var(--v30); background: var(--v30); } .vb-accent { fill: var(--accent); background: var(--accent); }
 .t-dim { fill: var(--line); }
 .vbar { width: 22px; height: 6px; border-radius: 1px; display: inline-block; }
 .jumper { width: 3px; height: 16px; border-radius: 2px; background: var(--accent); display: inline-block; }
@@ -278,7 +280,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
   <div class="facts">
     <div class="fact"><b>1 → 3</b><span>Proxmox Tinys</span></div>
     <div class="fact"><b>3</b><span>Talos nodes</span></div>
-    <div class="fact"><b>3</b><span>VLANs</span></div>
+    <div class="fact"><b>4</b><span>VLANs</span></div>
     <div class="fact"><b>8U</b><span>10-inch rack</span></div>
     <div class="fact"><b>35 W</b><span>CPU per Tiny</span></div>
   </div>
@@ -287,52 +289,53 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
 <section>
   <div class="section-head">
     <h2>Topology</h2>
-    <p class="muted">Frontier fiber runs straight into the UniFi gateway, with no ISP router in between. The gateway routes between three VLANs, and the Tiny gets a trunk port where each guest is tagged onto its VLAN. Only the basement AP is wired; the other two mesh wirelessly because the house has no ethernet runs.</p>
+    <p class="muted">Frontier fiber runs straight into the UniFi gateway, with no ISP router in between. The gateway routes between four VLANs: management for network gear, home, IoT and lab. The whole Proxmox host, Pi-hole included, sits on the lab VLAN with nothing tagged. Only the basement AP is wired; the other two mesh wirelessly because the house has no ethernet runs.</p>
   </div>
   <div class="tracebar topobar" role="group" aria-label="Highlight part of the topology">
     <span class="muted">Show:</span>
-    <button type="button" data-topo-btn="v1" aria-pressed="false">VLAN 1</button>
-    <button type="button" data-topo-btn="v10" aria-pressed="false">VLAN 10</button>
-    <button type="button" data-topo-btn="v20" aria-pressed="false">VLAN 20</button>
+    <button type="button" data-topo-btn="v1" aria-pressed="false">Management (1)</button>
+    <button type="button" data-topo-btn="v30" aria-pressed="false">Home (30)</button>
+    <button type="button" data-topo-btn="v10" aria-pressed="false">IoT (10)</button>
+    <button type="button" data-topo-btn="v20" aria-pressed="false">Lab (20)</button>
     <span class="muted" style="margin-left:10px">Paths:</span>
     <button type="button" data-topo-btn="inet" aria-pressed="false">Internet</button>
     <button type="button" data-topo-btn="mac" aria-pressed="false">Mac → lab</button>
     <button type="button" data-topo-btn="dns" aria-pressed="false">Lab DNS</button>
     <button type="button" data-topo-btn="blocked" aria-pressed="false">IoT → lab (blocked)</button>
   </div>
-  <div class="diagram topo" aria-label="Target network topology: Frontier fiber ONT to UniFi gateway, to an 8-port PoE switch, which feeds the wired basement access point (the other two mesh wirelessly), the Hue bridge on IoT, and the M920q Tiny Proxmox host. Proxmox runs Pi-hole on the default network and, on VLAN 20, a three-node Talos Kubernetes cluster, whose MetalLB service IPs are virtual addresses routed to pods for ArgoCD and vcsim, plus a separate planned AAP VM. The gateway zone firewall blocks traffic between VLANs by default; the personal laptop is the only default-network device allowed into VLAN 20, and the lab may only reach Pi-hole DNS and the Proxmox API.">
+  <div class="diagram topo" aria-label="Target network topology: Frontier fiber ONT to the UniFi gateway, then an 8-port PoE switch. Network gear sits on VLAN 1 management. The switch feeds the wired Basement access point (the other two mesh wirelessly), which serves the Home (VLAN 30), IoT (VLAN 10) and Lab (VLAN 20) Wi-Fi networks, and the M920q Proxmox host, which sits entirely on VLAN 20: Pi-hole, the three-node Talos cluster with its MetalLB service IPs, and a planned AAP VM. The gateway firewall blocks traffic between VLANs by default; the personal laptop on Home is the only device allowed into the lab.">
     <svg viewBox="0 0 960 690" xmlns="http://www.w3.org/2000/svg">
       <!-- links -->
       <line data-topo="gw inet" class="d-link" x1="480" y1="62" x2="480" y2="100"/>
-      <line data-topo="sw gw inet mac dns blocked v1 v10 v20" class="d-link" x1="480" y1="162" x2="480" y2="196"/>
-      <polyline data-topo="ap sw mac blocked v1 v10 v20" class="d-link" points="340,226 160,226 160,280"/>
-      <line data-topo="px sw inet mac dns v1 v20" class="d-trunk" x1="480" y1="256" x2="480" y2="280"/>
+      <line data-topo="sw gw inet mac blocked v1 v10 v20 v30" class="d-link" x1="480" y1="162" x2="480" y2="196"/>
+      <polyline data-topo="ap sw mac blocked v1 v10 v20 v30" class="d-link" points="340,226 160,226 160,280"/>
+      <line data-topo="px sw inet mac v20" class="d-trunk" x1="480" y1="256" x2="480" y2="280"/>
       <text data-topo="gw inet" class="t-label" x="490" y="86">WAN · 2.5 GbE</text>
-      <text data-topo="sw gw inet mac dns blocked v1 v10 v20" class="t-label" x="490" y="184">1 GbE · SW PORT 1</text>
-      <text data-topo="ap sw mac blocked v1 v10 v20" class="t-label" x="172" y="218">SW PORT 2 · PoE</text>
-      <text data-topo="px sw inet mac dns v1 v20" class="t-label t-accent" x="490" y="273">SW PORT 3 · VLAN 1 + 20</text>
+      <text data-topo="sw gw inet mac blocked v1 v10 v20 v30" class="t-label" x="490" y="184">1 GbE · SW PORT 1</text>
+      <text data-topo="ap sw mac blocked v1 v10 v20 v30" class="t-label" x="172" y="218">SW PORT 2 · PoE</text>
+      <text data-topo="px sw inet mac v20" class="t-label t-accent" x="490" y="273">SW PORT 3 · VLAN 20, UNTAGGED</text>
 
       <!-- fiber / ONT -->
       <rect data-topo="gw inet" class="d-box" x="360" y="16" width="240" height="46" rx="23"/>
       <text data-topo="gw inet" class="t-title" x="480" y="44" text-anchor="middle">Frontier fiber · FRX523 ONT</text>
 
       <!-- gateway -->
-      <rect data-topo="gw inet mac dns blocked v1 v10 v20" class="d-core" x="330" y="100" width="300" height="62" rx="8"/>
-      <text data-topo="gw inet mac dns blocked v1 v10 v20" class="t-title" x="346" y="124">UniFi Cloud Gateway Ultra</text>
-      <text data-topo="gw inet mac dns blocked v1 v10 v20" class="t-body" x="346" y="144">Router, firewall, DHCP · <tspan class="t-mono">192.168.0.1</tspan></text>
+      <rect data-topo="gw inet mac blocked v1 v10 v20 v30" class="d-core" x="330" y="100" width="300" height="62" rx="8"/>
+      <text data-topo="gw inet mac blocked v1 v10 v20 v30" class="t-title" x="346" y="124">UniFi Cloud Gateway Ultra</text>
+      <text data-topo="gw inet mac blocked v1 v10 v20 v30" class="t-body" x="346" y="144">Router, firewall, DHCP · <tspan class="t-mono">192.168.0.1</tspan></text>
 
       <!-- switch -->
-      <rect data-topo="sw gw ap px inet mac dns blocked v1 v10 v20" class="d-box" x="340" y="196" width="280" height="60" rx="8"/>
-      <text data-topo="sw gw ap px inet mac dns blocked v1 v10 v20" class="t-title" x="356" y="220">USW-Lite-8-PoE</text>
-      <text data-topo="sw gw ap px inet mac dns blocked v1 v10 v20" class="t-body" x="356" y="240">8-port switch · <tspan class="t-mono">192.168.0.2</tspan></text>
+      <rect data-topo="sw gw ap px inet mac blocked v1 v10 v20 v30" class="d-box" x="340" y="196" width="280" height="60" rx="8"/>
+      <text data-topo="sw gw ap px inet mac blocked v1 v10 v20 v30" class="t-title" x="356" y="220">USW-Lite-8-PoE</text>
+      <text data-topo="sw gw ap px inet mac blocked v1 v10 v20 v30" class="t-body" x="356" y="240">8-port switch · <tspan class="t-mono">192.168.0.2</tspan></text>
 
       <!-- APs -->
-      <rect data-topo="ap sw mac blocked v1 v10 v20" class="d-box" x="20" y="280" width="290" height="116" rx="8"/>
-      <text data-topo="ap sw mac blocked v1 v10 v20" class="t-title" x="36" y="304">3 × U7 Pro access points</text>
-      <text data-topo="ap sw mac blocked v1 v10 v20" class="t-mono" x="36" y="326">Basement .0.3 · wired, PoE</text>
-      <text data-topo="ap sw mac blocked v1 v10 v20" class="t-mono" x="36" y="344">Main .0.4 · Office .0.5 · mesh</text>
-      <text data-topo="ap sw mac blocked v1 v10 v20" class="t-body" x="36" y="368">Home 5 GHz, Gaming 6 GHz → VLAN 1</text>
-      <text data-topo="ap sw mac blocked v1 v10 v20" class="t-body" x="36" y="385">IoT 2.4 GHz → 10 · Lab 5 GHz → 20</text>
+      <rect data-topo="ap sw mac blocked v1 v10 v20 v30" class="d-box" x="20" y="280" width="290" height="116" rx="8"/>
+      <text data-topo="ap sw mac blocked v1 v10 v20 v30" class="t-title" x="36" y="304">3 × U7 Pro access points</text>
+      <text data-topo="ap sw mac blocked v1 v10 v20 v30" class="t-mono" x="36" y="326">Basement .0.3 · wired, PoE</text>
+      <text data-topo="ap sw mac blocked v1 v10 v20 v30" class="t-mono" x="36" y="344">Main .0.4 · Office .0.5 · mesh</text>
+      <text data-topo="ap sw mac blocked v1 v10 v20 v30" class="t-body" x="36" y="368">Home 5 GHz, Gaming 6 GHz → VLAN 30</text>
+      <text data-topo="ap sw mac blocked v1 v10 v20 v30" class="t-body" x="36" y="385">IoT 2.4 GHz → 10 · Lab 5 GHz → 20</text>
 
       <!-- IoT vlan -->
       <rect data-topo="v10 blocked" class="d-v10" x="20" y="416" width="290" height="74" rx="8"/>
@@ -341,40 +344,39 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <text data-topo="v10 blocked" class="t-body" x="36" y="477">Smart-home devices; Hue bridge on sw port 7</text>
 
       <!-- personal laptop -->
-      <rect data-topo="mac v1" class="d-v1" x="20" y="506" width="290" height="74" rx="8"/>
-      <text data-topo="mac v1" class="t-title" x="36" y="528">austin-mac · personal laptop</text>
-      <text data-topo="mac v1" class="t-mono" x="36" y="547">192.168.0.58 · Wi-Fi, VLAN 1</text>
-      <text data-topo="mac v1" class="t-body" x="36" y="566">Only VLAN 1 device allowed into the lab</text>
+      <rect data-topo="mac v30" class="d-v30" x="20" y="506" width="290" height="74" rx="8"/>
+      <text data-topo="mac v30" class="t-label t-v30" x="36" y="528">VLAN 30 · HOME · 192.168.30.0/24</text>
+      <text data-topo="mac v30" class="t-mono" x="36" y="547">austin-mac .30.58 · laptop</text>
+      <text data-topo="mac v30" class="t-body" x="36" y="566">Only Home device allowed into the lab</text>
 
       <!-- proxmox host: M920q Tiny #1 -->
-      <rect data-topo="px inet mac dns v1 v20" class="d-host" x="340" y="280" width="600" height="370" rx="10"/>
-      <text data-topo="px inet mac dns v1 v20" class="t-title" x="358" y="305">proxmox · M920q Tiny #1</text>
-      <text data-topo="px inet mac dns v1 v20" class="t-body" x="358" y="324"><tspan class="t-mono">192.168.0.100</tspan> · Proxmox VE 9 · bridge vmbr0 (VLAN-aware)</text>
+      <rect data-topo="px inet mac dns v20" class="d-host" x="340" y="280" width="600" height="370" rx="10"/>
+      <text data-topo="px inet mac dns v20" class="t-title" x="358" y="305">proxmox · M920q Tiny #1</text>
+      <text data-topo="px inet mac dns v20" class="t-body" x="358" y="324"><tspan class="t-mono">192.168.20.5</tspan> · Proxmox VE 9 · whole host on VLAN 20, untagged</text>
 
       <!-- pihole -->
-      <text data-topo="dns px v1" class="t-label t-v1" x="358" y="352">VLAN 1 · DEFAULT</text>
-      <rect data-topo="dns px v1" class="d-v1" x="358" y="360" width="164" height="72" rx="6"/>
-      <text data-topo="dns px v1" class="t-title" x="370" y="382">atlas-pihole</text>
-      <text data-topo="dns px v1" class="t-body" x="370" y="400">LXC 102 · DNS for atlas.local</text>
-      <text data-topo="dns px v1" class="t-mono" x="370" y="419">192.168.0.101</text>
+      <rect data-topo="dns px v20" class="d-v20" x="358" y="360" width="164" height="72" rx="6"/>
+      <text data-topo="dns px v20" class="t-title" x="370" y="382">atlas-pihole</text>
+      <text data-topo="dns px v20" class="t-body" x="370" y="400">LXC 102 · DNS for atlas.local</text>
+      <text data-topo="dns px v20" class="t-mono" x="370" y="419">192.168.20.3</text>
 
       <!-- host hw -->
-      <rect data-topo="px" class="d-box" x="358" y="448" width="164" height="150" rx="6"/>
-      <text data-topo="px" class="t-label" x="370" y="468">HARDWARE</text>
-      <text data-topo="px" class="t-body" x="370" y="488">i5-8500T · 6 cores</text>
-      <text data-topo="px" class="t-body" x="370" y="505">32 GB RAM</text>
-      <text data-topo="px" class="t-body t-accent" x="370" y="522">→ 64 GB for AAP</text>
-      <text data-topo="px" class="t-body" x="370" y="539">1 TB NVMe · guests</text>
-      <text data-topo="px" class="t-body" x="370" y="556">250 GB SATA · OS</text>
-      <text data-topo="px" class="t-body" x="370" y="573">500 GB USB · backups</text>
+      <rect data-topo="px v20" class="d-box" x="358" y="448" width="164" height="150" rx="6"/>
+      <text data-topo="px v20" class="t-label" x="370" y="468">HARDWARE</text>
+      <text data-topo="px v20" class="t-body" x="370" y="488">i5-8500T · 6 cores</text>
+      <text data-topo="px v20" class="t-body" x="370" y="505">32 GB RAM</text>
+      <text data-topo="px v20" class="t-body t-accent" x="370" y="522">→ 64 GB for AAP</text>
+      <text data-topo="px v20" class="t-body" x="370" y="539">1 TB NVMe · guests</text>
+      <text data-topo="px v20" class="t-body" x="370" y="556">250 GB SATA · OS</text>
+      <text data-topo="px v20" class="t-body" x="370" y="573">500 GB USB · backups</text>
 
       <!-- room for more containers -->
-      <rect data-topo="px" class="d-future" x="358" y="608" width="164" height="30" rx="6"/>
-      <text data-topo="px" class="t-body" x="370" y="628">+ more LXCs (tbd)</text>
+      <rect data-topo="px v20" class="d-future" x="358" y="608" width="164" height="30" rx="6"/>
+      <text data-topo="px v20" class="t-body" x="370" y="628">+ more LXCs (tbd)</text>
 
       <!-- vlan 20 zone -->
-      <rect data-topo="v20 px mac" class="d-v20zone" x="540" y="340" width="384" height="296" rx="8"/>
-      <text data-topo="v20 px mac" class="t-label t-v20" x="556" y="360">VLAN 20 · ATLAS LAB · 192.168.20.0/24</text>
+      <rect data-topo="v20 px mac" class="d-v20zone" x="350" y="336" width="580" height="306" rx="8"/>
+      <text data-topo="v20 px mac" class="t-label t-v20" x="364" y="353">VLAN 20 · ATLAS LAB · 192.168.20.0/24 · THE WHOLE HOST</text>
 
       <!-- Talos Kubernetes cluster: three node VMs; MetalLB IPs are virtual, inside the cluster -->
       <rect data-topo="v20 px mac" class="d-cluster" x="552" y="368" width="364" height="170" rx="8"/>
@@ -407,15 +409,16 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <text data-topo="v20 px mac" class="t-mono" x="564" y="610">.20.12 · aap.atlas.local</text>
 
       <!-- laptop firewall exception into VLAN 20 -->
-      <polyline data-topo="mac" class="d-allow" points="310,543 326,543 326,666 733,666 733,636"/>
+      <polyline data-topo="mac" class="d-allow" points="310,543 326,543 326,666 733,666 733,642"/>
       <text data-topo="mac" class="t-label t-warn" x="346" y="684">FIREWALL ALLOW · AUSTIN-MAC → VLAN 20 · ALL PORTS</text>
+      <text class="t-label t-v1" data-topo="v1" x="646" y="230">VLAN 1 · MANAGEMENT · GATEWAY, SWITCH, APS</text>
       <!-- path overlays (hidden until a path preset is chosen) -->
       <polyline class="d-path" data-topo="mac" points="310,520 322,520 322,340 310,340"/>
       <text class="t-label d-path-label ok" data-topo="mac" x="646" y="134">✓ ALLOWED · AUSTIN-MAC → LAB, ALL PORTS</text>
       <text class="t-label d-path-label ok" data-topo="inet" x="646" y="134">INTERNET · NAT AT THE GATEWAY</text>
       <polyline class="d-path" data-topo="dns" points="562,427 540,427 540,396 522,396"/>
-      <text class="t-label d-path-label ok" data-topo="dns" x="646" y="134">✓ ALLOWED · LAB → PI-HOLE, UDP 53</text>
-      <text class="t-label d-path-label ok" data-topo="dns" x="646" y="150">ROUTED VIA THE GATEWAY BETWEEN VLANS</text>
+      <text class="t-label d-path-label ok" data-topo="dns" x="646" y="134">✓ LAB DNS · SAME VLAN, NO FIREWALL HOP</text>
+      <text class="t-label d-path-label ok" data-topo="dns" x="646" y="150">HOME, IOT, MGMT → PI-HOLE: DNS ONLY</text>
       <polyline class="d-path blocked" data-topo="blocked" points="165,416 165,396"/>
       <text class="t-label d-path-label bad" data-topo="blocked" x="646" y="134">✕ BLOCKED · IOT → LAB (DEFAULT RULE)</text>
       <text class="t-label d-path-label bad" data-topo="blocked" x="646" y="150">STOPS AT THE GATEWAY FIREWALL</text>
@@ -425,18 +428,19 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
 
 <section>
   <div class="section-head">
-    <div class="eyebrow">Verified against UniFi · 24 Oct 2026</div>
+    <div class="eyebrow">Target design · network redesign agreed 25 Oct 2026</div>
     <h2>Network</h2>
-    <p class="muted">UniFi handles routing, Wi-Fi and DHCP. Every machine uses Pi-hole first, which filters ads and holds every <code>*.atlas.local</code> record, and Cloudflare <code>1.1.1.1</code> as a fallback so internet names still resolve if Pi-hole is down.</p>
+    <p class="muted">UniFi handles routing, Wi-Fi and DHCP. Every machine uses Pi-hole (<code>192.168.20.3</code>, on the lab VLAN) first, which filters ads and holds every <code>*.atlas.local</code> record, and Cloudflare <code>1.1.1.1</code> as a fallback so internet names still resolve if Pi-hole is down.</p>
   </div>
   <h3>VLANs and Wi-Fi</h3>
   <div class="table-wrap">
     <table>
       <thead><tr><th>Network</th><th>VLAN</th><th>Subnet</th><th>Wi-Fi</th><th>What lives there</th></tr></thead>
       <tbody>
-        <tr><td>Default</td><td><span class="chip c-v1">1</span></td><td class="mono nowrap">192.168.0.0/24</td><td>Atlas Home <span class="sub">5 GHz</span>Atlas Gaming <span class="sub">6 GHz only, WPA3 only: Wi-Fi 6E and 7 devices</span></td><td>Network gear, Proxmox management, Pi-hole, printer, everyday home devices</td></tr>
+        <tr><td>Management</td><td><span class="chip c-v1">1</span></td><td class="mono nowrap">192.168.0.0/24</td><td class="dim">none, by design <span class="sub">wired break-glass on switch port 8</span></td><td>Network gear only: gateway, switch, access points</td></tr>
+        <tr><td>Home <span class="sub">new</span></td><td><span class="chip c-v30">30</span></td><td class="mono nowrap">192.168.30.0/24</td><td>Atlas Home <span class="sub">5 GHz</span>Atlas Gaming <span class="sub">6 GHz only, WPA3 only: Wi-Fi 6E and 7 devices</span></td><td>Phones, laptops, TVs, consoles, printer</td></tr>
         <tr><td>IoT</td><td><span class="chip c-v10">10</span></td><td class="mono nowrap">192.168.10.0/24</td><td>Atlas IoT <span class="sub">2.4 GHz</span></td><td>Smart speakers, Hue lighting</td></tr>
-        <tr><td>Atlas Lab</td><td><span class="chip c-v20">20</span></td><td class="mono nowrap">192.168.20.0/24</td><td>Atlas Lab <span class="sub">5 GHz</span></td><td>Talos nodes (<code>.10, .11, .13</code>), AAP VM (<code>.12</code>), MetalLB service IPs (<code>.50–.99</code>)</td></tr>
+        <tr><td>Atlas Lab</td><td><span class="chip c-v20">20</span></td><td class="mono nowrap">192.168.20.0/24</td><td>Atlas Lab <span class="sub">5 GHz</span></td><td>Proxmox host, Pi-hole, Talos cluster, AAP, MetalLB service IPs</td></tr>
       </tbody>
     </table>
   </div>
@@ -446,15 +450,17 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     <table>
       <thead><tr><th>From</th><th>To</th><th>Allowed</th><th>Rule</th></tr></thead>
       <tbody>
-        <tr><td>austin-mac <span class="sub">.0.58, matched by MAC</span></td><td><span class="chip c-v20">20</span> Lab</td><td>All traffic</td><td>Allow Austin MAC to LAB</td></tr>
-        <tr><td><span class="chip c-v20">20</span> Lab</td><td>Pi-hole <span class="mono">.0.101</span></td><td>UDP 53</td><td>Allow LAB DNS to PiHole</td></tr>
-        <tr><td><span class="chip c-v20">20</span> Lab</td><td>Proxmox <span class="mono">.0.100</span></td><td>8006</td><td>Allow LAB to Proxmox API</td></tr>
-        <tr><td><span class="chip c-v10">10</span> IoT</td><td>Pi-hole <span class="mono">.0.101</span></td><td>UDP 53</td><td>Allow IoT DNS to PiHole</td></tr>
+        <tr><td>austin-mac <span class="sub">Home, .30.58, matched by MAC</span></td><td><span class="chip c-v20">20</span> Lab</td><td>All traffic</td><td>Allow Austin MAC to LAB</td></tr>
+        <tr><td>austin-mac</td><td><span class="chip c-v1">1</span> Management</td><td>TCP 443 (UniFi UI), TCP 22 (SSH)</td><td>Allow Austin MAC to Management</td></tr>
+        <tr><td><span class="chip c-v30">30</span> Home</td><td><span class="chip c-v10">10</span> IoT</td><td>All traffic <span class="sub">lights, casting; mDNS across Home and IoT</span></td><td>Allow Home to IoT</td></tr>
+        <tr><td>Home, IoT, Management</td><td>Pi-hole <span class="mono">.20.3</span></td><td>UDP/TCP 53</td><td>Allow DNS to PiHole</td></tr>
+        <tr><td>Home, IoT, Lab</td><td>Gateway</td><td>DHCP, NTP, mDNS only <span class="sub">admin (443, 22) only from austin-mac</span></td><td>Restrict gateway admin</td></tr>
         <tr><td class="dim">Everything else between VLANs</td><td class="dim">—</td><td><span class="changed">blocked</span></td><td class="dim">default</td></tr>
         <tr><td class="dim">All VLANs</td><td>Internet</td><td>All traffic</td><td class="dim">default</td></tr>
       </tbody>
     </table>
   </div>
+  <p class="muted">Two of today's rules go away: lab DNS and lab access to Proxmox no longer cross the firewall, because Pi-hole and Proxmox move onto the lab VLAN.</p>
   <h3>Lab addresses</h3>
   <p><span class="chip c-v20">VLAN 20</span> <span class="mono">192.168.20.0/24</span> <span class="muted">· Atlas Lab · gateway <span class="mono">192.168.20.1</span></span></p>
   <p class="muted">How full each range is and the next address to use, then every lab device by IP. Service IPs are pinned in each service's manifest so they never move.</p>
@@ -462,7 +468,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     <table>
       <thead><tr><th>Range</th><th>Use</th><th>Used</th><th>Next free</th></tr></thead>
       <tbody>
-        <tr><td class="mono nowrap">192.168.20.2–.49</td><td>VMs and containers <span class="sub">static</span></td><td class="nowrap"><span class="meter"><i style="width:8.3%"></i></span>4 / 48</td><td class="mono">.14</td></tr>
+        <tr><td class="mono nowrap">192.168.20.2–.49</td><td>VMs and containers <span class="sub">static</span></td><td class="nowrap"><span class="meter"><i style="width:12.5%"></i></span>6 / 48</td><td class="mono">.14</td></tr>
         <tr><td class="mono nowrap">192.168.20.50–.99</td><td>Kubernetes service IPs <span class="sub">MetalLB</span></td><td class="nowrap"><span class="meter lb"><i style="width:6%"></i></span>3 / 50</td><td class="mono">.51</td></tr>
         <tr><td class="mono nowrap">192.168.20.100–.254</td><td>DHCP <span class="sub">lab Wi-Fi clients</span></td><td class="dim">—</td><td class="dim">assigned automatically</td></tr>
       </tbody>
@@ -472,6 +478,8 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     <table>
       <thead><tr><th>IP</th><th>Device</th><th>Type</th><th>Size</th><th>Role</th><th>Status</th></tr></thead>
       <tbody>
+        <tr><td class="mono nowrap">192.168.20.3</td><td><a href="http://192.168.20.3/admin" target="_blank" rel="noopener">atlas-pihole</a> <span class="sub mono">atlas-pihole.atlas.local</span></td><td class="nowrap">LXC 102</td><td class="nowrap">1 vCPU · 512 MB</td><td>DNS and ad-blocking for every VLAN (moves from .0.101)</td><td><span class="st st-plan">Planned</span></td></tr>
+        <tr><td class="mono nowrap">192.168.20.5</td><td><a href="https://192.168.20.5:8006" target="_blank" rel="noopener">proxmox</a> <span class="sub mono">proxmox.atlas.local</span></td><td class="nowrap">M920q Tiny #1</td><td class="nowrap">6 cores · 32 → 64 GB</td><td>Proxmox host (moves from .0.100); Tinys #2 and #3 take .6 and .7</td><td><span class="st st-plan">Planned</span></td></tr>
         <tr><td class="mono nowrap">192.168.20.10</td><td>talos-cp <span class="sub mono">talos-cp.atlas.local</span></td><td class="nowrap">VM 200 · Talos</td><td class="nowrap">2 vCPU · 4 GB · 20 GB</td><td>Kubernetes control plane</td><td><span class="st st-ok">In use</span></td></tr>
         <tr><td class="mono nowrap">192.168.20.11</td><td>talos-worker-01 <span class="sub mono">talos-worker-01.atlas.local</span></td><td class="nowrap">VM 201 · Talos</td><td class="nowrap">2 vCPU · 6 GB · 75 GB</td><td>Kubernetes worker</td><td><span class="st st-ok">In use</span></td></tr>
         <tr><td class="mono nowrap">192.168.20.12</td><td><a href="https://aap.atlas.local" target="_blank" rel="noopener">aap</a> <span class="sub mono">aap.atlas.local</span></td><td class="nowrap">VM · RHEL 9</td><td class="nowrap">4 vCPU · 16 GB · 100 GB</td><td>Ansible Automation Platform</td><td><span class="st st-plan">Planned</span></td></tr>
@@ -485,12 +493,12 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Lab hosts on VLAN 1</th><th>Address</th><th>How it's set</th></tr></thead>
+      <thead><tr><th>Management · VLAN 1</th><th>Address</th><th>Notes</th></tr></thead>
       <tbody>
-        <tr><td><a href="https://192.168.0.1" target="_blank" rel="noopener">Gateway</a> <span class="sub">UniFi</span></td><td class="mono">192.168.0.1</td><td class="dim">UniFi</td></tr>
-        <tr><td>austin-mac <span class="sub">the only VLAN 1 device allowed into the lab</span></td><td class="mono">192.168.0.58</td><td class="dim">DHCP reservation</td></tr>
-        <tr><td><a href="https://192.168.0.100:8006" target="_blank" rel="noopener">Proxmox</a> <span class="sub">M920q Tiny #1</span></td><td class="mono">192.168.0.100</td><td class="dim">Static, on the host</td></tr>
-        <tr><td><a href="http://192.168.0.101/admin" target="_blank" rel="noopener">atlas-pihole</a> <span class="sub">LXC 102 · 1 vCPU · 512 MB · DNS for the house and lab</span></td><td class="mono">192.168.0.101</td><td class="dim">Static, container config</td></tr>
+        <tr><td><a href="https://192.168.0.1" target="_blank" rel="noopener">Gateway</a> <span class="sub">UCG Ultra</span></td><td class="mono">192.168.0.1</td><td class="dim">UniFi UI, reachable only from austin-mac</td></tr>
+        <tr><td>Switch <span class="sub">USW-Lite-8-PoE</span></td><td class="mono">192.168.0.2</td><td class="dim">—</td></tr>
+        <tr><td>Access points <span class="sub">U7 Pro Basement, Main, Office</span></td><td class="mono">192.168.0.3–.5</td><td class="dim">—</td></tr>
+        <tr><td>Break-glass port <span class="sub">switch port 8, VLAN 1 untagged</span></td><td class="dim">DHCP</td><td class="dim">No management Wi-Fi by design. If locked out, plug a laptop straight into switch port 8</td></tr>
       </tbody>
     </table>
   </div>
@@ -805,7 +813,6 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <rect data-pcol="1" data-trace="gw" class="sw-port" x="34" y="140" width="56" height="36" rx="3"/>
       <rect data-pcol="1" data-trace="gw" class="sw-jack" x="46" y="148" width="32" height="18" rx="2"/>
       <rect data-pcol="1" data-trace="gw" class="sw-jack" x="56" y="166" width="12" height="4"/>
-      <rect data-pcol="1" data-trace="gw" class="vb-accent" x="34.0" y="182" width="56.0" height="6"/>
       <text data-pcol="1" data-trace="gw" class="t-body" x="62" y="214" text-anchor="middle" font-weight="600">Gateway</text>
       <text data-pcol="1" data-trace="gw" class="t-body" x="62" y="228" text-anchor="middle">uplink</text>
       <text data-pcol="1" data-trace="gw" class="t-label" x="62" y="243" text-anchor="middle">uplink</text>
@@ -813,9 +820,6 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <rect data-pcol="2" data-trace="ap" class="sw-port" x="110" y="140" width="56" height="36" rx="3"/>
       <rect data-pcol="2" data-trace="ap" class="sw-jack" x="122" y="148" width="32" height="18" rx="2"/>
       <rect data-pcol="2" data-trace="ap" class="sw-jack" x="132" y="166" width="12" height="4"/>
-      <rect data-pcol="2" data-trace="ap" class="vb-v1" x="110.0" y="182" width="18.7" height="6"/>
-      <rect data-pcol="2" data-trace="ap" class="vb-v10" x="128.7" y="182" width="18.7" height="6"/>
-      <rect data-pcol="2" data-trace="ap" class="vb-v20" x="147.3" y="182" width="18.7" height="6"/>
       <text data-pcol="2" data-trace="ap" class="t-body" x="138" y="214" text-anchor="middle" font-weight="600">U7 Pro</text>
       <text data-pcol="2" data-trace="ap" class="t-body" x="138" y="228" text-anchor="middle">Basement</text>
       <text data-pcol="2" data-trace="ap" class="t-label" x="138" y="243" text-anchor="middle">all · PoE</text>
@@ -823,28 +827,22 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <rect data-pcol="3" data-trace="tiny1" class="sw-port" x="186" y="140" width="56" height="36" rx="3"/>
       <rect data-pcol="3" data-trace="tiny1" class="sw-jack" x="198" y="148" width="32" height="18" rx="2"/>
       <rect data-pcol="3" data-trace="tiny1" class="sw-jack" x="208" y="166" width="12" height="4"/>
-      <rect data-pcol="3" data-trace="tiny1" class="vb-v1" x="186.0" y="182" width="28.0" height="6"/>
-      <rect data-pcol="3" data-trace="tiny1" class="vb-v20" x="214.0" y="182" width="28.0" height="6"/>
       <text data-pcol="3" data-trace="tiny1" class="t-body" x="214" y="214" text-anchor="middle" font-weight="600">Tiny #1</text>
-      <text data-pcol="3" data-trace="tiny1" class="t-label" x="214" y="243" text-anchor="middle">1 + 20</text>
+      <text data-pcol="3" data-trace="tiny1" class="t-label" x="214" y="243" text-anchor="middle">VLAN 20</text>
       <text data-pcol="4" class="t-label" x="290" y="133" text-anchor="middle">4</text>
       <rect data-pcol="4" class="sw-port-future" x="262" y="140" width="56" height="36" rx="3"/>
       <rect data-pcol="4" class="sw-jack" x="274" y="148" width="32" height="18" rx="2"/>
       <rect data-pcol="4" class="sw-jack" x="284" y="166" width="12" height="4"/>
-      <rect data-pcol="4" class="vb-v1" x="262.0" y="182" width="28.0" height="6" opacity="0.45"/>
-      <rect data-pcol="4" class="vb-v20" x="290.0" y="182" width="28.0" height="6" opacity="0.45"/>
       <text data-pcol="4" class="t-body" x="290" y="214" text-anchor="middle" font-weight="600">Tiny #2</text>
       <text data-pcol="4" class="t-body" x="290" y="228" text-anchor="middle">future</text>
-      <text data-pcol="4" class="t-label" x="290" y="243" text-anchor="middle">1 + 20</text>
+      <text data-pcol="4" class="t-label" x="290" y="243" text-anchor="middle">VLAN 20</text>
       <text data-pcol="5" class="t-label" x="366" y="133" text-anchor="middle">5</text>
       <rect data-pcol="5" class="sw-port-future" x="338" y="140" width="56" height="36" rx="3"/>
       <rect data-pcol="5" class="sw-jack" x="350" y="148" width="32" height="18" rx="2"/>
       <rect data-pcol="5" class="sw-jack" x="360" y="166" width="12" height="4"/>
-      <rect data-pcol="5" class="vb-v1" x="338.0" y="182" width="28.0" height="6" opacity="0.45"/>
-      <rect data-pcol="5" class="vb-v20" x="366.0" y="182" width="28.0" height="6" opacity="0.45"/>
       <text data-pcol="5" class="t-body" x="366" y="214" text-anchor="middle" font-weight="600">Tiny #3</text>
       <text data-pcol="5" class="t-body" x="366" y="228" text-anchor="middle">future</text>
-      <text data-pcol="5" class="t-label" x="366" y="243" text-anchor="middle">1 + 20</text>
+      <text data-pcol="5" class="t-label" x="366" y="243" text-anchor="middle">VLAN 20</text>
       <text data-pcol="6" class="t-label" x="442" y="133" text-anchor="middle">6</text>
       <rect data-pcol="6" class="sw-port-empty" x="414" y="140" width="56" height="36" rx="3"/>
       <text data-pcol="6" class="t-body t-dim" x="442" y="214" text-anchor="middle">spare</text>
@@ -852,19 +850,30 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <rect data-pcol="7" data-trace="hue" class="sw-port" x="490" y="140" width="56" height="36" rx="3"/>
       <rect data-pcol="7" data-trace="hue" class="sw-jack" x="502" y="148" width="32" height="18" rx="2"/>
       <rect data-pcol="7" data-trace="hue" class="sw-jack" x="512" y="166" width="12" height="4"/>
-      <rect data-pcol="7" data-trace="hue" class="vb-v10" x="490.0" y="182" width="56.0" height="6"/>
       <text data-pcol="7" data-trace="hue" class="t-body" x="518" y="214" text-anchor="middle" font-weight="600">Hue bridge</text>
       <text data-pcol="7" data-trace="hue" class="t-body" x="518" y="228" text-anchor="middle">side</text>
       <text data-pcol="7" data-trace="hue" class="t-label" x="518" y="243" text-anchor="middle">10 IoT</text>
       <text data-pcol="8" class="t-label" x="594" y="133" text-anchor="middle">8</text>
       <rect data-pcol="8" class="sw-port-empty" x="566" y="140" width="56" height="36" rx="3"/>
-      <text data-pcol="8" class="t-body t-dim" x="594" y="214" text-anchor="middle">spare</text>
+      <text data-pcol="8" class="t-body" x="594" y="214" text-anchor="middle" font-weight="600">break-glass</text>
+      <text data-pcol="8" class="t-label" x="594" y="243" text-anchor="middle">VLAN 1</text>
+      <rect data-pcol="1" data-trace="gw" class="vb-accent" x="34.0" y="182" width="56.0" height="6"/>
+      <rect data-pcol="2" data-trace="ap" class="vb-v1" x="110.0" y="182" width="14.0" height="6"/>
+      <rect data-pcol="2" data-trace="ap" class="vb-v30" x="124.0" y="182" width="14.0" height="6"/>
+      <rect data-pcol="2" data-trace="ap" class="vb-v10" x="138.0" y="182" width="14.0" height="6"/>
+      <rect data-pcol="2" data-trace="ap" class="vb-v20" x="152.0" y="182" width="14.0" height="6"/>
+      <rect data-pcol="3" data-trace="tiny1" class="vb-v20" x="186.0" y="182" width="56.0" height="6"/>
+      <rect data-pcol="4" class="vb-v20" x="262.0" y="182" width="56.0" height="6" opacity="0.45"/>
+      <rect data-pcol="5" class="vb-v20" x="338.0" y="182" width="56.0" height="6" opacity="0.45"/>
+      <rect data-pcol="7" data-trace="hue" class="vb-v10" x="490.0" y="182" width="56.0" height="6"/>
+      <rect data-pcol="8" class="vb-v1" x="566.0" y="182" width="56.0" height="6"/>
     </svg>
   </div>
   <p class="portinfo" id="portinfo" aria-live="polite">Hover over or tap a port for its details. Click a VLAN below to see which ports carry it.</p>
   <div class="legend">
-    <button type="button" data-vlan-btn="v1" aria-pressed="false"><i class="vbar vb-v1"></i>VLAN 1 native</button>
-    <button type="button" data-vlan-btn="v20" aria-pressed="false"><i class="vbar vb-v20"></i>VLAN 20 tagged</button>
+    <button type="button" data-vlan-btn="v1" aria-pressed="false"><i class="vbar vb-v1"></i>VLAN 1 management</button>
+    <button type="button" data-vlan-btn="v30" aria-pressed="false"><i class="vbar vb-v30"></i>VLAN 30 home</button>
+    <button type="button" data-vlan-btn="v20" aria-pressed="false"><i class="vbar vb-v20"></i>VLAN 20 lab</button>
     <button type="button" data-vlan-btn="v10" aria-pressed="false"><i class="vbar vb-v10"></i>VLAN 10 IoT</button>
     <button type="button" data-vlan-btn="uplink" aria-pressed="false"><i class="vbar vb-accent"></i>Uplink to gateway</button>
     <span><i class="jumper"></i>0.5 ft jumper</span>
@@ -997,7 +1006,6 @@ spec:
     <div class="stack">
       <h2>Open decisions</h2>
       <ul class="notes open">
-        <li><b>Name and IP for Tiny #1</b><span class="muted">Drawn here as <code>proxmox.atlas.local</code> / .0.100, taking over from the old tower</span></li>
         <li><b>RAM upgrade for AAP</b><span class="muted">2 × 32 GB SO-DIMMs; works in the M920q per community reports, above Lenovo's official 32 GB</span></li>
         <li><b>Side for the power strip and Hue</b><span class="muted">Pick the side panel, and whether it keeps its acrylic plate</span></li>
         <li><b>10-inch mounts</b><span class="muted">Models for the gateway, switch and Tiny</span></li>
@@ -1092,16 +1100,16 @@ spec:
   var info = document.getElementById("portinfo");
   if (!box || !info) return;
   var PORTS = {
-    1: ["Gateway uplink", "panel 1", "carries every VLAN (native 1, tagged 10 + 20)", "no PoE", "1 GbE"],
-    2: ["U7 Pro Basement", "panel 2", "native VLAN 1, tagged 10 + 20 for the SSIDs", "PoE", "1 GbE"],
-    3: ["M920q Tiny #1", "panel 3", "native VLAN 1 (Proxmox), tagged 20 (lab guests)", "no PoE", "1 GbE"],
-    4: ["Tiny #2 (future)", "panel 4", "native VLAN 1, tagged 20", "no PoE", "1 GbE"],
-    5: ["Tiny #3 (future)", "panel 5", "native VLAN 1, tagged 20", "no PoE", "1 GbE"],
+    1: ["Gateway uplink", "panel 1", "carries every VLAN (native 1, tagged 10, 20, 30)", "no PoE", "1 GbE"],
+    2: ["U7 Pro Basement", "panel 2", "native VLAN 1 (management), tagged 10, 20, 30 for the SSIDs", "PoE", "1 GbE"],
+    3: ["M920q Tiny #1", "panel 3", "VLAN 20 only, untagged: host and every guest", "no PoE", "1 GbE"],
+    4: ["Tiny #2 (future)", "panel 4", "VLAN 20 only, untagged", "no PoE", "1 GbE"],
+    5: ["Tiny #3 (future)", "panel 5", "VLAN 20 only, untagged", "no PoE", "1 GbE"],
     6: ["Spare", "panel 6", "unused; disable until needed", "", ""],
     7: ["Hue bridge (side panel)", "panel 7", "VLAN 10 only (IoT access port)", "no PoE", "100 Mb"],
-    8: ["Spare", "panel 8", "unused; disable until needed", "", ""]
+    8: ["Break-glass management port", "no jumper: plug a laptop straight into the switch", "VLAN 1 only, untagged", "use only when locked out", "1 GbE"]
   };
-  var VLANS = { v1: [1, 2, 3, 4, 5], v20: [1, 2, 3, 4, 5], v10: [1, 2, 7], uplink: [1] };
+  var VLANS = { v1: [1, 2, 8], v30: [1, 2], v10: [1, 2, 7], v20: [1, 2, 3, 4, 5], uplink: [1] };
   var cells = Array.prototype.slice.call(box.querySelectorAll("[data-pcol]"));
   var hint = info.innerHTML, pinned = null;
   function show(n) {

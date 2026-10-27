@@ -47,58 +47,89 @@ Consolidate the basement network and lab gear (currently loose on a desk next to
 ### Physical
 - Frontier XGS-PON fiber into FRX523 ONT (no ISP router). ONT to UCG Ultra WAN (2.5 GbE) with a short direct cable (1 ft Cat6) down the back of the rack, from the ONT's network port to the gateway's rear WAN port. It does not go through the patch panel: it's the internet link between two devices in the rack and never touches the switch. The link runs at 2.5 Gb/s (the gateway's WAN port), which only matters for a plan faster than 2.5 Gig. Leave the wall fiber a gentle loop into the back of the ONT; the ONT's power plug ("Fiber Service, DO NOT REMOVE") goes to the side-mounted strip.
 - UCG Ultra to USW-Lite-8-PoE (1 GbE uplink).
-\1 The Basement AP sits on a stand beside the rack, cabled into patch panel rear port 2 (PoE). Keep it about 1 m from the rack (metal and the ONT block signal) and as high as practical, face toward the house: it is also the wireless mesh uplink for Main and Office. Ceiling-mounting it centrally with one cable back to port 2 would give the best coverage later.
+- Three U7 Pro APs: Basement (wired, PoE from switch port 2, 192.168.0.3). Main and Office mesh wirelessly off Basement. House has no ethernet runs (has coax). The Basement AP sits on a stand beside the rack, cabled into patch panel rear port 2 (PoE). Keep it about 1 m from the rack (metal and the ONT block signal) and as high as practical, face toward the house: it is also the wireless mesh uplink for Main and Office. Ceiling-mounting it centrally with one cable back to port 2 would give the best coverage later.
 - Old eero Pro 6E retired.
 
 ### Switch port map (PROPOSED)
-| Port | Device | Port profile |
+| Port | Device | VLANs (target) |
 |---|---|---|
-| 1 | UCG Ultra uplink | Uplink |
-| 2 | U7 Pro Basement (PoE) | AP trunk, all VLANs |
-| 3 | M920q Tiny #1 | Native VLAN 1, tagged VLAN 20 |
-| 4 | Tiny #2 (future) | Native VLAN 1, tagged VLAN 20 |
-| 5 | Tiny #3 (future) | Native VLAN 1, tagged VLAN 20 |
-| 6 | Old Proxmox box (temporary, during migration; currently on port 6) | Native VLAN 1, tagged VLAN 20 |
-| 7 | Philips Hue bridge (side-mounted, via patch panel port 7) | Access, VLAN 10 IoT |
-| 8 | Spare | |
+| 1 | UCG Ultra uplink | Uplink, all VLANs |
+| 2 | U7 Pro Basement (PoE) | AP trunk: native 1 (management), tagged 10, 20, 30 for the SSIDs |
+| 3 | M920q Tiny #1 | VLAN 20 only, untagged (access port) |
+| 4 | Tiny #2 (future) | VLAN 20 only, untagged |
+| 5 | Tiny #3 (future) | VLAN 20 only, untagged |
+| 6 | Old Proxmox box (temporary, during migration) | Native 1, tagged 20 (as today), then spare and disabled |
+| 7 | Philips Hue bridge (side-mounted, via patch panel port 7) | VLAN 10 only, untagged (access port) |
+| 8 | Break-glass management port (no jumper; plug a laptop straight into the switch) | VLAN 1 only, untagged (access port) |
 
 Cable path for every cable that reaches the switch, including the gateway uplink (panel 1) and the Basement AP (panel 2): device -> patch panel rear port N -> patch panel front port N -> 0.5 ft jumper -> switch port N. Keep panel and switch numbers matched so only the short jumpers show at the front. The side-mounted Hue bridge follows the same path: a short (1-2 ft) cable around the rear edge into patch panel rear port 7. The only cable that skips the panel is ONT -> gateway WAN.
 
-**Port VLAN settings (verified 2026-10-24).** No port profiles are set; ports 6 and 7 have per-port overrides. Every port's native VLAN is Default (1) except port 7 (IoT, 10), and every port still allows **all** tagged VLANs (the UniFi default), which is how VLAN 20 reaches Proxmox today. Planned tightening, in UniFi per port: port 7 (Hue) tagged VLAN management **Block All** so it's a pure IoT access port; Tiny ports (3-5, and 6 while the old tower is there) **Custom -> Atlas Lab (20) only**; unused ports disabled until needed. Change port 7 first and confirm the Hue app still works, then the Proxmox port.
+**Port VLAN settings today (verified 2026-10-24).** No port profiles are set; ports 6 and 7 have per-port overrides. Every port's native VLAN is Default (1) except port 7 (IoT, 10), and every port still allows **all** tagged VLANs (the UniFi default), which is how VLAN 20 reaches Proxmox today. The target settings in the table above replace this as part of the network redesign: in UniFi, set each port's native VLAN and tagged VLAN management (Block All for access ports, Custom for the AP and uplink).
 
-### VLANs and subnets
-| VLAN | Name | Subnet | Use |
+### Network redesign (agreed 2026-10-25, done with the M920q install)
+Goal: stronger isolation. VLAN 1 becomes a management network for network gear only; everyday devices move to a new Home VLAN; the whole Proxmox host, Pi-hole included, lives on the lab VLAN.
+
+### VLANs and subnets (target)
+| VLAN | Name | Subnet | Use | Wi-Fi |
+|---|---|---|---|---|
+| 1 | Management | 192.168.0.0/24 | Network gear only: gateway, switch, APs | None, by design. Wired break-glass access on switch port 8 |
+| 30 | Home (new) | 192.168.30.0/24 | Everyday devices: phones, laptops, TVs, consoles, printer | "Atlas Home" (5 GHz) and "Atlas Gaming" (6 GHz only, WPA3 only, so Wi-Fi 6E/7 devices only; MLO off) |
+| 10 | IoT | 192.168.10.0/24 | Smart-home devices, Hue bridge | "Atlas IoT" (2.4 GHz) |
+| 20 | Atlas Lab | 192.168.20.0/24 | Proxmox host, Pi-hole, Talos cluster, AAP, lab services | "Atlas Lab" (5 GHz) |
+
+Home gets its own firewall zone (HOME), separate from Management (the existing Internal zone), so the two can be isolated from each other.
+
+No management Wi-Fi (decided 2026-10-25): it would broadcast the management network through the house. The laptop stays on Home and reaches Management through its firewall rule (443, 22). If Wi-Fi or a firewall change ever locks it out, switch port 8 is a **break-glass port**: VLAN 1 untagged, nothing normally plugged in. Plug the laptop's cable straight into switch port 8 (no patch panel jumper) to land on Management. It's only usable by someone at the rack. Label the port.
+
+### Firewall (target)
+Traffic between zones is blocked by default; replies to allowed connections are let through automatically.
+
+| From | To | Allowed | Rule |
 |---|---|---|---|
-| 1 | Default | 192.168.0.0/24 | Infra, Proxmox host management. SSIDs "Atlas Home" (5 GHz) and "Atlas Gaming" (6 GHz only, WPA3 only, so Wi-Fi 6E/7 devices only; MLO off) |
-| 10 | IoT | 192.168.10.0/24 | SSID "Atlas IoT" (2.4 GHz) |
-| 20 | Atlas Lab | 192.168.20.0/24 | Lab VMs/containers (tagged). SSID "Atlas Lab" (5 GHz) |
+| austin-mac (Home, 192.168.30.58, matched by MAC) | Lab | All traffic | Allow Austin MAC to LAB |
+| austin-mac | Management | TCP 443 (UniFi UI), TCP 22 (SSH to switch and APs) | Allow Austin MAC to Management |
+| Home | IoT | All traffic (control lights, cast to speakers; needs mDNS across Home and IoT) | Allow Home to IoT |
+| Home, IoT, Management | Pi-hole 192.168.20.3 | UDP/TCP 53 | Allow DNS to PiHole |
+| Home, IoT, Lab | Gateway | DHCP, NTP, mDNS only; admin (443, 22) blocked except austin-mac | Restrict gateway admin (recommended) |
+| Everything else between zones | | Blocked | Default |
+| All zones | Internet | All traffic | Default |
 
-### Firewall / DNS
-- Zone firewall (verified 2026-10-24): traffic between zones blocked by default. Exceptions: LAB and IoT to Pi-hole 192.168.0.101 on UDP 53; LAB to Proxmox 192.168.0.100 on 8006; personal laptop (austin-mac, 192.168.0.58, matched by MAC) to LAB, all traffic. Return traffic allowed automatically. The laptop's MAC (ba:b0:9f:7d:1a:3b) is a macOS private Wi-Fi address set to "Fixed" for Atlas Home, stable since June 2025. It only changes if the Mac forgets the network; then update the MAC in both the rule and the .0.58 reservation.
-- Nord VPN policy route for IoT (disabled). QoS rule for gaming PC.
-- DNS (intentional design, set 2026-10-24): every machine uses Pi-hole (192.168.0.101) first and Cloudflare 1.1.1.1 as a fallback, so filtering applies normally and internet DNS keeps working if Pi-hole is down. DHCP clients get both from UniFi (all three VLANs); Proxmox and its LXCs get them from the host DNS settings; the Talos nodes get them from Terraform `dns_server` + `dns_fallback_server`. Clients can occasionally use the fallback even when Pi-hole is up, so expect the odd unfiltered lookup or a brief `atlas.local` miss. Pi-hole forwards to local Unbound (127.0.0.1#5335) and Google 8.8.4.4.
+Retired by the redesign: "Allow LAB DNS to PiHole" (Pi-hole is on the lab VLAN, so no firewall hop) and "Allow LAB to Proxmox API" (Proxmox is on the lab VLAN too). Today the gateway's own UI and SSH are reachable from every VLAN, because the predefined Gateway-zone policies allow all; the "Restrict gateway admin" rule closes that.
 
-### Known addresses
+The laptop's MAC (ba:b0:9f:7d:1a:3b) is a macOS private Wi-Fi address set to "Fixed" for Atlas Home, stable since June 2025. Moving Atlas Home to VLAN 30 keeps the same SSID, so the MAC stays the same; update its reservation to 192.168.30.58.
+
+Other UniFi settings: Nord VPN policy route for IoT (disabled); QoS rule for gaming PC (follows it to the Home VLAN).
+
+### DNS (target)
+Every machine uses Pi-hole (192.168.20.3, on the lab VLAN) first and Cloudflare 1.1.1.1 as a fallback, so filtering applies normally and internet DNS keeps working if Pi-hole or the lab host is down. DHCP on all four VLANs hands out both. Proxmox and its containers use the host DNS settings; the Talos nodes use Terraform `dns_server` (changes to 192.168.20.3) + `dns_fallback_server`. Clients can occasionally use the fallback even when Pi-hole is up, so expect the odd unfiltered lookup or a brief `atlas.local` miss. Pi-hole forwards to local Unbound (127.0.0.1#5335) and Google 8.8.4.4.
+
+Why Pi-hole lives on the lab VLAN: it runs on the lab host, and whichever VLAN it sits on, the lab host has to carry that VLAN. On the lab VLAN, the host carries only VLAN 20, so the lab never touches Home or Management. Home, IoT and Management reach it through one DNS-only firewall rule. If home DNS should ever be independent of the lab, move Pi-hole to its own small box on Management.
+
+### Known addresses (target)
 | Host | IP |
 |---|---|
-| UCG Ultra | 192.168.0.1 |
+| UCG Ultra (gateway) | 192.168.0.1 |
 | USW-Lite-8-PoE | 192.168.0.2 |
-| U7 Pro Basement | 192.168.0.3 |
-| proxmox.atlas.local (current box) | 192.168.0.100 |
-| Pi-hole | 192.168.0.101 |
-| proxmox-cgrater.atlas.local (dormant, removed from cluster) | 192.168.0.102 |
+| U7 Pro Basement / Main / Office | 192.168.0.3 / .4 / .5 |
+| atlas-pihole (LXC 102) | 192.168.20.3 (today 192.168.0.101) |
+| proxmox.atlas.local (M920q Tiny #1) | 192.168.20.5 (today 192.168.0.100 on the old tower) |
+| Tiny #2 / #3 (future) | 192.168.20.6 / .7 |
+| austin-mac | 192.168.30.58 (DHCP reservation; today 192.168.0.58) |
 
-### Address plan
-Static addresses sit outside each DHCP range (verified in UniFi 2026-10-24).
+### Address plan (target)
+Static addresses sit outside each DHCP range.
 
 | VLAN | Range | Use |
 |---|---|---|
 | 1 | .1 | Gateway |
 | 1 | .2-.5 | Switch and APs |
-| 1 | .10-.99 | DHCP (Mac reserved at .58) |
-| 1 | .100 / .101 | Proxmox / Pi-hole |
-| 1 | .102-.254 | Free for static |
+| 1 | .10-.99 | DHCP, for adopting new network gear |
+| 30 | .1 | Gateway |
+| 30 | .10-.254 | DHCP (Mac reserved at .58; printer gets a reservation too) |
+| 10 | .100-.254 | DHCP |
 | 20 | .1 | Gateway |
+| 20 | .3 | atlas-pihole |
+| 20 | .5 / .6 / .7 | Proxmox nodes: Tiny #1 / #2 / #3 |
 | 20 | .10 / .11 / .12 / .13 | talos-cp / talos-worker-01 / aap / talos-worker-02 |
 | 20 | .14-.49 | Free for new VMs and LXCs |
 | 20 | .50-.99 | MetalLB service IPs (.50 ArgoCD, .52-.53 vcsim) |
@@ -134,10 +165,12 @@ From seller photos:
 | Old 500 GB Crucial SSD in USB 3 enclosure (on a 10 Gbps port) | VM backup target / import source |
 
 ## 6. Proxmox networking (PROPOSED)
-- `vmbr0` VLAN-aware, bridged to the single onboard NIC.
-- Host management IP untagged on VLAN 1.
-- Each VM/CT network device tagged VLAN 20.
-- Switch port: native VLAN 1, tagged VLAN 20.
+- The whole host lives on VLAN 20 (Atlas Lab); nothing on it is tagged.
+- Switch port 3: VLAN 20 untagged, no tagged VLANs (access port).
+- `vmbr0` bridged to the single onboard NIC. VLAN-aware can stay on for flexibility, but no guest uses a tag.
+- Host management: 192.168.20.5/24, gateway 192.168.20.1, DNS 192.168.20.3 then 1.1.1.1.
+- Guests: no VLAN tag. In Terraform, `vlan_id` becomes unset for the Talos VMs; Pi-hole (LXC 102) moves to 192.168.20.3/24, gateway .20.1.
+- Don't mix styles: with VLAN 20 untagged on the port, a guest that sends VLAN 20 tagged frames would be dropped or misdelivered.
 
 ## 7. Workloads
 
@@ -172,6 +205,17 @@ Target: the 500 GB Crucial SSD in a USB 3 enclosure behind Tiny #1, added to Pro
 Restore: `pct restore` / `qmrestore` for guests; for the cluster, `terraform apply` then `talosctl bootstrap --recover-from` the latest etcd snapshot and let ArgoCD redeploy from Git. The USB SSD sits in the same rack, so sync etcd snapshots and AAP backups to OneDrive weekly for an off-site copy. Retention may need tuning once real backup sizes are known.
 
 ## 8. Migration plan
+
+### Network cutover (with the M920q install)
+1. UniFi: create the Home network (VLAN 30, 192.168.30.0/24, DHCP .10-.254, DNS 192.168.20.3 then 1.1.1.1) and a HOME firewall zone; enable mDNS across Home and IoT.
+2. UniFi: move the "Atlas Home" and "Atlas Gaming" SSIDs to Home; reserve 192.168.30.58 for austin-mac and an address for the printer. Set switch port 8 to VLAN 1 untagged, Block All tagged (break-glass port), and test it once with the laptop.
+3. Install Proxmox on the Tiny at 192.168.20.5; set switch port 3 to VLAN 20 untagged only.
+4. Move Pi-hole (LXC 102) to 192.168.20.3, untagged; update `proxmox.atlas.local` and other records.
+5. UniFi: set DHCP DNS to 192.168.20.3 + 1.1.1.1 on every network; add the target firewall rules and retire the two lab rules.
+6. Terraform: `proxmox_endpoint` = https://192.168.20.5:8006, `dns_server` = 192.168.20.3, `vlan_id` unset. Kratix `proxmox-vm` promise: update the endpoint in the `proxmox-credentials` secret.
+7. Repo: update `CLAUDE.md` (allowed commands) and `docs/proxmox.md` to the new addresses; run `scripts/check-lab-overview.py`.
+
+### Hardware migration
 1. Install Proxmox on the 250 GB SATA in the Tiny (or transplant the current 250 GB, still being considered).
 2. Attach old Crucial via USB to import existing VMs/CTs.
 3. Fix NIC name in `/etc/network/interfaces` if moving the existing install.
@@ -179,7 +223,6 @@ Restore: `pct restore` / `qmrestore` for guests; for the cluster, `terraform app
 5. Retire the old box from switch port 6.
 
 ## 9. Open decisions
-- Does Tiny #1 take over `proxmox.atlas.local` / 192.168.0.100, or get a new name/IP while both run side by side?
 - Fresh install on the Tiny vs. transplanting the current 250 GB drive.
 - Which side panel takes the power strip and Hue bridge, and whether that side keeps its acrylic plate.
 - 10-inch mount models for UCG Ultra, switch, and M920q.
