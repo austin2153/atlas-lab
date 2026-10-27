@@ -18,18 +18,22 @@ PIHOLE = "192.168.0.101"
 
 # What the page's address plan and firewall table say. Keep in sync with the page.
 NETWORKS = {
-    "Default":   ("192.168.0.1/24",  "192.168.0.10",   "192.168.0.99"),
+    "Default":   ("192.168.0.1/24",  "192.168.0.10",   "192.168.0.99"),   # becomes Management
+    "Home":      ("192.168.30.1/24", "192.168.30.10",  "192.168.30.254"), # new in the redesign
     "IoT":       ("192.168.10.1/24", "192.168.10.100", "192.168.10.254"),
     "Atlas Lab": ("192.168.20.1/24", "192.168.20.100", "192.168.20.254"),
 }
-FIREWALL_RULES = {"Allow Austin MAC to LAB", "Allow LAB DNS to PiHole",
-                  "Allow LAB to Proxmox API", "Allow IoT DNS to PiHole"}
+FIREWALL_RULES = {"Allow Austin MAC to LAB", "Allow Austin MAC to Management",
+                  "Allow Home to IoT", "Allow DNS to PiHole", "Restrict gateway admin"}
+# Live today, replaced by the redesign.
+FIREWALL_RETIRING = {"Allow LAB DNS to PiHole", "Allow LAB to Proxmox API", "Allow IoT DNS to PiHole"}
+PLANNED_NETWORKS = {"Home"}
 PLANNED = {"aap.atlas.local", "talos-worker-02.atlas.local"}
 
 # The page's lab address map. Keep in sync with the page.
 STATIC = {
-    "192.168.0.100": "proxmox.atlas.local",
-    "192.168.0.101": "atlas-pihole.atlas.local",
+    "192.168.20.5": "proxmox.atlas.local",
+    "192.168.20.3": "atlas-pihole.atlas.local",
     "192.168.20.10": "talos-cp.atlas.local",
     "192.168.20.11": "talos-worker-01.atlas.local",
     "192.168.20.12": "aap.atlas.local",
@@ -40,6 +44,8 @@ METALLB = {
     "192.168.20.52": "vcsim/vcenter-01",
     "192.168.20.53": "vcsim/vcenter-02",
 }
+# Addresses that change in the redesign: name -> address it has today.
+MOVES = {"proxmox.atlas.local": "192.168.0.100", "atlas-pihole.atlas.local": "192.168.0.101"}
 # Still live today, but gone in the target design shown on the page.
 RETIRING = {}  # e.g. {"192.168.20.51": "namespace/service"}
 
@@ -67,6 +73,8 @@ def check_static():
             report("OK", f"{ip} static", name)
         elif not found and name in PLANNED:
             report("PLANNED", f"{ip} static", f"{name} not in Pi-hole yet")
+        elif MOVES.get(name) in found:
+            report("PLANNED", f"{ip} static", f"{name} still at {MOVES[name]}; moves with the M920q")
         else:
             report("MISMATCH", f"{ip} static", f"{name} resolves to {found or 'nothing'}")
 
@@ -128,7 +136,11 @@ def check_unifi():
     for name, (subnet, start, stop) in NETWORKS.items():
         n = nets.get(name)
         if not n:
-            report("MISMATCH", f"network {name}", "missing in UniFi"); continue
+            if name in PLANNED_NETWORKS:
+                report("PLANNED", f"network {name}", "not created in UniFi yet")
+            else:
+                report("MISMATCH", f"network {name}", "missing in UniFi")
+            continue
         live = (n.get("ip_subnet"), n.get("dhcpd_start"), n.get("dhcpd_stop"))
         if live == (subnet, start, stop):
             report("OK", f"network {name}", f"{subnet}, DHCP {start}-{stop}")
@@ -139,7 +151,9 @@ def check_unifi():
         if rule in FIREWALL_RULES and rule in live_rules:
             report("OK", f"firewall: {rule}")
         elif rule in FIREWALL_RULES:
-            report("MISMATCH", f"firewall: {rule}", "on the page but not in UniFi")
+            report("PLANNED", f"firewall: {rule}", "not in UniFi yet")
+        elif rule in FIREWALL_RETIRING:
+            report("RETIRING", f"firewall: {rule}", "replaced by the redesign")
         else:
             report("MISMATCH", f"firewall: {rule}", "in UniFi but not on the page")
 
