@@ -57,6 +57,12 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
 
   scsi_hardware = "virtio-scsi-single"
 
+  # Start after Pi-hole (LXC 102, order=1) so DNS is up before the cluster
+  startup {
+    order    = 3
+    up_delay = 60
+  }
+
   # After Talos installs, UEFI boots from disk via EFI entry — no need to eject ISO
   lifecycle {
     ignore_changes = [
@@ -124,6 +130,11 @@ resource "proxmox_virtual_environment_vm" "worker" {
   }
 
   scsi_hardware = "virtio-scsi-single"
+
+  # Start after the control plane
+  startup {
+    order = 4
+  }
 
   lifecycle {
     ignore_changes = [

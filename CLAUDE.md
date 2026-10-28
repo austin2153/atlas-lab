@@ -15,8 +15,7 @@ The following commands are pre-approved and do not require classifier review:
 All credentials are sourced from local files — never hardcoded or echoed:
 
 - `~/.unifi-credentials` — UniFi controller (UNIFI_URL, UNIFI_USER, UNIFI_PASSWORD)
-- `~/.proxmox-credentials` — Proxmox API token
-- `~/.ssh/proxmox-claude` — SSH key for Proxmox root access
+- `~/.proxmox-credentials` — Proxmox credentials: `PROXMOX_URL`, `PROXMOX_TOKEN_ID`, `PROXMOX_TOKEN_SECRET` (terraform@pve API token for VM/API operations), `PROXMOX_SSH_KEY`, `PROXMOX_SSH_USER` (root SSH for shell access)
 - `~/.terraform.d/credentials.tfrc.json` — Terraform Cloud API token (org: ACLABORG, workspace: atlas-talos)
 
 ## Services on the Proxmox host
