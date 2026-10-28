@@ -16,3 +16,7 @@ All credentials are sourced from local files — never hardcoded or echoed:
 - `~/.unifi-credentials` — UniFi controller (UNIFI_URL, UNIFI_USER, UNIFI_PASSWORD)
 - `~/.proxmox-credentials` — Proxmox API token
 - `~/.ssh/proxmox-claude` — SSH key for Proxmox root access
+
+## Services on the Proxmox host
+
+- Pi-hole (LXC 102) — managed from the Proxmox host with `pct exec 102 -- <command>` (e.g. `pihole-FTL --config dns.hosts` for local DNS records). No separate Pi-hole credentials.

@@ -38,6 +38,7 @@ STATIC = {
     "192.168.20.11": "talos-worker-01.atlas.local",
     "192.168.20.12": "aap.atlas.local",
     "192.168.20.13": "talos-worker-02.atlas.local",
+    "192.168.20.14": "llm.atlas.local",
 }
 METALLB = {
     "192.168.20.50": "argocd/argocd-server",

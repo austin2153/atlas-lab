@@ -58,13 +58,13 @@ Consolidate the basement network and lab gear (currently loose on a desk next to
 | 3 | M920q Tiny #1 | VLAN 20 only, untagged (access port) |
 | 4 | Tiny #2 (future) | VLAN 20 only, untagged |
 | 5 | Tiny #3 (future) | VLAN 20 only, untagged |
-| 6 | Old Proxmox box (temporary, during migration) | Native 1, tagged 20 (as today), then spare and disabled |
+| 6 | Old Proxmox box (temporary, during migration), then the LLM box | Native 1, tagged 20 (as today); then VLAN 20 only, untagged, for the LLM box |
 | 7 | Philips Hue bridge (side-mounted, via patch panel port 7) | VLAN 10 only, untagged (access port) |
 | 8 | Break-glass management port (no jumper; plug a laptop straight into the switch) | VLAN 1 only, untagged (access port) |
 
 Cable path for every cable that reaches the switch, including the gateway uplink (panel 1) and the Basement AP (panel 2): device -> patch panel rear port N -> patch panel front port N -> 0.5 ft jumper -> switch port N. Keep panel and switch numbers matched so only the short jumpers show at the front. The side-mounted Hue bridge follows the same path: a short (1-2 ft) cable around the rear edge into patch panel rear port 7. The only cable that skips the panel is ONT -> gateway WAN.
 
-**Port VLAN settings today (verified 2026-10-24).** No port profiles are set; ports 6 and 7 have per-port overrides. Every port's native VLAN is Default (1) except port 7 (IoT, 10), and every port still allows **all** tagged VLANs (the UniFi default), which is how VLAN 20 reaches Proxmox today. The target settings in the table above replace this as part of the network redesign: in UniFi, set each port's native VLAN and tagged VLAN management (Block All for access ports, Custom for the AP and uplink).
+**Port VLAN settings today (verified 2026-10-24, port 3 added 2026-10-27).** No port profiles are set; ports 3, 6 and 7 have per-port overrides. Port 3 is the LLM box for now: VLAN 20 untagged, Block All tagged, PoE off. Every other port's native VLAN is Default (1) except port 7 (IoT, 10), and every other port still allows **all** tagged VLANs (the UniFi default), which is how VLAN 20 reaches Proxmox today. The target settings in the table above replace this as part of the network redesign: in UniFi, set each port's native VLAN and tagged VLAN management (Block All for access ports, Custom for the AP and uplink).
 
 ### Network redesign (agreed 2026-10-25, done with the M920q install)
 Goal: stronger isolation. VLAN 1 becomes a management network for network gear only; everyday devices move to a new Home VLAN; the whole Proxmox host, Pi-hole included, lives on the lab VLAN.
@@ -114,6 +114,7 @@ Why Pi-hole lives on the lab VLAN: it runs on the lab host, and whichever VLAN i
 | atlas-pihole (LXC 102) | 192.168.20.3 (today 192.168.0.101) |
 | proxmox.atlas.local (M920q Tiny #1) | 192.168.20.5 (today 192.168.0.100 on the old tower) |
 | Tiny #2 / #3 (future) | 192.168.20.6 / .7 |
+| llm.atlas.local (LLM box, the old gaming PC) | 192.168.20.14 (static, set on the machine) |
 | austin-mac | 192.168.30.58 (DHCP reservation; today 192.168.0.58) |
 
 ### Address plan (target)
@@ -131,7 +132,8 @@ Static addresses sit outside each DHCP range.
 | 20 | .3 | atlas-pihole |
 | 20 | .5 / .6 / .7 | Proxmox nodes: Tiny #1 / #2 / #3 |
 | 20 | .10 / .11 / .12 / .13 | talos-cp / talos-worker-01 / aap / talos-worker-02 |
-| 20 | .14-.49 | Free for new VMs and LXCs |
+| 20 | .14 | LLM box (physical, the old gaming PC) |
+| 20 | .15-.49 | Free for new VMs and LXCs |
 | 20 | .50-.99 | MetalLB service IPs (.50 ArgoCD, .52-.53 vcsim) |
 | 20 | .100-.254 | DHCP (lab Wi-Fi) |
 
@@ -188,6 +190,7 @@ Target state:
 - Three-node Kubernetes cluster on Talos VMs carrying most workloads: talos-cp (VM 200, 192.168.20.10), talos-worker-01 (VM 201, 192.168.20.11) and a new talos-worker-02 (VM 202, 192.168.20.13, talos-worker-02.atlas.local, 2 vCPU / 6 GB / 75 GB). Added by appending 192.168.20.13 to `worker_ips` in Terraform, which pins its MAC to BC:24:11:00:02:02; also add its Pi-hole DNS record.
 - Red Hat Ansible Automation Platform on its own RHEL 9 VM, `aap.atlas.local` at 192.168.20.12 (VLAN 20, ~4 vCPU / 16 GB / 100 GB), installed with the containerized installer in the growth topology with its bundled Postgres. Not in the Talos cluster: the AAP operator is only supported on OpenShift. Replaces AWX, which was removed on 2026-10-24 along with its awx-postgres LXC (CT 105); its database and secrets are backed up in /root/awx-backup-20261024 on the Proxmox host. Needs the 64 GB RAM upgrade.
 - Pi-hole and other lab services. More Kubernetes services and LXC containers are expected but not decided yet: new cluster services get MetalLB IPs from the free part of the pool (.51, .54-.99), and the 64 GB RAM upgrade leaves roughly 25 GB of headroom for them.
+- Local LLM box: the old gaming PC, on the lab VLAN at `llm.atlas.local`, 192.168.20.14. A physical machine beside the rack, not a Proxmox guest. Static IP set on the machine (not DHCP): gateway 192.168.20.1, DNS 192.168.0.101 then 1.1.1.1 (192.168.20.3 after the cutover), no VLAN tagging (the switch port does it). Wired only: keep its Wi-Fi off so it doesn't also sit on the home network. Today on switch port 3; port 6 in the target layout.
 - No NAS planned (no media/data hoard; personal files live on OneDrive).
 
 ## Backups (PROPOSED)
@@ -209,8 +212,8 @@ Restore: `pct restore` / `qmrestore` for guests; for the cluster, `terraform app
 ### Network cutover (with the M920q install)
 1. UniFi: create the Home network (VLAN 30, 192.168.30.0/24, DHCP .10-.254, DNS 192.168.20.3 then 1.1.1.1) and a HOME firewall zone; enable mDNS across Home and IoT.
 2. UniFi: move the "Atlas Home" and "Atlas Gaming" SSIDs to Home; reserve 192.168.30.58 for austin-mac and an address for the printer. Set switch port 8 to VLAN 1 untagged, Block All tagged (break-glass port), and test it once with the laptop.
-3. Install Proxmox on the Tiny at 192.168.20.5; set switch port 3 to VLAN 20 untagged only.
-4. Move Pi-hole (LXC 102) to 192.168.20.3, untagged; update `proxmox.atlas.local` and other records.
+3. Move the LLM box's cable from switch port 3 to port 4 (set port 4 to VLAN 20 untagged first). Install Proxmox on the Tiny at 192.168.20.5 on port 3, already VLAN 20 untagged only.
+4. Move Pi-hole (LXC 102) to 192.168.20.3, untagged; update `proxmox.atlas.local` and other records. Change the LLM box's static DNS from 192.168.0.101 to 192.168.20.3 (it doesn't get DNS from DHCP).
 5. UniFi: set DHCP DNS to 192.168.20.3 + 1.1.1.1 on every network; add the target firewall rules and retire the two lab rules.
 6. Terraform: `proxmox_endpoint` = https://192.168.20.5:8006, `dns_server` = 192.168.20.3, `vlan_id` unset. Kratix `proxmox-vm` promise: update the endpoint in the `proxmox-credentials` secret.
 7. Repo: update `CLAUDE.md` (allowed commands) and `docs/proxmox.md` to the new addresses; run `scripts/check-lab-overview.py`.
@@ -220,7 +223,7 @@ Restore: `pct restore` / `qmrestore` for guests; for the cluster, `terraform app
 2. Attach old Crucial via USB to import existing VMs/CTs.
 3. Fix NIC name in `/etc/network/interfaces` if moving the existing install.
 4. Repurpose the Crucial as the backup target.
-5. Retire the old box from switch port 6.
+5. Retire the old box from switch port 6; set port 6 to VLAN 20 untagged, Block All tagged, and move the LLM box there from port 4.
 
 ## 9. Open decisions
 - Fresh install on the Tiny vs. transplanting the current 250 GB drive.
