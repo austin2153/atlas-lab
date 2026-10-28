@@ -20,6 +20,7 @@ This document describes the design decisions, infrastructure layout, and rationa
 | Storage | local-path-provisioner v0.0.30 | Simple dynamic PV provisioner using node-local disk; Talos has no default StorageClass |
 | Load balancer | MetalLB v0.15.3 | L2 load balancer providing external IPs for LoadBalancer services (pool: 192.168.20.50–99) |
 | TLS | cert-manager v1.20.2 | Certificate management; bootstraps a self-signed CA chain for cluster-internal TLS |
+| Secrets | HashiCorp Vault (Community) | Lab-wide secrets store and CA on its own Alpine VM (`vault.atlas.local`, 192.168.20.15); Raft storage; two-tier PKI (`Atlas Lab Root CA` → `Atlas Lab Intermediate CA`); External Secrets Operator bridges Vault secrets into Kubernetes |
 | GitOps state sync | Flux v2.8.5 | Watches `state/` directory in this repo and applies Kratix-written manifests to the cluster |
 | Platform engineering | Kratix v0.125.0 | Promise-based internal platform framework; writes workload manifests to `state/` via GitStateStore |
 

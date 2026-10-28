@@ -115,6 +115,7 @@ Why Pi-hole lives on the lab VLAN: it runs on the lab host, and whichever VLAN i
 | proxmox.atlas.local (M920q Tiny #1) | 192.168.20.5 (today 192.168.0.100 on the old tower) |
 | Tiny #2 / #3 (future) | 192.168.20.6 / .7 |
 | llm.atlas.local (LLM box, the old gaming PC) | 192.168.20.14 (static, set on the machine) |
+| vault.atlas.local | 192.168.20.15 (VM 203, planned) |
 | austin-mac | 192.168.30.58 (DHCP reservation; today 192.168.0.58) |
 
 ### Address plan (target)
@@ -133,7 +134,8 @@ Static addresses sit outside each DHCP range.
 | 20 | .5 / .6 / .7 | Proxmox nodes: Tiny #1 / #2 / #3 |
 | 20 | .10 / .11 / .12 / .13 | talos-cp / talos-worker-01 / aap / talos-worker-02 |
 | 20 | .14 | LLM box (physical, the old gaming PC) |
-| 20 | .15-.49 | Free for new VMs and LXCs |
+| 20 | .15 | vault.atlas.local (Vault VM, planned) |
+| 20 | .16-.49 | Free for new VMs and LXCs |
 | 20 | .50-.99 | MetalLB service IPs (.50 ArgoCD, .52-.53 vcsim) |
 | 20 | .100-.254 | DHCP (lab Wi-Fi) |
 
