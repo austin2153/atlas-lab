@@ -381,7 +381,9 @@ vault login -method=userpass username=austin
 
 ### Step 8 — Enable KV secrets engine
 
-The KV (key-value) secrets engine is Vault's general-purpose store for static secrets — passwords, API keys, tokens, and any other values that don't need to be dynamically generated. KV v2 adds versioning, so every time you update a secret the previous value is retained and can be recovered if needed.
+A secrets engine is a plugin inside Vault that knows how to store, generate, or vend a particular type of secret. Vault ships with many engines — KV for static secrets, PKI for certificates, AWS for dynamic IAM credentials, and so on. You enable an engine at a path, and everything under that path is handled by that engine.
+
+The KV (key-value) secrets engine is the simplest and most commonly used — it's Vault's general-purpose store for static secrets: passwords, API keys, tokens, and any other values that don't need to be dynamically generated. KV v2 adds versioning, so every time you update a secret the previous value is retained and can be recovered if needed.
 
 Mounting it at `secret/` is the conventional path. The folder structure underneath is up to you — organising by consumer keeps policies clean and makes it easy to grant a service access to only its own secrets.
 
