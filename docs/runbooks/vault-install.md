@@ -451,6 +451,40 @@ The file is at `/etc/crontabs/vault` (chmod 600):
 0 2 * * * VAULT_ADDR=https://vault.atlas.local:8200 VAULT_SKIP_VERIFY=true vault operator raft snapshot save /opt/vault/snapshots/vault-$(date +%Y%m%d).snap && find /opt/vault/snapshots -name '*.snap' -mtime +7 -delete
 ```
 
+#### Snapshot token setup
+
+The cron job runs as the `vault` OS user, which has no Vault token by default. We give it a dedicated token with a minimal policy — least privilege means it can only take snapshots, nothing else in Vault.
+
+**1. Create the snapshot policy:**
+
+```bash
+vault policy write snapshot - << 'EOF'
+# Grants permission to take a Raft snapshot only.
+# Attached to the snapshot-agent token used by the cron job on the Vault VM.
+path "sys/storage/raft/snapshot" {
+  capabilities = ["read"]
+}
+EOF
+```
+
+**2. Create a long-lived token with only that policy and save it to the VM:**
+
+```bash
+# Create the token (1 year TTL, non-renewable so it doesn't silently expire)
+vault token create -policy=snapshot -ttl=8760h -no-default-policy -display-name=snapshot-agent -format=json \
+  | jq -r '.auth.client_token' \
+  | ssh -i ~/.ssh/proxmox-claude root@192.168.20.15 \
+    "cat > /etc/vault.d/snapshot-token && chmod 600 /etc/vault.d/snapshot-token && chown vault:vault /etc/vault.d/snapshot-token"
+```
+
+**3. Update the cron job to use the token:**
+
+Edit `/etc/crontabs/vault` on the Vault VM to source the token file:
+
+```sh
+0 2 * * * VAULT_ADDR=https://vault.atlas.local:8200 VAULT_SKIP_VERIFY=true VAULT_TOKEN=$(cat /etc/vault.d/snapshot-token) vault operator raft snapshot save /opt/vault/snapshots/vault-$(date +%Y%m%d).snap && find /opt/vault/snapshots -name '*.snap' -mtime +7 -delete
+```
+
 Verify snapshots are being created (check after 24 hours):
 
 ```bash
