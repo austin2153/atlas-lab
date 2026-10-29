@@ -423,12 +423,14 @@ chown vault:vault /opt/vault/snapshots
 
 #### Cron-based snapshots on the Vault VM
 
-A cron job runs as the vault user to take daily snapshots and prune old ones, keeping 7 days of history:
+A cron job runs as the vault user to take daily snapshots at 2:00 AM and prune old ones, keeping 7 days of history.
+
+> Alpine Linux does not use `/etc/cron.d/` — per-user crontabs live in `/etc/crontabs/<user>`.
+
+The file is at `/etc/crontabs/vault` (chmod 600) and contains inline comments explaining each piece. The key line:
 
 ```sh
-# /etc/cron.d/vault-snapshots on the Vault VM
-# Requires VAULT_ADDR and a token with snapshot permissions
-0 2 * * * vault sh -c 'VAULT_ADDR=https://vault.atlas.local:8200 VAULT_SKIP_VERIFY=true vault operator raft snapshot save /opt/vault/snapshots/vault-$(date +\%Y\%m\%d).snap && find /opt/vault/snapshots -name "*.snap" -mtime +7 -delete'
+0 2 * * * VAULT_ADDR=https://vault.atlas.local:8200 VAULT_SKIP_VERIFY=true vault operator raft snapshot save /opt/vault/snapshots/vault-$(date +%Y%m%d).snap && find /opt/vault/snapshots -name '*.snap' -mtime +7 -delete
 ```
 
 Verify snapshots are being created (check after 24 hours):
