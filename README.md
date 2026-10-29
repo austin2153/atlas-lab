@@ -4,7 +4,7 @@
 
 Terraform code to deploy a [Talos Linux](https://www.talos.dev/) Kubernetes cluster on a Proxmox VE server.
 
-See [docs/architecture.md](docs/architecture.md) for design decisions, network layout, and rationale.
+See [docs/talos-cluster-architecture.md](docs/talos-cluster-architecture.md) for design decisions, network layout, and rationale.
 
 ## Cluster Overview
 
