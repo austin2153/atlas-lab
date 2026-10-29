@@ -398,7 +398,7 @@ Planned folder structure by consumer:
 ```
 secret/aap/             # AAP playbook credentials
 secret/atlas-ai/        # atlas-ai secrets
-secret/cluster/         # Kubernetes app secrets (read by External Secrets Operator)
+secret/talos-cluster/   # Talos Kubernetes app secrets (read by External Secrets Operator)
 secret/home-assistant/  # Home Assistant credentials
 ```
 
