@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare docs/lab-overview.html with the live lab.
+"""Compare docs/index.html with the live lab.
 
 Checks every *.atlas.local name on the page against Pi-hole; the lab address
 map (static addresses via DNS, MetalLB addresses via the cluster's LoadBalancer
@@ -13,7 +13,7 @@ access to the lab.
 """
 import http.cookiejar, json, pathlib, re, ssl, subprocess, sys, urllib.request
 
-PAGE = pathlib.Path(__file__).resolve().parent.parent / "docs" / "lab-overview.html"
+PAGE = pathlib.Path(__file__).resolve().parent.parent / "docs" / "index.html"
 PIHOLE = "192.168.0.101"
 
 # What the page's address plan and firewall table say. Keep in sync with the page.
