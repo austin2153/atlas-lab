@@ -381,28 +381,34 @@ vault login -method=userpass username=austin
 
 ### Step 8 — Enable KV secrets engine
 
+The KV (key-value) secrets engine is Vault's general-purpose store for static secrets — passwords, API keys, tokens, and any other values that don't need to be dynamically generated. KV v2 adds versioning, so every time you update a secret the previous value is retained and can be recovered if needed.
+
+Mounting it at `secret/` is the conventional path. The folder structure underneath is up to you — organising by consumer keeps policies clean and makes it easy to grant a service access to only its own secrets.
+
 ```bash
 vault secrets enable -path=secret kv-v2
 
-# Test
+# Test it works
 vault kv put secret/test message="hello from vault"
 vault kv get secret/test
 vault kv metadata delete secret/test
 ```
 
-Organise secrets by consumer:
+Planned folder structure by consumer:
 ```
-secret/aap/          # AAP playbook credentials
-secret/atlas-ai/     # atlas-ai secrets
-secret/cluster/      # Kubernetes app secrets (read by External Secrets Operator)
-secret/home-assistant/
+secret/aap/             # AAP playbook credentials
+secret/atlas-ai/        # atlas-ai secrets
+secret/cluster/         # Kubernetes app secrets (read by External Secrets Operator)
+secret/home-assistant/  # Home Assistant credentials
 ```
 
 ---
 
 ### Step 8b — Configure automated snapshots
 
-Vault's built-in snapshot scheduler creates and rotates backups automatically. Run this once after Vault is initialized:
+Vault's Raft storage is entirely in-memory backed by an on-disk log at `/opt/vault/data`. If the VM is lost or the data directory is corrupted, everything is gone — all secrets, PKI keys, auth config. Snapshots are the safety net.
+
+Vault has a built-in snapshot scheduler that creates point-in-time backups of the entire Raft state and rotates them automatically. These snapshots can be used with `vault operator raft snapshot restore` to bring Vault back to a known good state. Run this once after Vault is initialized:
 
 ```bash
 # Daily snapshots, keep 7
@@ -451,7 +457,16 @@ Add a cron job on the Proxmox host to pull snapshots from the Vault VM daily and
 
 ### Step 9 — Build the PKI hierarchy
 
-This is where Vault becomes the lab's CA. Two steps: root CA, then intermediate CA.
+This is where Vault becomes the lab's Certificate Authority. Every service in the lab will get a TLS certificate from Vault, signed by a trusted CA — so browser warnings go away and service-to-service communication can be properly verified.
+
+The design follows the enterprise two-tier pattern:
+
+- **Root CA** (`pki` mount) — the trust anchor. Its key never leaves Vault and the mount is disabled after signing the intermediate, so it can't be used day-to-day. Think of it as the offline root.
+- **Intermediate CA** (`pki_int` mount) — signs all the actual service certificates. If it were ever compromised, you revoke it and issue a new one from the root without throwing away the whole chain.
+
+Any client that trusts the Root CA will automatically trust certificates issued by the intermediate — which means trusting every service in the lab. You'll install the root CA cert into your Mac's keychain and into the cluster so everything verifies cleanly.
+
+Two steps: root CA first, then intermediate CA.
 
 #### 9a — Root CA (`pki` mount)
 
