@@ -38,32 +38,18 @@ This document describes the design decisions, infrastructure layout, and rationa
 
 ## Cluster Topology
 
-```
-┌───────────────────────────────────┐
-│         Proxmox VE 9.2            │
-│         (single node)             │
-│                                   │
-│  ┌────────────────────────────┐   │
-│  │  talos-cp (VM 200)         │   │
-│  │  Control Plane             │   │
-│  │  192.168.20.10             │   │
-│  │  2 vCPU / 4 GB / 20 GB     │   │
-│  └────────────────────────────┘   │
-│                                   │
-│  ┌────────────────────────────┐   │
-│  │  talos-worker-01 (VM 201)  │   │
-│  │  Worker                    │   │
-│  │  192.168.20.11             │   │
-│  │  2 vCPU / 6 GB / 75 GB     │   │
-│  └────────────────────────────┘   │
-│                                   │
-│  ┌────────────────────────────┐   │
-│  │  talos-worker-02 (VM 202)  │   │
-│  │  Worker (planned)          │   │
-│  │  192.168.20.13             │   │
-│  │  2 vCPU / 6 GB / 75 GB     │   │
-│  └────────────────────────────┘   │
-└───────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph proxmox["Proxmox VE 9.2 — single node"]
+        subgraph k8s["Talos Kubernetes Cluster"]
+            cp["<b>talos-cp</b> (VM 200)<br/>Control Plane<br/>192.168.20.10<br/>2 vCPU / 4 GB / 20 GB"]
+            w1["<b>talos-worker-01</b> (VM 201)<br/>Worker<br/>192.168.20.11<br/>2 vCPU / 6 GB / 75 GB"]
+            w2["<b>talos-worker-02</b> (VM 202)<br/>Worker — planned<br/>192.168.20.13<br/>2 vCPU / 6 GB / 75 GB"]
+            cp --> w1
+            cp -.->|planned| w2
+        end
+        vault["<b>vault</b> (VM 203)<br/>HashiCorp Vault<br/>192.168.20.15<br/>1 vCPU / 1 GB / 16 GB"]
+    end
 ```
 
 Starting with 1 control plane and 1 worker. A second worker (`talos-worker-02`, VM 202, `192.168.20.13`) is planned pending the M920q hardware arriving. The Terraform is already designed to scale — adding it requires only a new IP in `worker_ips` and a Pi-hole DNS entry; `locals.tf` derives the VM ID, hostname, and MAC address automatically.
