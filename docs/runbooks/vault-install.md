@@ -524,24 +524,36 @@ Two steps: root CA first, then intermediate CA.
 
 #### 9a — Root CA (`pki` mount)
 
+**Enable the PKI secrets engine at `pki/`:**
 ```bash
-# Enable the root PKI mount with a 10-year max TTL
 vault secrets enable -path=pki pki
-vault secrets tune -max-lease-ttl=87600h pki
+```
+Mounts the PKI engine at the path `pki/`. Just like enabling KV v2 at `secret/`, this turns the engine on — nothing is generated yet.
 
-# Generate the root CA key and cert (stays inside Vault — never exported)
+**Set the maximum certificate lifetime to 10 years:**
+```bash
+vault secrets tune -max-lease-ttl=87600h pki
+```
+`87600h` is 10 years in hours. This sets a hard ceiling — no certificate issued under this mount can live longer than 10 years. The root CA cert itself will use this full lifetime. 10 years is the standard for root CAs because the root is the trust anchor: if it expires, every cert it ever signed becomes untrusted and you'd have to rebuild the entire chain. The root CA mount gets disabled after signing the intermediate (Step 9c), so a long lifetime is safe — it can't issue anything day-to-day.
+
+**Generate the Root CA key and cert inside Vault:**
+```bash
 vault write -format=json pki/root/generate/internal \
   common_name="Atlas Lab Root CA" \
   ttl=87600h \
   key_type=rsa \
   key_bits=4096 \
   | jq -r '.data.certificate' > /tmp/atlas-lab-root-ca.crt
+```
+`internal` means the private key is generated inside Vault and never exported — it never touches disk outside of Vault's encrypted storage. The public certificate is piped out to `/tmp/atlas-lab-root-ca.crt` — save this file, you'll need it in Step 9e to install into your Mac's keychain and the cluster so they trust everything signed by this CA.
 
-# Configure CRL and issuing URLs
+**Configure the URLs Vault embeds in every certificate it issues:**
+```bash
 vault write pki/config/urls \
   issuing_certificates="https://vault.atlas.local:8200/v1/pki/ca" \
   crl_distribution_points="https://vault.atlas.local:8200/v1/pki/crl"
 ```
+Every certificate Vault issues contains two embedded URLs: one pointing to where clients can download the CA cert (`issuing_certificates`), and one pointing to the Certificate Revocation List (`crl_distribution_points`) — a list of certs that have been revoked before their expiry. Any client that receives a cert from this CA knows exactly where to go to verify it.
 
 #### 9b — Intermediate CA (`pki_int` mount)
 
