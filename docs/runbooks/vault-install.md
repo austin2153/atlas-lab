@@ -410,34 +410,37 @@ secret/home-assistant/  # Home Assistant credentials
 
 Vault's Raft storage is entirely in-memory backed by an on-disk log at `/opt/vault/data`. If the VM is lost or the data directory is corrupted, everything is gone — all secrets, PKI keys, auth config. Snapshots are the safety net.
 
-Vault has a built-in snapshot scheduler that creates point-in-time backups of the entire Raft state and rotates them automatically. These snapshots can be used with `vault operator raft snapshot restore` to bring Vault back to a known good state. Run this once after Vault is initialized:
+A snapshot is a point-in-time copy of the entire Raft state. You can restore from one with `vault operator raft snapshot restore` to bring Vault back to exactly how it was at that moment.
 
-```bash
-# Daily snapshots, keep 7
-vault write sys/storage/raft/snapshot-auto/config/daily \
-  interval="24h" \
-  retain=7 \
-  path_prefix="/opt/vault/snapshots"
+> **Note:** Vault's built-in snapshot scheduler (`sys/storage/raft/snapshot-auto`) is an enterprise-only feature and is not available in Vault Community edition. We use a cron job instead.
 
-# Weekly snapshots, keep 4
-vault write sys/storage/raft/snapshot-auto/config/weekly \
-  interval="168h" \
-  retain=4 \
-  path_prefix="/opt/vault/snapshots"
-```
-
-Create the snapshot directory on the VM:
+The snapshot directory was created on the VM during setup:
 
 ```sh
 mkdir -p /opt/vault/snapshots
 chown vault:vault /opt/vault/snapshots
 ```
 
+#### Cron-based snapshots on the Vault VM
+
+A cron job runs as the vault user to take daily snapshots and prune old ones, keeping 7 days of history:
+
+```sh
+# /etc/cron.d/vault-snapshots on the Vault VM
+# Requires VAULT_ADDR and a token with snapshot permissions
+0 2 * * * vault sh -c 'VAULT_ADDR=https://vault.atlas.local:8200 VAULT_SKIP_VERIFY=true vault operator raft snapshot save /opt/vault/snapshots/vault-$(date +\%Y\%m\%d).snap && find /opt/vault/snapshots -name "*.snap" -mtime +7 -delete'
+```
+
 Verify snapshots are being created (check after 24 hours):
 
 ```bash
-vault list sys/storage/raft/snapshot-auto/config   # shows daily, weekly
 ls -lh /opt/vault/snapshots
+```
+
+Take a manual snapshot at any time from the Mac:
+
+```bash
+vault operator raft snapshot save ~/vault-snapshot-$(date +%Y%m%d).snap
 ```
 
 **Copying snapshots off the VM** (future state — do this once the Crucial SSD enclosure arrives):
@@ -449,11 +452,6 @@ Add a cron job on the Proxmox host to pull snapshots from the Vault VM daily and
 0 3 * * * root rsync -a root@192.168.20.15:/opt/vault/snapshots/ /mnt/crucial-ssd/backups/vault/
 0 4 * * 0 root rclone sync /mnt/crucial-ssd/backups/vault/ onedrive:atlas-lab/vault-snapshots/
 ```
-
-> Until the SSD enclosure arrives, take manual snapshots to your Mac occasionally as a stopgap:
-> ```bash
-> vault operator raft snapshot save ~/vault-snapshot-$(date +%Y%m%d).snap
-> ```
 
 ---
 
