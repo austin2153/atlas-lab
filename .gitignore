@@ -1,3 +1,6 @@
+# Claude Code config (internal tooling — not for public repos)
+CLAUDE.md
+
 # Terraform
 .terraform/
 terraform.tfstate
