@@ -12,6 +12,7 @@ See [docs/architecture.md](docs/architecture.md) for design decisions, network l
 |---|---|---|
 | Control Plane | `talos-cp.atlas.local` | `192.168.20.10` |
 | Worker | `talos-worker-01.atlas.local` | `192.168.20.11` |
+| Worker *(planned)* | `talos-worker-02.atlas.local` | `192.168.20.13` |
 
 ## Prerequisites
 

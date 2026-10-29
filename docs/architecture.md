@@ -44,10 +44,17 @@ This document describes the design decisions, infrastructure layout, and rationa
 │  │  192.168.20.11             │   │
 │  │  2 vCPU / 6 GB / 75 GB     │   │
 │  └────────────────────────────┘   │
+│                                   │
+│  ┌────────────────────────────┐   │
+│  │  talos-worker-02 (VM 202)  │   │
+│  │  Worker (planned)          │   │
+│  │  192.168.20.13             │   │
+│  │  2 vCPU / 6 GB / 75 GB     │   │
+│  └────────────────────────────┘   │
 └───────────────────────────────────┘
 ```
 
-Starting with 1 control plane and 1 worker. The worker count is designed to scale — adding a second worker means adding another IP reservation and a new entry in the `worker_ips` variable.
+Starting with 1 control plane and 1 worker. A second worker (`talos-worker-02`, VM 202, `192.168.20.13`) is planned pending the M920q hardware arriving. The Terraform is already designed to scale — adding it requires only a new IP in `worker_ips` and a Pi-hole DNS entry; `locals.tf` derives the VM ID, hostname, and MAC address automatically.
 
 ## Network Layout
 
@@ -60,6 +67,7 @@ Starting with 1 control plane and 1 worker. The worker count is designed to scal
 | Proxmox bridge | `vmbr0`, VLAN tag `20` |
 | Control plane | `talos-cp.atlas.local` → `192.168.20.10` |
 | Worker 01 | `talos-worker-01.atlas.local` → `192.168.20.11` |
+| Worker 02 *(planned)* | `talos-worker-02.atlas.local` → `192.168.20.13` |
 
 DNS entries are managed in Pi-hole (`atlas-pihole.atlas.local`). Static IPs are configured directly in the Talos machine configs rather than via DHCP reservations.
 
@@ -135,7 +143,7 @@ Kubernetes on bare metal has no cloud load balancer, so a `Service` of `type: Lo
 
 Traffic path: client → ARP finds the node currently announcing the address → that node → kube-proxy → the service's pods, on any node. Layer 2 mode means all traffic for one address enters through a single node at a time. That's fine at lab scale; BGP mode (which spreads load) would need a BGP-capable router.
 
-**Giving a service an address.** Pin every address so the address plan in [lab-overview.html](lab-overview.html) stays true. Use the annotation for new services:
+**Giving a service an address.** Pin every address so the address plan in [index.html](index.html) stays true. Use the annotation for new services:
 
 ```yaml
 metadata:
