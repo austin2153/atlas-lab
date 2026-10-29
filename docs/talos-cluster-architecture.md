@@ -39,7 +39,7 @@ This document describes the design decisions, infrastructure layout, and rationa
 ## Cluster Topology
 
 ```mermaid
-graph TD
+graph LR
     subgraph proxmox["Proxmox VE 9.2 — single node"]
         subgraph k8s["Talos Kubernetes Cluster"]
             cp["<b>talos-cp</b> (VM 200)<br/>Control Plane<br/>192.168.20.10<br/>2 vCPU / 4 GB / 20 GB"]
