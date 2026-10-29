@@ -6,10 +6,6 @@ Terraform code to deploy a [Talos Linux](https://www.talos.dev/) Kubernetes clus
 
 See [docs/architecture.md](docs/architecture.md) for design decisions, network layout, and rationale.
 
-See [docs/unifi-access.md](docs/unifi-access.md) for how to connect to the UniFi controller.
-
-See [docs/proxmox.md](docs/proxmox.md) for the Proxmox host: access, rebuild runbook, maintenance and history.
-
 ## Cluster Overview
 
 | Role | Hostname | IP |
@@ -27,12 +23,7 @@ Install the following on your local machine:
 brew install terraform talosctl kubectl
 ```
 
-### Accounts & Access
-
-- **Proxmox API token**: Datacenter → Permissions → API Tokens → create token for a user with VM provisioning permissions
-- **Terraform Cloud account**: [app.terraform.io](https://app.terraform.io) — workspace must be set to **Local** execution mode (Settings → General → Execution Mode)
-
-### Authenticate Terraform CLI to Terraform Cloud
+### Authenticate to Terraform Cloud
 
 ```bash
 terraform login
