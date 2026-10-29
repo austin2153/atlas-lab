@@ -6,8 +6,6 @@ Terraform code to deploy a [Talos Linux](https://www.talos.dev/) Kubernetes clus
 
 See [docs/architecture.md](docs/architecture.md) for design decisions, network layout, and rationale.
 
-See the **[Atlas Lab Overview](https://austin2153.github.io/atlas-talos/)** for a live one-page visual overview of the whole lab (network, Proxmox guests, Kubernetes platform, address plan).
-
 See [docs/unifi-access.md](docs/unifi-access.md) for how to connect to the UniFi controller.
 
 See [docs/proxmox.md](docs/proxmox.md) for the Proxmox host: access, rebuild runbook, maintenance and history.
