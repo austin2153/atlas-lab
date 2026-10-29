@@ -1,6 +1,18 @@
-# Architecture
+# Talos Cluster Architecture
 
 This document describes the design decisions, infrastructure layout, and rationale behind the `atlas-talos` Terraform project.
+
+## References
+
+- [Talos Linux Docs](https://www.talos.dev/latest/) — official documentation
+- [Talos Image Factory](https://factory.talos.dev/) — build and download Talos ISOs with extensions
+- [siderolabs/talos GitHub](https://github.com/siderolabs/talos) — source and releases
+- [Proxmox VE Docs](https://pve.proxmox.com/pve-docs/) — hypervisor documentation
+- [bpg/proxmox Terraform provider](https://registry.terraform.io/providers/bpg/proxmox/latest/docs) — Terraform provider reference
+- [siderolabs/talos Terraform provider](https://registry.terraform.io/providers/siderolabs/talos/latest/docs) — Talos provider reference
+- [ArgoCD Docs](https://argo-cd.readthedocs.io/) — GitOps controller
+- [MetalLB Docs](https://metallb.io/) — L2 load balancer
+- [cert-manager Docs](https://cert-manager.io/docs/) — TLS certificate management
 
 ## Overview
 
