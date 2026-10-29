@@ -10,6 +10,7 @@ All credentials live in local files on the Mac — never committed to Git. This 
 | `~/.proxmox-credentials` | Proxmox API token (`PROXMOX_URL`, `PROXMOX_TOKEN_ID`, `PROXMOX_TOKEN_SECRET`) and SSH access (`PROXMOX_SSH_KEY`, `PROXMOX_SSH_USER`) |
 | `~/.terraform.d/credentials.tfrc.json` | Terraform Cloud API token |
 | `~/.vault-init` | Vault unseal keys (5 Shamir shares, 3 required) and initial root token — needed after every reboot |
+| `~/.vault-credentials` | Vault userpass login (`VAULT_USER`, `VAULT_PASSWORD`) for day-to-day admin access |
 | `~/.ssh/proxmox-claude` | SSH private key for root access to the Proxmox host |
 | `terraform/terraform.tfvars` | All Terraform input values including the Proxmox API token (gitignored) |
 
