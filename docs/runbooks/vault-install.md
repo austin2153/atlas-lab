@@ -427,9 +427,27 @@ A cron job runs as the vault user to take daily snapshots at 2:00 AM and prune o
 
 > Alpine Linux does not use `/etc/cron.d/` — per-user crontabs live in `/etc/crontabs/<user>`.
 
-The file is at `/etc/crontabs/vault` (chmod 600) and contains inline comments explaining each piece. The key line:
+The file is at `/etc/crontabs/vault` (chmod 600):
 
 ```sh
+# Vault Raft Snapshot Schedule
+# Runs daily at 2:00 AM as the vault user
+#
+# Takes a point-in-time snapshot of Vault's entire Raft state (secrets, PKI,
+# policies, auth config) and saves it to /opt/vault/snapshots/ with a
+# datestamped filename (e.g. vault-20261029.snap).
+#
+# Retention: keeps the last 7 days of snapshots, deletes anything older.
+#
+# To restore from a snapshot:
+#   vault operator raft snapshot restore /opt/vault/snapshots/vault-YYYYMMDD.snap
+#
+# Note: Vault's built-in snapshot scheduler (sys/storage/raft/snapshot-auto)
+# is enterprise-only. This cron job is the community edition alternative.
+#
+# VAULT_SKIP_VERIFY is set inline because the TLS cert is self-signed until
+# Step 10 replaces it with a Vault-issued cert.
+
 0 2 * * * VAULT_ADDR=https://vault.atlas.local:8200 VAULT_SKIP_VERIFY=true vault operator raft snapshot save /opt/vault/snapshots/vault-$(date +%Y%m%d).snap && find /opt/vault/snapshots -name '*.snap' -mtime +7 -delete
 ```
 
