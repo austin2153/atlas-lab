@@ -946,7 +946,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <tbody>
         <tr><td>A container or VM</td><td><code>pct restore</code> / <code>qmrestore</code> from the USB backup storage, or Restore in the Proxmox UI</td></tr>
         <tr><td>The Kubernetes cluster</td><td><code>terraform apply</code> to rebuild the nodes, then <code>talosctl bootstrap --recover-from</code> the latest etcd snapshot; ArgoCD redeploys the platform from Git</td></tr>
-        <tr><td>The whole host</td><td>The rebuild runbook in <code>docs/proxmox.md</code>, then restore guests from the USB SSD</td></tr>
+        <tr><td>The whole host</td><td>The rebuild runbook in <code>docs/runbooks/proxmox-install.md</code>, then restore guests from the USB SSD</td></tr>
       </tbody>
     </table>
   </div>
@@ -957,7 +957,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
   <div class="section-head">
     <div class="eyebrow">Verified against the cluster · 24 Oct 2026</div>
     <h2>Kubernetes platform</h2>
-    <p class="muted">Three Talos nodes: <code>talos-cp</code> (.10) runs the control plane, and <code>talos-worker-01</code> (.11) and the new <code>talos-worker-02</code> (.13) run workloads. Each component is a folder under <code>platform/</code>; ArgoCD deploys it.</p>
+    <p class="muted">Two Talos nodes currently: <code>talos-cp</code> (.10) runs the control plane and <code>talos-worker-01</code> (.11) runs workloads. A second worker, <code>talos-worker-02</code> (.13), is planned. Each platform component is a folder under <code>platform/</code>; ArgoCD deploys it.</p>
   </div>
   <div class="split">
     <div class="table-wrap">
@@ -984,7 +984,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     <li><div><h3>A speaker announces it on VLAN 20</h3><p>A <code>speaker</code> pod runs on every node. In Layer 2 mode, one of them answers ARP for each service address ("that IP is me"), so the gateway and your Mac send traffic for it to that node. If the node goes down, another speaker takes over within seconds.</p></div></li>
     <li><div><h3>The node forwards to the pods</h3><p>Kubernetes passes the traffic from that node to the service's pods, wherever they run in the cluster.</p></div></li>
   </ol>
-  <p class="muted">To give a new service an address, set <code>type: LoadBalancer</code> and pin the next free address from the table above. The config lives in <code>platform/metallb/l2-config.yaml</code>; the full refresher is in <code>docs/architecture.md</code>.</p>
+  <p class="muted">To give a new service an address, set <code>type: LoadBalancer</code> and pin the next free address from the table above. The config lives in <code>platform/metallb/l2-config.yaml</code>; the full refresher is in <code>docs/talos-cluster-architecture.md</code>.</p>
   <pre class="code">apiVersion: v1
 kind: Service
 metadata:
