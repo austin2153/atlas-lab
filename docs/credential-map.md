@@ -1,0 +1,46 @@
+# Credential Map
+
+All credentials live in local files on the Mac — never committed to Git. This document is the single reference for what exists, where it lives, and what it's used for.
+
+## Mac — local credential files
+
+| File | Purpose |
+|---|---|
+| `~/.unifi-credentials` | UniFi controller REST API (`UNIFI_URL`, `UNIFI_USER`, `UNIFI_PASSWORD`) |
+| `~/.proxmox-credentials` | Proxmox API token (`PROXMOX_URL`, `PROXMOX_TOKEN_ID`, `PROXMOX_TOKEN_SECRET`) and SSH access (`PROXMOX_SSH_KEY`, `PROXMOX_SSH_USER`) |
+| `~/.terraform.d/credentials.tfrc.json` | Terraform Cloud API token |
+| `~/.vault-init` | Vault unseal keys (5 Shamir shares, 3 required) and initial root token — needed after every reboot |
+| `~/.ssh/proxmox-claude` | SSH private key for root access to the Proxmox host |
+| `terraform/terraform.tfvars` | All Terraform input values including the Proxmox API token (gitignored) |
+
+All credential files should be `chmod 600`.
+
+## Mac — shell environment (`~/.zshrc`)
+
+| Variable | Value | Notes |
+|---|---|---|
+| `VAULT_ADDR` | `https://vault.atlas.local:8200` | Points the Vault CLI at the lab instance |
+| `VAULT_SKIP_VERIFY` | `true` | Temporary — remove after Step 9 replaces the self-signed cert |
+
+## Vault VM — `/etc/profile`
+
+Same `VAULT_ADDR` and `VAULT_SKIP_VERIFY` as above, for root shell sessions on the VM.
+
+## Proxmox host
+
+| Location | What it holds |
+|---|---|
+| `root@proxmox:~/.ssh/authorized_keys` | `proxmox-claude` public key for SSH access |
+
+## Kubernetes secrets (created imperatively — not in Git)
+
+| Secret | Namespace | Purpose |
+|---|---|---|
+| `atlas-talos-repo` | `argocd` | SSH deploy key for ArgoCD to pull from GitHub |
+| `kratix-state-writer` | `kratix-platform-system` | GitHub PAT for Kratix to push manifests to `state/` |
+
+## Rules
+
+- Always source credentials from their local files — never hardcode or echo secrets in the terminal
+- Per-container credentials follow the pattern `~/.proxmox-<name>-credentials`
+- New credential handoffs added to this project go in this document
