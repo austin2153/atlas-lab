@@ -1,8 +1,19 @@
 # Atlas Lab
 
-**[→ Lab Overview](https://austin2153.github.io/atlas-talos/)** — live visualization of the lab: network, hosts, address plan, Kubernetes platform.
+**[→ Lab Overview](https://austin2153.github.io/atlas-talos/)** — live visualization of the lab: network, hosts, address plan, and Kubernetes platform. Built in vanilla HTML/SVG and automatically validated against the live lab by a Python script.
 
 A self-hosted homelab built on a single Proxmox VE node, running a Talos Linux Kubernetes cluster, HashiCorp Vault, and a full GitOps platform stack. Built as a hands-on environment for learning and demonstrating enterprise infrastructure patterns at home-lab scale.
+
+---
+
+## What This Demonstrates
+
+- **Infrastructure as Code** — Proxmox VMs provisioned end-to-end with Terraform, state managed in Terraform Cloud
+- **Immutable infrastructure** — Talos Linux: no SSH, no package manager, API-only cluster management
+- **GitOps** — ArgoCD ApplicationSet auto-discovers and deploys platform components from Git
+- **Platform engineering** — Kratix promise-based framework provisions on-demand infrastructure (Proxmox VMs) from Kubernetes resource requests
+- **Secrets management** — HashiCorp Vault with Raft storage, KV v2 secrets engine, automated snapshots, and a two-tier PKI CA hierarchy (in progress)
+- **Network segmentation** — VLAN-separated lab, home, and IoT traffic on UniFi hardware
 
 ---
 
@@ -10,7 +21,7 @@ A self-hosted homelab built on a single Proxmox VE node, running a Talos Linux K
 
 | Layer | Technology |
 |---|---|
-| Hypervisor | Proxmox VE 9.2 |
+| Hypervisor | Proxmox VE 9.2 (Lenovo ThinkCentre M920q) |
 | Kubernetes OS | Talos Linux v1.12 — immutable, API-driven, no SSH |
 | Infrastructure as Code | Terraform — provisions VMs, cluster config, and bootstrap |
 | GitOps | ArgoCD — auto-discovers and deploys everything under `platform/` |
@@ -20,6 +31,19 @@ A self-hosted homelab built on a single Proxmox VE node, running a Talos Linux K
 | TLS | cert-manager — transitioning to Vault PKI |
 | DNS | Pi-hole — all `*.atlas.local` names |
 | Networking | UniFi Home Cloud Gateway Ultra — VLAN-segmented |
+
+---
+
+## Status
+
+| Area | Status |
+|---|---|
+| Talos Kubernetes cluster | Running — 1 control plane, 1 worker |
+| ArgoCD + GitOps platform | Running |
+| HashiCorp Vault | Running — KV v2 and snapshots configured; PKI in progress |
+| Vault PKI (CA hierarchy) | In progress |
+| Second worker node | Planned — pending hardware (M920q + RAM) |
+| Ansible Automation Platform | Planned |
 
 ---
 
