@@ -782,7 +782,6 @@ For services using cert-manager (cluster Ingresses), renewal is automatic once t
 
 ## Open items
 
-- [ ] Issue cert for Proxmox web UI (Step 11)
 - [ ] Issue cert for Pi-hole web UI (Step 11)
 - [ ] Stand up AAP, then run Step 12
 - [ ] Add `platform/external-secrets/` to the cluster, then run Step 13
@@ -790,3 +789,17 @@ For services using cert-manager (cluster Ingresses), renewal is automatic once t
 - [ ] Decide on auto-unseal once comfortable with the manual workflow
 - [ ] Raft snapshot off-VM copy (rsync to Crucial SSD + rclone to OneDrive) once the SSD enclosure arrives — commands are in Step 8b
 - [ ] Home Assistant AppRole when HA joins the lab VLAN
+
+## Future capabilities to explore
+
+These are Vault features not currently configured in the lab but worth pursuing as the platform matures:
+
+| Capability | What it does | Why it's interesting |
+|---|---|---|
+| **Vault Agent** | Daemon that runs on each host, auto-renews certs and secrets, triggers service reloads | Removes manual cert renewal for Proxmox, Pi-hole, and other infrastructure hosts |
+| **Dynamic secrets** | Vault generates short-lived credentials on demand (database passwords, AWS keys) and revokes them automatically | Nothing long-lived sitting in config files — secrets exist only while needed |
+| **Transit engine** | Encryption-as-a-service — apps encrypt/decrypt data without ever handling keys | Useful for atlas-ai or any service that needs to store sensitive data |
+| **SSH secrets engine** | Issues signed SSH certificates instead of managing authorized_keys files | Centralized SSH access control across all lab hosts |
+| **Auto-unseal** | Vault unseals itself on restart using a key stored in an external provider (cloud KMS, another Vault instance) | Removes the need to manually unseal after every reboot |
+| **Vault Agent Injector** | Kubernetes mutating webhook that injects secrets directly into pod filesystems via Vault Agent sidecars | Alternative to External Secrets Operator for getting secrets into cluster workloads |
+| **TOTP secrets engine** | Vault generates TOTP codes (like Google Authenticator) — useful for storing and generating 2FA codes centrally | Interesting for lab service accounts that require MFA |
