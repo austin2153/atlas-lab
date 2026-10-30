@@ -374,8 +374,8 @@ echo 'PROXMOX_HOMEPAGE_TOKEN_SECRET=<paste-token-secret-here>' >> ~/.proxmox-cre
 ```bash
 kubectl create secret generic proxmox-widget \
   --namespace homepage \
-  --from-literal=PROXMOX_TOKEN_ID='root@pam!homepage' \
-  --from-literal=PROXMOX_TOKEN_SECRET='<paste-token-secret-here>'
+  --from-literal=HOMEPAGE_VAR_PROXMOX_TOKEN_ID='root@pam!homepage' \
+  --from-literal=HOMEPAGE_VAR_PROXMOX_TOKEN_SECRET='<paste-token-secret-here>'
 ```
 
 Verify it was created:
@@ -396,8 +396,8 @@ Update the Proxmox service entry in `platform/homepage/configmap.yaml`:
             widget:
               type: proxmox
               url: https://proxmox.atlas.local:8006
-              username: "${PROXMOX_TOKEN_ID}"
-              password: "${PROXMOX_TOKEN_SECRET}"
+              username: "{{HOMEPAGE_VAR_PROXMOX_TOKEN_ID}}"
+              password: "{{HOMEPAGE_VAR_PROXMOX_TOKEN_SECRET}}"
 ```
 
 Homepage uses `{{OPEN}}{{OPEN}}HOMEPAGE_VAR_*{{CLOSE}}{{CLOSE}}` placeholders to pull values from environment variables at runtime. The Secret gets mounted as environment variables via the Deployment.
@@ -412,7 +412,7 @@ Add an `envFrom` block to the container spec so Homepage can read the secret val
                 name: proxmox-widget
 ```
 
-This injects the secret keys as environment variables (`PROXMOX_TOKEN_ID`, `PROXMOX_TOKEN_SECRET`). Homepage substitutes `${VAR_NAME}` placeholders in config files at runtime using these env vars.
+Homepage only substitutes env vars that start with `HOMEPAGE_VAR_`, using `{{HOMEPAGE_VAR_NAME}}` syntax in config files. The secret keys must include that prefix so they are picked up at runtime.
 
 After pushing, ArgoCD syncs and the pod restarts with the new environment. The Proxmox tile should now show live CPU and RAM data.
 
