@@ -524,36 +524,31 @@ Two steps: root CA first, then intermediate CA.
 
 #### 9a — Root CA (`pki` mount)
 
-**Enable the PKI secrets engine at `pki/`:**
+This step enables the PKI secrets engine, sets a 10-year max TTL (the root CA's own lifetime — 10 years is standard because the root is the trust anchor; if it expires, every cert it ever signed becomes untrusted), and generates the Root CA key and certificate entirely inside Vault. Using `internal` means the private key is generated in Vault's encrypted storage and never exported — it never touches disk. The public certificate is piped out to a temp file you'll need in Step 9e to install into your Mac's keychain and the cluster.
+
+The last command configures the URLs Vault embeds in every certificate it issues: one pointing to where clients can download the CA cert (`issuing_certificates`) and one pointing to the Certificate Revocation List (`crl_distribution_points`). Any client that receives a cert from this CA knows exactly where to go to verify it.
+
 ```bash
+# Enable the PKI secrets engine at pki/
 vault secrets enable -path=pki pki
-```
-Mounts the PKI engine at the path `pki/`. Just like enabling KV v2 at `secret/`, this turns the engine on — nothing is generated yet.
 
-**Set the maximum certificate lifetime to 10 years:**
-```bash
+# Set a 10-year max TTL — the root CA will use the full lifetime
 vault secrets tune -max-lease-ttl=87600h pki
-```
-`87600h` is 10 years in hours. This sets a hard ceiling — no certificate issued under this mount can live longer than 10 years. The root CA cert itself will use this full lifetime. 10 years is the standard for root CAs because the root is the trust anchor: if it expires, every cert it ever signed becomes untrusted and you'd have to rebuild the entire chain. The root CA mount gets disabled after signing the intermediate (Step 9c), so a long lifetime is safe — it can't issue anything day-to-day.
 
-**Generate the Root CA key and cert inside Vault:**
-```bash
+# Generate the Root CA key and cert inside Vault (key never leaves Vault's storage)
+# The public cert is saved to a temp file — needed in Step 9e for keychain install
 vault write -format=json pki/root/generate/internal \
   common_name="Atlas Lab Root CA" \
   ttl=87600h \
   key_type=rsa \
   key_bits=4096 \
   | jq -r '.data.certificate' > /tmp/atlas-lab-root-ca.crt
-```
-`internal` means the private key is generated inside Vault and never exported — it never touches disk outside of Vault's encrypted storage. The public certificate is piped out to `/tmp/atlas-lab-root-ca.crt` — save this file, you'll need it in Step 9e to install into your Mac's keychain and the cluster so they trust everything signed by this CA.
 
-**Configure the URLs Vault embeds in every certificate it issues:**
-```bash
+# Configure the URLs Vault embeds in every issued certificate
 vault write pki/config/urls \
   issuing_certificates="https://vault.atlas.local:8200/v1/pki/ca" \
   crl_distribution_points="https://vault.atlas.local:8200/v1/pki/crl"
 ```
-Every certificate Vault issues contains two embedded URLs: one pointing to where clients can download the CA cert (`issuing_certificates`), and one pointing to the Certificate Revocation List (`crl_distribution_points`) — a list of certs that have been revoked before their expiry. Any client that receives a cert from this CA knows exactly where to go to verify it.
 
 #### 9b — Intermediate CA (`pki_int` mount)
 
