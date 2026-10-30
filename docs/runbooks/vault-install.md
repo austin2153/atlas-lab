@@ -786,7 +786,7 @@ For services using cert-manager (cluster Ingresses), renewal is automatic once t
 - [ ] Stand up AAP, then run Step 12
 - [ ] Add `platform/external-secrets/` to the cluster, then run Step 13
 - [ ] Update `platform/cert-manager/cluster-issuer.yaml` to use Vault PKI issuer (Step 14)
-- [ ] Decide on auto-unseal once comfortable with the manual workflow
+- [ ] Set up auto-unseal via Azure Key Vault (service principal + `seal "azurekeyvault"` block + master key migration)
 - [ ] Raft snapshot off-VM copy (rsync to Crucial SSD + rclone to OneDrive) once the SSD enclosure arrives — commands are in Step 8b
 - [ ] Home Assistant AppRole when HA joins the lab VLAN
 
@@ -800,6 +800,6 @@ These are Vault features not currently configured in the lab but worth pursuing 
 | **Dynamic secrets** | Vault generates short-lived credentials on demand (database passwords, AWS keys) and revokes them automatically | Nothing long-lived sitting in config files — secrets exist only while needed |
 | **Transit engine** | Encryption-as-a-service — apps encrypt/decrypt data without ever handling keys | Useful for atlas-ai or any service that needs to store sensitive data |
 | **SSH secrets engine** | Issues signed SSH certificates instead of managing authorized_keys files | Centralized SSH access control across all lab hosts |
-| **Auto-unseal** | Vault unseals itself on restart using a key stored in an external provider (cloud KMS, another Vault instance) | Removes the need to manually unseal after every reboot |
+| **Auto-unseal (Azure Key Vault)** | Vault unseals itself on restart using a key stored in Azure Key Vault — add `seal "azurekeyvault"` block to `vault.hcl`, create a service principal with access, migrate the master key | Removes the need to manually unseal after every reboot; Azure chosen over AWS KMS given existing Azure familiarity and certifications |
 | **Vault Agent Injector** | Kubernetes mutating webhook that injects secrets directly into pod filesystems via Vault Agent sidecars | Alternative to External Secrets Operator for getting secrets into cluster workloads |
 | **TOTP secrets engine** | Vault generates TOTP codes (like Google Authenticator) — useful for storing and generating 2FA codes centrally | Interesting for lab service accounts that require MFA |
