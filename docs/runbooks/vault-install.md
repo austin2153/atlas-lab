@@ -13,7 +13,11 @@
 | Snapshot auto | https://developer.hashicorp.com/vault/docs/commands/operator/raft#snapshot-auto |
 | Alpine Linux wiki | https://wiki.alpinelinux.org/ |
 
-**Currently installed:** Vault v2.2.1 on Alpine Linux 3.24 (`vault.atlas.local`, `192.168.20.15`)
+**Currently installed:** Vault Community v2.2.1 on Alpine Linux 3.24 (`vault.atlas.local`, `192.168.20.15`)
+
+## Community vs. Enterprise
+
+Everything in this runbook runs on the free Community edition. The architecture — PKI hierarchy, KV v2, AppRole, Kubernetes auth, Raft storage — is identical to Enterprise. What Enterprise adds is almost entirely about operating at scale across teams and datacenters: namespaces (multi-tenancy), DR and performance replication, Sentinel policies (time/MFA-based access rules), control groups (dual approval for sensitive secrets), HSM-based unseal, and FIPS 140-2 compliance. The one Enterprise feature we hit directly is `snapshot-auto` (Step 8b) — that API endpoint is enterprise-only, which is why we use a cron job instead.
 
 To check the installed version on the VM:
 ```bash
