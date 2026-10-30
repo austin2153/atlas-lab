@@ -40,8 +40,8 @@ A self-hosted homelab built on a single Proxmox VE node, running a Talos Linux K
 |---|---|
 | Talos Kubernetes cluster | Running — 1 control plane, 1 worker |
 | ArgoCD + GitOps platform | Running |
-| HashiCorp Vault | Running — KV v2 and snapshots configured; PKI in progress |
-| Vault PKI (CA hierarchy) | In progress |
+| HashiCorp Vault | Running — KV v2, snapshots, and two-tier PKI CA hierarchy |
+| Vault PKI (CA hierarchy) | Running — root CA, intermediate CA, issuing role, Mac keychain trust |
 | Second worker node | Planned — pending hardware (M920q + RAM) |
 | Ansible Automation Platform | Planned |
 

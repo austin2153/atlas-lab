@@ -650,19 +650,11 @@ Remove `VAULT_SKIP_VERIFY` from `/etc/profile` and from your laptop's shell. Fro
 
 ### Step 10 — Trust the root CA on your Mac
 
-Download the root cert and add it to the macOS System keychain:
-
-```bash
-curl -sk https://vault.atlas.local:8200/v1/pki/ca/pem -o ~/Downloads/atlas-lab-root-ca.crt
-# pki mount is disabled — fetch from the file saved in Step 9a instead:
-# scp root@vault.atlas.local:/tmp/... no — use the copy saved during Step 9a
-```
-
-> Save `atlas-lab-root-ca.crt` during Step 9a — you'll need it for this step. Keep it (it's a public cert, not a key).
+The root CA cert was saved to `/tmp/atlas-lab-root-ca.crt` during Step 9a. Installing it into the macOS System keychain tells every app on your Mac — browsers, curl, the Vault CLI — to trust any certificate signed by this CA. Once done, `VAULT_SKIP_VERIFY` is no longer needed anywhere and Vault's UI will show a green padlock.
 
 ```bash
 sudo security add-trusted-cert -d -r trustRoot \
-  -k /Library/Keychains/System.keychain atlas-lab-root-ca.crt
+  -k /Library/Keychains/System.keychain /tmp/atlas-lab-root-ca.crt
 ```
 
 After this, every browser on your Mac trusts any cert signed by the intermediate. Proxmox, Pi-hole, and Vault's UI will load without warnings once they each have a cert (done individually as you get to each service).
