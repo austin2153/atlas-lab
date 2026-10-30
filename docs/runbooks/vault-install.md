@@ -657,11 +657,63 @@ sudo security add-trusted-cert -d -r trustRoot \
   -k /Library/Keychains/System.keychain /tmp/atlas-lab-root-ca.crt
 ```
 
-After this, every browser on your Mac trusts any cert signed by the intermediate. Proxmox, Pi-hole, and Vault's UI will load without warnings once they each have a cert (done individually as you get to each service).
+After this, every browser on your Mac trusts any cert signed by the intermediate. Services get certs individually as you work through them — see the next section.
 
 ---
 
-### Step 11 — AppRole auth for AAP and atlas-ai
+### Step 11 — Issue certs for lab services
+
+Now that Vault is the lab CA, any running service can get a proper TLS cert from it. The pattern is the same for every service: issue the cert from the intermediate, install it on the service, restart. No more browser warnings.
+
+#### Proxmox
+
+```bash
+# Issue the cert (run on your Mac)
+vault write -format=json pki_int/issue/atlas-lab \
+  common_name="proxmox.atlas.local" \
+  ip_sans="192.168.0.100" \
+  ttl=8760h > /tmp/proxmox-cert.json
+
+jq -r '.data.certificate + "\n" + .data.ca_chain[0]' /tmp/proxmox-cert.json > /tmp/proxmox.crt
+jq -r '.data.private_key' /tmp/proxmox-cert.json > /tmp/proxmox.key
+
+# Copy to Proxmox host
+scp -i ~/.ssh/proxmox-claude /tmp/proxmox.crt /tmp/proxmox.key root@192.168.0.100:/etc/pve/local/
+
+# On Proxmox: rename to match what the UI expects and restart the proxy
+ssh -i ~/.ssh/proxmox-claude root@192.168.0.100 '
+  mv /etc/pve/local/proxmox.crt /etc/pve/local/pveproxy-ssl.pem
+  mv /etc/pve/local/proxmox.key /etc/pve/local/pveproxy-ssl.key
+  systemctl restart pveproxy
+'
+```
+
+#### Pi-hole
+
+```bash
+# Issue the cert (run on your Mac)
+vault write -format=json pki_int/issue/atlas-lab \
+  common_name="pihole.atlas.local" \
+  ip_sans="192.168.0.101" \
+  ttl=8760h > /tmp/pihole-cert.json
+
+jq -r '.data.certificate + "\n" + .data.ca_chain[0]' /tmp/pihole-cert.json > /tmp/pihole.crt
+jq -r '.data.private_key' /tmp/pihole-cert.json > /tmp/pihole.key
+
+# Copy to the Pi-hole LXC via Proxmox
+pct push 102 /tmp/pihole.crt /etc/pihole/tls.crt
+pct push 102 /tmp/pihole.key /etc/pihole/tls.key
+```
+
+> Pi-hole TLS configuration depends on the web server it's using (lighttpd by default). Update the lighttpd config to point at these files and restart.
+
+---
+
+### Step 12 — AppRole auth (AAP and atlas-ai)
+
+> **Prereq: AAP and atlas-ai must be stood up before running this step.**
+
+AppRole is how automated services authenticate to Vault without a username/password. Each service gets a role-id (like a username) and a secret-id (like a password), which it uses to obtain a short-lived token. The token is scoped to a policy that limits exactly what secrets it can read.
 
 ```bash
 vault auth enable approle
@@ -688,7 +740,7 @@ vault write auth/approle/role/atlas-ai \
   token_policies="atlas-ai-policy" \
   token_ttl=1h token_max_ttl=24h
 
-# Get credentials for each (store encrypted, same as unseal keys)
+# Get credentials for each (store in ~/.vault-init or equivalent)
 vault read auth/approle/role/aap/role-id
 vault write -f auth/approle/role/aap/secret-id
 vault read auth/approle/role/atlas-ai/role-id
@@ -697,9 +749,9 @@ vault write -f auth/approle/role/atlas-ai/secret-id
 
 ---
 
-### Step 12 — Kubernetes auth and External Secrets Operator
+### Step 13 — Kubernetes auth and External Secrets Operator
 
-> **TODO:** Add `platform/external-secrets/` to the repo. Do this as a separate task once Vault is running.
+> **Prereq: External Secrets Operator must be deployed to the cluster. Add `platform/external-secrets/` to the repo first.**
 
 ```bash
 vault auth enable kubernetes
@@ -714,27 +766,27 @@ External Secrets Operator then uses a `SecretStore` pointing at `https://vault.a
 
 ---
 
-### Step 13 — Point cert-manager at Vault PKI (retire atlas-ca)
+### Step 14 — Point cert-manager at Vault PKI (retire atlas-ca)
 
-cert-manager supports Vault as an issuer natively (no ACME needed — it uses the Vault API directly).
+> **Prereq: Steps 12–13 complete. Update `platform/cert-manager/cluster-issuer.yaml` to add the Vault ClusterIssuer.**
 
-> **TODO:** Update `platform/cert-manager/cluster-issuer.yaml` to add a `Vault` ClusterIssuer pointing at `pki_int/sign/atlas-lab`. This is a separate commit — do it once Vault is running and the PKI hierarchy is verified.
-
-After this, new certificates requested inside the cluster come from `Atlas Lab Intermediate CA` instead of `atlas-ca`. The old `atlas-ca` ClusterIssuer and its self-signed chain can be removed.
+cert-manager supports Vault as an issuer natively — no ACME needed, it uses the Vault API directly. After this, new certificates requested inside the cluster come from `Atlas Lab Intermediate CA` instead of `atlas-ca`. The old `atlas-ca` ClusterIssuer and its self-signed chain can be removed.
 
 ---
 
 ## Cert renewal
 
-Certs issued with `ttl=8760h` expire after one year. Renew by re-running the `pki_int/issue/atlas-lab` command for that service and restarting it. Add calendar reminders.
+Certs issued manually (Proxmox, Pi-hole) expire after one year. Renew by re-running the `pki_int/issue/atlas-lab` command for that service and restarting it.
 
-For services using cert-manager (cluster Ingresses), renewal is automatic once the Vault issuer is configured.
+For services using cert-manager (cluster Ingresses), renewal is automatic once the Vault issuer is configured in Step 14.
 
 ## Open items
 
-- [ ] Add `platform/external-secrets/` to the cluster (Step 12)
-- [ ] Update `platform/cert-manager/cluster-issuer.yaml` to use Vault PKI issuer (Step 13)
-- [ ] Issue certs for Proxmox and Pi-hole web UIs from Vault PKI and install them
+- [ ] Issue cert for Proxmox web UI (Step 11)
+- [ ] Issue cert for Pi-hole web UI (Step 11)
+- [ ] Stand up AAP, then run Step 12
+- [ ] Add `platform/external-secrets/` to the cluster, then run Step 13
+- [ ] Update `platform/cert-manager/cluster-issuer.yaml` to use Vault PKI issuer (Step 14)
 - [ ] Decide on auto-unseal once comfortable with the manual workflow
 - [ ] Raft snapshot off-VM copy (rsync to Crucial SSD + rclone to OneDrive) once the SSD enclosure arrives — commands are in Step 8b
 - [ ] Home Assistant AppRole when HA joins the lab VLAN
