@@ -599,6 +599,10 @@ vault secrets disable pki   # re-enable only when signing a new intermediate
 
 #### 9d — Create an issuing role on the intermediate
 
+An issuing role is a named policy that controls what the intermediate CA is allowed to sign. Vault won't issue any certificate without one — the role is the gatekeeper. It defines which domains are permitted, how long certificates can live, and what key types are allowed.
+
+For the lab, one role covers everything: `atlas-local`, scoped to `*.atlas.local`. This is the role cert-manager will reference in Step 10 when it requests TLS certificates for cluster services. Any request that doesn't match the role's rules gets rejected by Vault before a cert is ever issued.
+
 ```bash
 vault write pki_int/roles/atlas-lab \
   allowed_domains="atlas.local" \
