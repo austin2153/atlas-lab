@@ -416,9 +416,63 @@ Homepage only substitutes env vars that start with `HOMEPAGE_VAR_`, using `{{HOM
 
 After pushing, ArgoCD syncs and the pod restarts with the new environment. The Proxmox tile should now show live CPU and RAM data.
 
-### Step 7b — Pi-hole widget (deferred)
+### Step 7b — Pi-hole widget
 
-Requires the Pi-hole API key. The widget shows query count, percentage blocked, and active client count.
+The Pi-hole widget shows total queries, blocked queries, blocked percentage, and gravity list size. It authenticates using the Pi-hole v6 admin password.
+
+**Save credentials to `~/.pihole-credentials`**
+
+```bash
+cat > ~/.pihole-credentials << 'EOF'
+PIHOLE_URL=http://atlas-pihole.atlas.local
+PIHOLE_PASSWORD=<your-pihole-password>
+EOF
+chmod 600 ~/.pihole-credentials
+```
+
+**Verify the password works against the Pi-hole API**
+
+```bash
+source ~/.pihole-credentials
+curl -s $PIHOLE_URL/api/auth \
+  -X POST -H "Content-Type: application/json" \
+  -d "{\"password\":\"$PIHOLE_PASSWORD\"}" | python3 -m json.tool | grep valid
+# should print: "valid": true
+```
+
+**Create the Kubernetes Secret**
+
+```bash
+source ~/.pihole-credentials
+kubectl create secret generic pihole-widget \
+  --namespace homepage \
+  --from-literal=HOMEPAGE_VAR_PIHOLE_KEY="$PIHOLE_PASSWORD"
+```
+
+**Add the widget block to `configmap.yaml`**
+
+```yaml
+        - Pi-hole:
+            href: http://atlas-pihole.atlas.local/admin
+            description: DNS and ad blocking
+            icon: pi-hole.png
+            widget:
+              type: pihole
+              url: http://atlas-pihole.atlas.local
+              version: 6
+              key: "{{HOMEPAGE_VAR_PIHOLE_KEY}}"
+              fields: ["queries", "blocked", "blocked_percent", "gravity"]
+```
+
+**Add the secret to `envFrom` in `deployment.yaml`**
+
+```yaml
+          envFrom:
+            - secretRef:
+                name: proxmox-widget
+            - secretRef:
+                name: pihole-widget
+```
 
 ### Step 7c — ArgoCD widget (deferred)
 
@@ -430,9 +484,9 @@ Requires an ArgoCD API token. The widget shows application count and sync status
 |---|---|
 | Basic dashboard (tiles, no widgets) | Done |
 | Pi-hole DNS entry | Done — `homepage.atlas.local → 192.168.20.54` |
-| Proxmox widget | In progress (Step 7a) |
+| Proxmox widget | Done |
+| Pi-hole widget | Done |
 | Vault-issued TLS cert | Deferred (Step 6 above) |
-| Pi-hole widget | Deferred (Step 7b — needs Pi-hole API key) |
 | ArgoCD widget | Deferred (Step 7c — needs ArgoCD token) |
 | ESO integration for widget secrets | Deferred (needs Vault K8s auth — vault-install.md Step 12) |
 
