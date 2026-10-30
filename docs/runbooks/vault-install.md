@@ -552,6 +552,10 @@ vault write pki/config/urls \
 
 #### 9b — Intermediate CA (`pki_int` mount)
 
+The intermediate CA is what actually signs day-to-day certificates for lab services. The root CA (Step 9a) signs the intermediate exactly once, then gets disabled — so if the intermediate were ever compromised, you revoke it and issue a new one from the root without touching anything that already trusts the root.
+
+The signing flow has three parts: generate a Certificate Signing Request (CSR) on the intermediate mount, bring that CSR to the root CA to get it signed, then import the signed certificate back into the intermediate mount. Both keys stay inside Vault the entire time — only the CSR and signed cert move between mounts as files. The temp files are removed at the end since they're no longer needed once the intermediate mount has its signed cert.
+
 ```bash
 # Enable the intermediate PKI mount with a 5-year max TTL
 vault secrets enable -path=pki_int pki
