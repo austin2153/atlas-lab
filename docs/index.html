@@ -942,7 +942,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     <li><div><h3>A speaker announces it on VLAN 20</h3><p>A <code>speaker</code> pod runs on every node. In Layer 2 mode, one of them answers ARP for each service address ("that IP is me"), so the gateway and your Mac send traffic for it to that node. If the node goes down, another speaker takes over within seconds.</p></div></li>
     <li><div><h3>The node forwards to the pods</h3><p>Kubernetes passes the traffic from that node to the service's pods, wherever they run in the cluster.</p></div></li>
   </ol>
-  <p class="muted">To give a new service an address, set <code>type: LoadBalancer</code> and pin the next free address from the table above. The config lives in <code>platform/metallb/l2-config.yaml</code>; the full refresher is in <code>docs/talos-cluster-architecture.md</code>.</p>
+  <p class="muted">To give a new service an address, set <code>type: LoadBalancer</code> and pin the next free address from the table above. The config lives in <code>platform/metallb/l2-config.yaml</code>; the full refresher is in <code>docs/talos-architecture.md</code>.</p>
   <pre class="code">apiVersion: v1
 kind: Service
 metadata:
@@ -982,7 +982,7 @@ spec:
   </div>
 </section>
 
-<footer>Target design as of 24 Oct 2026. Run <code>scripts/check-lab-overview.py</code> to compare this page with the live lab. Network and firewall settings come from the live UniFi controller; the rack and hardware plan from <code>docs/atlas-rack-design.md</code>; the platform from the rest of the atlas-talos repo.</footer>
+<footer>Target design as of 24 Oct 2026. Run <code>scripts/check-lab-overview.py</code> to compare this page with the live lab. Network and firewall settings come from the live UniFi controller; the rack and hardware plan from <code>docs/lab-infrastructure.md</code>; the platform from the rest of the atlas-talos repo.</footer>
 
 </div>
 <script>
