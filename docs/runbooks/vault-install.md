@@ -622,17 +622,21 @@ The command asks the intermediate to issue a cert for `vault.atlas.local`, saves
 The cert file gets both the server cert and the intermediate CA cert concatenated together. That's called a full chain — it lets clients that only have the root CA cert walk the full path to Vault's cert without needing to fetch the intermediate separately.
 
 ```bash
+# Issue the cert and save the raw JSON response (run on your Mac)
 vault write -format=json pki_int/issue/atlas-lab \
   common_name="vault.atlas.local" \
-  alt_names="vault" \
   ip_sans="192.168.20.15" \
-  ttl=8760h \
-  | python3 -c "
-import json,sys
-d=json.load(sys.stdin)['data']
-open('/opt/vault/tls/vault.crt','w').write(d['certificate']+'\n'+d['ca_chain'][0])
-open('/opt/vault/tls/vault.key','w').write(d['private_key'])
-"
+  ttl=8760h > /tmp/vault-cert.json
+
+# Extract the cert chain and private key (Alpine has no python3 — use jq)
+jq -r '.data.certificate' /tmp/vault-cert.json > /tmp/vault.crt
+jq -r '.data.ca_chain[0]' /tmp/vault-cert.json >> /tmp/vault.crt
+jq -r '.data.private_key' /tmp/vault-cert.json > /tmp/vault.key
+
+# Copy to the Vault VM
+scp -i ~/.ssh/proxmox-claude /tmp/vault.crt /tmp/vault.key root@192.168.20.15:/opt/vault/tls/
+
+# Set permissions and restart (run on Vault VM or via SSH)
 chown root:root /opt/vault/tls/vault.crt
 chown root:vault /opt/vault/tls/vault.key
 chmod 644 /opt/vault/tls/vault.crt

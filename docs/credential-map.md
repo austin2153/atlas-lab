@@ -23,7 +23,7 @@ All credential files should be `chmod 600`.
 |---|---|---|
 | `TALOSCONFIG` | `~/.talos/atlas-talos.talosconfig` | Points `talosctl` at the atlas cluster config |
 | `VAULT_ADDR` | `https://vault.atlas.local:8200` | Points the Vault CLI at the lab instance |
-| `VAULT_SKIP_VERIFY` | `true` | Temporary — remove after Step 9 replaces the self-signed cert |
+| `VAULT_SKIP_VERIFY` | *(removed)* | Was temporary — removed after Step 9e replaced the self-signed cert |
 
 ## Vault VM — `/etc/profile`
 
