@@ -30,6 +30,7 @@ spec:
           envFrom:
             - secretRef:
                 name: proxmox-widget
+                prefix: HOMEPAGE_VAR_
           livenessProbe:
             httpGet:
               path: /api/healthcheck
