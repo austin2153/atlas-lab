@@ -30,6 +30,8 @@ spec:
           envFrom:
             - secretRef:
                 name: proxmox-widget
+            - secretRef:
+                name: pihole-widget
           livenessProbe:
             httpGet:
               path: /api/healthcheck

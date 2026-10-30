@@ -8,6 +8,7 @@ All credentials live in local files on the Mac — never committed to Git. This 
 |---|---|
 | `~/.unifi-credentials` | UniFi controller REST API (`UNIFI_URL`, `UNIFI_USER`, `UNIFI_PASSWORD`) — local-only admin account, no Ubiquiti cloud or 2FA required |
 | `~/.proxmox-credentials` | Proxmox API token (`PROXMOX_URL`, `PROXMOX_TOKEN_ID`, `PROXMOX_TOKEN_SECRET`) and SSH access (`PROXMOX_SSH_KEY`, `PROXMOX_SSH_USER`). Also holds `PROXMOX_HOMEPAGE_TOKEN_ID=root@pam!homepage` and `PROXMOX_HOMEPAGE_TOKEN_SECRET` — read-only PVEAuditor token for the Homepage widget |
+| `~/.pihole-credentials` | Pi-hole v6 admin credentials (`PIHOLE_URL`, `PIHOLE_PASSWORD`) — used for the Homepage widget K8s secret |
 | `~/.terraform.d/credentials.tfrc.json` | Terraform Cloud API token |
 | `~/.vault-init` | Vault unseal keys (5 Shamir shares, 3 required), initial root token, and userpass login (`VAULT_USER`, `VAULT_PASSWORD`) — needed after every reboot |
 | `~/.ssh/proxmox-claude` | SSH private key for root access to the Proxmox host |
@@ -41,6 +42,8 @@ Same `VAULT_ADDR` and `VAULT_SKIP_VERIFY` as above, for root shell sessions on t
 |---|---|---|
 | `atlas-talos-repo` | `argocd` | SSH deploy key for ArgoCD to pull from GitHub |
 | `kratix-state-writer` | `kratix-platform-system` | GitHub PAT for Kratix to push manifests to `state/` |
+| `proxmox-widget` | `homepage` | Proxmox read-only API token for Homepage widget (`HOMEPAGE_VAR_PROXMOX_TOKEN_ID`, `HOMEPAGE_VAR_PROXMOX_TOKEN_SECRET`) |
+| `pihole-widget` | `homepage` | Pi-hole admin password for Homepage widget (`HOMEPAGE_VAR_PIHOLE_KEY`) |
 
 ## Rules
 

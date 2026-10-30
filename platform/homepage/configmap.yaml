@@ -33,6 +33,12 @@ data:
             href: http://atlas-pihole.atlas.local/admin
             description: DNS and ad blocking
             icon: pi-hole.png
+            widget:
+              type: pihole
+              url: http://atlas-pihole.atlas.local
+              version: 6
+              key: "{{HOMEPAGE_VAR_PIHOLE_KEY}}"
+              fields: ["queries", "blocked", "blocked_percent", "gravity"]
 
   widgets.yaml: |
     - resources:
