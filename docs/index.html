@@ -461,49 +461,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     </table>
   </div>
   <p class="muted">Two of today's rules go away: lab DNS and lab access to Proxmox no longer cross the firewall, because Pi-hole and Proxmox move onto the lab VLAN.</p>
-  <h3>Lab addresses</h3>
-  <p><span class="chip c-v20">VLAN 20</span> <span class="mono">192.168.20.0/24</span> <span class="muted">· Atlas Lab · gateway <span class="mono">192.168.20.1</span></span></p>
-  <p class="muted">How full each range is and the next address to use, then every lab device by IP. Service IPs are pinned in each service's manifest so they never move.</p>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Range</th><th>Use</th><th>Used</th><th>Next free</th></tr></thead>
-      <tbody>
-        <tr><td class="mono nowrap">192.168.20.2–.49</td><td>VMs and containers <span class="sub">static</span></td><td class="nowrap"><span class="meter"><i style="width:16.7%"></i></span>8 / 48</td><td class="mono">.16</td></tr>
-        <tr><td class="mono nowrap">192.168.20.50–.99</td><td>Kubernetes service IPs <span class="sub">MetalLB</span></td><td class="nowrap"><span class="meter lb"><i style="width:6%"></i></span>3 / 50</td><td class="mono">.51</td></tr>
-        <tr><td class="mono nowrap">192.168.20.100–.254</td><td>DHCP <span class="sub">lab Wi-Fi clients</span></td><td class="dim">—</td><td class="dim">assigned automatically</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>IP</th><th>Device</th><th>Type</th><th>Size</th><th>Role</th><th>Status</th></tr></thead>
-      <tbody>
-        <tr><td class="mono nowrap">192.168.20.3</td><td><a href="http://192.168.20.3/admin" target="_blank" rel="noopener">atlas-pihole</a> <span class="sub mono">atlas-pihole.atlas.local</span></td><td class="nowrap">LXC 102</td><td class="nowrap">1 vCPU · 512 MB</td><td>DNS and ad-blocking for every VLAN (moves from .0.101)</td><td><span class="st st-plan">Planned</span></td></tr>
-        <tr><td class="mono nowrap">192.168.20.5</td><td><a href="https://192.168.20.5:8006" target="_blank" rel="noopener">proxmox</a> <span class="sub mono">proxmox.atlas.local</span></td><td class="nowrap">M920q Tiny #1</td><td class="nowrap">6 cores · 32 → 64 GB</td><td>Proxmox host (moves from .0.100); Tinys #2 and #3 take .6 and .7</td><td><span class="st st-plan">Planned</span></td></tr>
-        <tr><td class="mono nowrap">192.168.20.10</td><td>talos-cp <span class="sub mono">talos-cp.atlas.local</span></td><td class="nowrap">VM 200 · Talos</td><td class="nowrap">2 vCPU · 4 GB · 20 GB</td><td>Kubernetes control plane</td><td><span class="st st-ok">In use</span></td></tr>
-        <tr><td class="mono nowrap">192.168.20.11</td><td>talos-worker-01 <span class="sub mono">talos-worker-01.atlas.local</span></td><td class="nowrap">VM 201 · Talos</td><td class="nowrap">2 vCPU · 6 GB · 75 GB</td><td>Kubernetes worker</td><td><span class="st st-ok">In use</span></td></tr>
-        <tr><td class="mono nowrap">192.168.20.12</td><td><a href="https://aap.atlas.local" target="_blank" rel="noopener">aap</a> <span class="sub mono">aap.atlas.local</span></td><td class="nowrap">VM · RHEL 9</td><td class="nowrap">4 vCPU · 16 GB · 100 GB</td><td>Ansible Automation Platform</td><td><span class="st st-plan">Planned</span></td></tr>
-        <tr><td class="mono nowrap">192.168.20.13</td><td>talos-worker-02 <span class="sub mono">talos-worker-02.atlas.local</span></td><td class="nowrap">VM 202 · Talos</td><td class="nowrap">2 vCPU · 6 GB · 75 GB</td><td>Kubernetes worker</td><td><span class="st st-plan">Planned</span></td></tr>
-        <tr><td class="mono nowrap">192.168.20.14</td><td>llm <span class="sub mono">llm.atlas.local</span></td><td class="nowrap">Physical · old gaming PC</td><td class="dim">—</td><td>Local LLM machine, beside the rack (wired only)</td><td><span class="st st-plan">Planned</span></td></tr>
-        <tr><td class="mono nowrap">192.168.20.15</td><td><a href="https://vault.atlas.local:8200" target="_blank" rel="noopener">vault</a> <span class="sub mono">vault.atlas.local</span></td><td class="nowrap">VM 203 · Alpine</td><td class="nowrap">1 vCPU · 1 GB · 16 GB</td><td>HashiCorp Vault — lab secrets store</td><td><span class="st st-ok">In use</span></td></tr>
-        <tr><td class="mono nowrap">192.168.20.50</td><td><a href="https://192.168.20.50" target="_blank" rel="noopener">argocd-server</a> <span class="sub mono">argocd.atlas.local</span></td><td class="nowrap">Service · MetalLB</td><td class="dim">—</td><td>ArgoCD UI</td><td><span class="st st-ok">In use</span></td></tr>
-        <tr><td class="mono nowrap">192.168.20.52</td><td><a href="https://vcenter-01.atlas.local" target="_blank" rel="noopener">vcenter-01</a> <span class="sub mono">vcenter-01.atlas.local</span></td><td class="nowrap">Service · MetalLB</td><td class="dim">—</td><td>vCenter simulator</td><td><span class="st st-ok">In use</span></td></tr>
-        <tr><td class="mono nowrap">192.168.20.53</td><td><a href="https://vcenter-02.atlas.local" target="_blank" rel="noopener">vcenter-02</a> <span class="sub mono">vcenter-02.atlas.local</span></td><td class="nowrap">Service · MetalLB</td><td class="dim">—</td><td>vCenter simulator</td><td><span class="st st-ok">In use</span></td></tr>
-        <tr><td class="mono nowrap dim">.16+</td><td class="dim">more VMs and containers</td><td class="dim">tbd</td><td class="dim">—</td><td class="dim">Not decided yet; room once the RAM upgrade is in</td><td></td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Management · VLAN 1</th><th>Address</th><th>Notes</th></tr></thead>
-      <tbody>
-        <tr><td><a href="https://192.168.0.1" target="_blank" rel="noopener">Gateway</a> <span class="sub">UCG Ultra</span></td><td class="mono">192.168.0.1</td><td class="dim">UniFi UI, reachable only from austin-mac</td></tr>
-        <tr><td>Switch <span class="sub">USW-Lite-8-PoE</span></td><td class="mono">192.168.0.2</td><td class="dim">—</td></tr>
-        <tr><td>Access points <span class="sub">U7 Pro Basement, Main, Office</span></td><td class="mono">192.168.0.3–.5</td><td class="dim">—</td></tr>
-        <tr><td>Break-glass port <span class="sub">switch port 8, VLAN 1 untagged</span></td><td class="dim">DHCP</td><td class="dim">No management Wi-Fi by design. If locked out, plug a laptop straight into switch port 8</td></tr>
-      </tbody>
-    </table>
-  </div>
+  <p class="muted">For subnet ranges, static IP assignments, DHCP ranges, and DNS records see <a href="https://github.com/austin2153/atlas-talos/blob/main/docs/network-address-plan.md" target="_blank" rel="noopener">network-address-plan.md</a>.</p>
 </section>
 
 <section id="rack">
