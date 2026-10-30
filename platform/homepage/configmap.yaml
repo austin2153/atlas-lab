@@ -22,7 +22,7 @@ data:
         - ArgoCD:
             href: https://argocd.atlas.local
             description: GitOps controller
-            icon: argocd.png
+            icon: argo-cd.png
         - Pi-hole:
             href: http://atlas-pihole.atlas.local/admin
             description: DNS and ad blocking
