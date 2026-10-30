@@ -396,8 +396,8 @@ Update the Proxmox service entry in `platform/homepage/configmap.yaml`:
             widget:
               type: proxmox
               url: https://proxmox.atlas.local:8006
-              username: "{{OPEN}}{{OPEN}}HOMEPAGE_VAR_PROXMOX_TOKEN_ID{{CLOSE}}{{CLOSE}}"
-              password: "{{OPEN}}{{OPEN}}HOMEPAGE_VAR_PROXMOX_TOKEN_SECRET{{CLOSE}}{{CLOSE}}"
+              username: "${PROXMOX_TOKEN_ID}"
+              password: "${PROXMOX_TOKEN_SECRET}"
 ```
 
 Homepage uses `{{OPEN}}{{OPEN}}HOMEPAGE_VAR_*{{CLOSE}}{{CLOSE}}` placeholders to pull values from environment variables at runtime. The Secret gets mounted as environment variables via the Deployment.
@@ -410,10 +410,9 @@ Add an `envFrom` block to the container spec so Homepage can read the secret val
           envFrom:
             - secretRef:
                 name: proxmox-widget
-                prefix: HOMEPAGE_VAR_
 ```
 
-> The `prefix` maps the secret keys to the `HOMEPAGE_VAR_` prefix that Homepage expects. So `token-id` becomes `HOMEPAGE_VAR_TOKEN_ID` and `token-secret` becomes `HOMEPAGE_VAR_TOKEN_SECRET`.
+This injects the secret keys as environment variables (`PROXMOX_TOKEN_ID`, `PROXMOX_TOKEN_SECRET`). Homepage substitutes `${VAR_NAME}` placeholders in config files at runtime using these env vars.
 
 After pushing, ArgoCD syncs and the pod restarts with the new environment. The Proxmox tile should now show live CPU and RAM data.
 
