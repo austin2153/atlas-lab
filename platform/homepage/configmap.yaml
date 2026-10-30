@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage
+  namespace: homepage
+data:
+  settings.yaml: |
+    title: Atlas Lab
+    theme: dark
+    color: slate
+
+  services.yaml: |
+    - Lab:
+        - Proxmox:
+            href: https://proxmox.atlas.local:8006
+            description: Hypervisor (Proxmox VE 9.2)
+            icon: proxmox.png
+        - Vault:
+            href: https://vault.atlas.local:8200
+            description: Secrets and PKI (HashiCorp Vault)
+            icon: vault.png
+        - ArgoCD:
+            href: https://argocd.atlas.local
+            description: GitOps controller
+            icon: argocd.png
+        - Pi-hole:
+            href: http://atlas-pihole.atlas.local/admin
+            description: DNS and ad blocking
+            icon: pi-hole.png
+
+  widgets.yaml: |
+    - resources:
+        cpu: true
+        memory: true
+    - search:
+        provider: google
+        target: _blank
+
+  bookmarks.yaml: |
+    []
+
+  docker.yaml: |
+    {}
+
+  kubernetes.yaml: |
+    mode: cluster
