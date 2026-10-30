@@ -318,35 +318,123 @@ Once the basic dashboard is working, replace the plain HTTP endpoint with HTTPS:
 4. Update the Pi-hole DNS record if the IP changes
 5. Remove the self-signed bypass if any was added
 
-## Step 7 — Configure service widgets (deferred)
+## Step 7 — Configure service widgets
 
-Homepage's real value comes from live widgets — tiles that show actual status rather than just links. Each widget calls the service's API from the Homepage pod. Credentials must be supplied as Kubernetes Secrets and referenced in `values.yaml`.
+Homepage's real value comes from live widgets — tiles that show actual status rather than just links. Each widget calls the service's API from inside the Homepage pod. Credentials must be stored in Kubernetes Secrets and referenced from `configmap.yaml` — **never put credentials directly in `configmap.yaml`**, as that file is committed to Git.
 
 | Service | Widget type | What it shows | Credential needed |
 |---|---|---|---|
-| Proxmox | `proxmox` | CPU/RAM/storage per node | Proxmox API token |
+| Proxmox | `proxmox` | VM/LXC counts, CPU and RAM usage | Read-only API token |
 | Pi-hole | `pihole` | Query count, blocked %, clients | Pi-hole API key |
 | ArgoCD | `argocd` | App count, sync status | ArgoCD API token |
 | Vault | — | No official widget yet; use plain link | — |
 
-Workflow for adding a widget:
+> Once Vault's Kubernetes auth and External Secrets Operator are set up (vault-install.md Steps 12–13), widget secrets can be populated from Vault automatically instead of being created manually.
 
-1. Create a Kubernetes Secret with the API credential in the `homepage` namespace
-2. Add a `widget:` block to the relevant service entry in `configmap.yaml`
-3. Push the change; ArgoCD syncs; the tile updates
+### Step 7a — Proxmox widget
 
-> Credentials for widgets go in Kubernetes Secrets — **not** in `configmap.yaml` directly (that file is committed to Git). Once Vault's Kubernetes auth and External Secrets Operator are set up (vault-install.md Steps 12–13), those secrets can be populated from Vault automatically.
+The Proxmox widget shows VM count, LXC count, CPU usage, and RAM usage on the tile. It calls the Proxmox API using a dedicated read-only token — not the Terraform token, which has full permissions.
+
+**Create a read-only API token in Proxmox**
+
+In the Proxmox UI: Datacenter → Permissions → API Tokens → Add.
+
+| Field | Value |
+|---|---|
+| User | `root@pam` |
+| Token ID | `homepage` |
+| Privilege Separation | unticked |
+
+Copy the token secret — it is only shown once. Then scope it to read-only by assigning the `PVEAuditor` role:
+
+Datacenter → Permissions → Add → API Token Permission:
+- Path: `/`
+- API Token: `root@pam!homepage`
+- Role: `PVEAuditor`
+- Propagate: ticked
+
+Or via the CLI on the Proxmox host:
+
+```bash
+pveum user token add root@pam homepage --privsep 0 --output-format json
+pveum acl modify / --token 'root@pam!homepage' --role PVEAuditor
+```
+
+**Save the token to `~/.proxmox-credentials`**
+
+The token secret is only shown once. Save it immediately alongside the existing Proxmox credentials (see `docs/lab-credentials.md`):
+
+```bash
+echo 'PROXMOX_HOMEPAGE_TOKEN_ID=root@pam!homepage' >> ~/.proxmox-credentials
+echo 'PROXMOX_HOMEPAGE_TOKEN_SECRET=<paste-token-secret-here>' >> ~/.proxmox-credentials
+```
+
+**Create the Kubernetes Secret**
+
+```bash
+kubectl create secret generic proxmox-widget \
+  --namespace homepage \
+  --from-literal=PROXMOX_TOKEN_ID='root@pam!homepage' \
+  --from-literal=PROXMOX_TOKEN_SECRET='<paste-token-secret-here>'
+```
+
+Verify it was created:
+
+```bash
+kubectl get secret proxmox-widget -n homepage
+```
+
+**Add the widget block to `configmap.yaml`**
+
+Update the Proxmox service entry in `platform/homepage/configmap.yaml`:
+
+```yaml
+        - Proxmox:
+            href: https://proxmox.atlas.local:8006
+            description: Hypervisor (Proxmox VE 9.2)
+            icon: proxmox.png
+            widget:
+              type: proxmox
+              url: https://proxmox.atlas.local:8006
+              username: "{{OPEN}}{{OPEN}}HOMEPAGE_VAR_PROXMOX_TOKEN_ID{{CLOSE}}{{CLOSE}}"
+              password: "{{OPEN}}{{OPEN}}HOMEPAGE_VAR_PROXMOX_TOKEN_SECRET{{CLOSE}}{{CLOSE}}"
+```
+
+Homepage uses `{{OPEN}}{{OPEN}}HOMEPAGE_VAR_*{{CLOSE}}{{CLOSE}}` placeholders to pull values from environment variables at runtime. The Secret gets mounted as environment variables via the Deployment.
+
+**Mount the Secret in `deployment.yaml`**
+
+Add an `envFrom` block to the container spec so Homepage can read the secret values:
+
+```yaml
+          envFrom:
+            - secretRef:
+                name: proxmox-widget
+                prefix: HOMEPAGE_VAR_
+```
+
+> The `prefix` maps the secret keys to the `HOMEPAGE_VAR_` prefix that Homepage expects. So `token-id` becomes `HOMEPAGE_VAR_TOKEN_ID` and `token-secret` becomes `HOMEPAGE_VAR_TOKEN_SECRET`.
+
+After pushing, ArgoCD syncs and the pod restarts with the new environment. The Proxmox tile should now show live CPU and RAM data.
+
+### Step 7b — Pi-hole widget (deferred)
+
+Requires the Pi-hole API key. The widget shows query count, percentage blocked, and active client count.
+
+### Step 7c — ArgoCD widget (deferred)
+
+Requires an ArgoCD API token. The widget shows application count and sync status.
 
 ## Open items
 
 | Item | Status |
 |---|---|
-| Basic dashboard (tiles, no widgets) | Planned |
-| Pi-hole DNS entry | Planned |
+| Basic dashboard (tiles, no widgets) | Done |
+| Pi-hole DNS entry | Done — `homepage.atlas.local → 192.168.20.54` |
+| Proxmox widget | In progress (Step 7a) |
 | Vault-issued TLS cert | Deferred (Step 6 above) |
-| Proxmox widget | Deferred (needs API token in a K8s Secret) |
-| Pi-hole widget | Deferred (needs Pi-hole API key) |
-| ArgoCD widget | Deferred (needs ArgoCD token) |
+| Pi-hole widget | Deferred (Step 7b — needs Pi-hole API key) |
+| ArgoCD widget | Deferred (Step 7c — needs ArgoCD token) |
 | ESO integration for widget secrets | Deferred (needs Vault K8s auth — vault-install.md Step 12) |
 
 ## Troubleshooting

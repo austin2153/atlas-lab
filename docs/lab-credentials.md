@@ -7,7 +7,7 @@ All credentials live in local files on the Mac — never committed to Git. This 
 | File | Purpose |
 |---|---|
 | `~/.unifi-credentials` | UniFi controller REST API (`UNIFI_URL`, `UNIFI_USER`, `UNIFI_PASSWORD`) — local-only admin account, no Ubiquiti cloud or 2FA required |
-| `~/.proxmox-credentials` | Proxmox API token (`PROXMOX_URL`, `PROXMOX_TOKEN_ID`, `PROXMOX_TOKEN_SECRET`) and SSH access (`PROXMOX_SSH_KEY`, `PROXMOX_SSH_USER`) |
+| `~/.proxmox-credentials` | Proxmox API token (`PROXMOX_URL`, `PROXMOX_TOKEN_ID`, `PROXMOX_TOKEN_SECRET`) and SSH access (`PROXMOX_SSH_KEY`, `PROXMOX_SSH_USER`). Also holds `PROXMOX_HOMEPAGE_TOKEN_ID=root@pam!homepage` and `PROXMOX_HOMEPAGE_TOKEN_SECRET` — read-only PVEAuditor token for the Homepage widget |
 | `~/.terraform.d/credentials.tfrc.json` | Terraform Cloud API token |
 | `~/.vault-init` | Vault unseal keys (5 Shamir shares, 3 required), initial root token, and userpass login (`VAULT_USER`, `VAULT_PASSWORD`) — needed after every reboot |
 | `~/.ssh/proxmox-claude` | SSH private key for root access to the Proxmox host |

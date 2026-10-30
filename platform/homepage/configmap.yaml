@@ -15,6 +15,11 @@ data:
             href: https://proxmox.atlas.local:8006
             description: Hypervisor (Proxmox VE 9.2)
             icon: proxmox.png
+            widget:
+              type: proxmox
+              url: https://proxmox.atlas.local:8006
+              username: "{{HOMEPAGE_VAR_PROXMOX_TOKEN_ID}}"
+              password: "{{HOMEPAGE_VAR_PROXMOX_TOKEN_SECRET}}"
         - Vault:
             href: https://vault.atlas.local:8200
             description: Secrets and PKI (HashiCorp Vault)
