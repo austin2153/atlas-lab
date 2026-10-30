@@ -28,8 +28,8 @@ Consolidate the basement network and lab gear (currently loose on a desk next to
 | Slot | Height | Device | Notes |
 |---|---|---|---|
 | 1 | 0.5U | 12-port patch panel | Pass-through. Front jumpers to switch |
-| 2 | 1U | UniFi USW-Lite-8-PoE | 192.168.0.2, 1 GbE |
-| 3 | 1U | UniFi UCG Ultra | Gateway/router, 192.168.0.1, 2.5 GbE WAN |
+| 2 | 1U | UniFi USW-Lite-8-PoE | 1 GbE |
+| 3 | 1U | UniFi UCG Ultra | Gateway/router, 2.5 GbE WAN |
 | 4 | 1U | Blank (included 1U blank panel) | Not needed for a shelf: the ONT sits on top of the rack and the Hue bridge is side-mounted |
 | 5 | 1U | Lenovo M920q Tiny #1 | Proxmox node. **VM backup drive:** old 500 GB Crucial SSD in a USB 3 enclosure, sitting behind the Tiny (import source during migration, then the backup target) |
 | 6 | 1U | M920q Tiny #2 | Future. Included 1U blank panel until then |
@@ -69,13 +69,16 @@ Cable path for every cable that reaches the switch, including the gateway uplink
 ### Network redesign (agreed 2026-10-25, done with the M920q install)
 Goal: stronger isolation. VLAN 1 becomes a management network for network gear only; everyday devices move to a new Home VLAN; the whole Proxmox host, Pi-hole included, lives on the lab VLAN.
 
-### VLANs and subnets (target)
-| VLAN | Name | Subnet | Use | Wi-Fi |
-|---|---|---|---|---|
-| 1 | Management | 192.168.0.0/24 | Network gear only: gateway, switch, APs | None, by design. Wired break-glass access on switch port 8 |
-| 30 | Home (new) | 192.168.30.0/24 | Everyday devices: phones, laptops, TVs, consoles, printer | "Atlas Home" (5 GHz) and "Atlas Gaming" (6 GHz only, WPA3 only, so Wi-Fi 6E/7 devices only; MLO off) |
-| 10 | IoT | 192.168.10.0/24 | Smart-home devices, Hue bridge | "Atlas IoT" (2.4 GHz) |
-| 20 | Atlas Lab | 192.168.20.0/24 | Proxmox host, Pi-hole, Talos cluster, AAP, lab services | "Atlas Lab" (5 GHz) |
+### VLANs (target)
+
+| VLAN | Name | Use | Wi-Fi |
+|---|---|---|---|
+| 1 | Management | Network gear only: gateway, switch, APs | None, by design. Break-glass on switch port 8 |
+| 10 | IoT | Smart-home devices, Hue bridge | "Atlas IoT" (2.4 GHz) |
+| 20 | Atlas Lab | Proxmox host, Pi-hole, Talos cluster, AAP, lab services | "Atlas Lab" (5 GHz) |
+| 30 | Home | Everyday devices: phones, laptops, TVs, consoles, printer | "Atlas Home" (5 GHz), "Atlas Gaming" (6 GHz, WPA3 only) |
+
+Subnets, DHCP ranges, and static IP assignments: see [network-address-plan.md](network-address-plan.md).
 
 Home gets its own firewall zone (HOME), separate from Management (the existing Internal zone), so the two can be isolated from each other.
 
@@ -86,10 +89,10 @@ Traffic between zones is blocked by default; replies to allowed connections are 
 
 | From | To | Allowed | Rule |
 |---|---|---|---|
-| austin-mac (Home, 192.168.30.58, matched by MAC) | Lab | All traffic | Allow Austin MAC to LAB |
+| austin-mac (Home, matched by MAC) | Lab | All traffic | Allow Austin MAC to LAB |
 | austin-mac | Management | TCP 443 (UniFi UI), TCP 22 (SSH to switch and APs) | Allow Austin MAC to Management |
 | Home | IoT | All traffic (control lights, cast to speakers; needs mDNS across Home and IoT) | Allow Home to IoT |
-| Home, IoT, Management | Pi-hole 192.168.20.3 | UDP/TCP 53 | Allow DNS to PiHole |
+| Home, IoT, Management | Pi-hole (`atlas-pihole.atlas.local`) | UDP/TCP 53 | Allow DNS to PiHole |
 | Home, IoT, Lab | Gateway | DHCP, NTP, mDNS only; admin (443, 22) blocked except austin-mac | Restrict gateway admin (recommended) |
 | Everything else between zones | | Blocked | Default |
 | All zones | Internet | All traffic | Default |
@@ -101,49 +104,12 @@ The laptop's MAC (ba:b0:9f:7d:1a:3b) is a macOS private Wi-Fi address set to "Fi
 Other UniFi settings: Nord VPN policy route for IoT (disabled); QoS rule for gaming PC (follows it to the Home VLAN).
 
 ### DNS (target)
-Every machine uses Pi-hole (192.168.20.3, on the lab VLAN) first and Cloudflare 1.1.1.1 as a fallback, so filtering applies normally and internet DNS keeps working if Pi-hole or the lab host is down. DHCP on all four VLANs hands out both. Proxmox and its containers use the host DNS settings; the Talos nodes use Terraform `dns_server` (changes to 192.168.20.3) + `dns_fallback_server`. Clients can occasionally use the fallback even when Pi-hole is up, so expect the odd unfiltered lookup or a brief `atlas.local` miss. Pi-hole forwards to local Unbound (127.0.0.1#5335) and Google 8.8.4.4.
 
-Why Pi-hole lives on the lab VLAN: it runs on the lab host, and whichever VLAN it sits on, the lab host has to carry that VLAN. On the lab VLAN, the host carries only VLAN 20, so the lab never touches Home or Management. Home, IoT and Management reach it through one DNS-only firewall rule. If home DNS should ever be independent of the lab, move Pi-hole to its own small box on Management.
+Every machine uses Pi-hole (`atlas-pihole.atlas.local`, on the lab VLAN) first and Cloudflare `1.1.1.1` as a fallback. DHCP on all four VLANs hands out both. Pi-hole forwards to local Unbound and Google `8.8.4.4`.
 
-### Known addresses (target)
-| Host | IP |
-|---|---|
-| UCG Ultra (gateway) | 192.168.0.1 |
-| USW-Lite-8-PoE | 192.168.0.2 |
-| U7 Pro Basement / Main / Office | 192.168.0.3 / .4 / .5 |
-| atlas-pihole (LXC 102) | 192.168.20.3 (today 192.168.0.101) |
-| proxmox.atlas.local (M920q Tiny #1) | 192.168.20.5 (today 192.168.0.100 on the old tower) |
-| Tiny #2 / #3 (future) | 192.168.20.6 / .7 |
-| llm.atlas.local (LLM box, the old gaming PC) | 192.168.20.14 (static, set on the machine) |
-| vault.atlas.local | 192.168.20.15 (VM 203, planned) |
-| austin-mac | 192.168.30.58 (DHCP reservation; today 192.168.0.58) |
+Why Pi-hole lives on the lab VLAN: the lab host has to carry whichever VLAN Pi-hole is on. On VLAN 20, the host carries only the lab VLAN. Home, IoT, and Management reach it through one DNS-only firewall rule.
 
-### Address plan (target)
-Static addresses sit outside each DHCP range.
-
-| VLAN | Range | Use |
-|---|---|---|
-| 1 | .1 | Gateway |
-| 1 | .2-.5 | Switch and APs |
-| 1 | .10-.99 | DHCP, for adopting new network gear |
-| 30 | .1 | Gateway |
-| 30 | .10-.254 | DHCP (Mac reserved at .58; printer gets a reservation too) |
-| 10 | .100-.254 | DHCP |
-| 20 | .1 | Gateway |
-| 20 | .3 | atlas-pihole |
-| 20 | .5 / .6 / .7 | Proxmox nodes: Tiny #1 / #2 / #3 |
-| 20 | .10 / .11 / .12 / .13 | talos-cp / talos-worker-01 / aap / talos-worker-02 |
-| 20 | .14 | LLM box (physical, the old gaming PC) |
-| 20 | .15 | vault.atlas.local (Vault VM, planned) |
-| 20 | .16-.49 | Free for new VMs and LXCs |
-| 20 | .50-.99 | MetalLB service IPs (.50 ArgoCD, .52-.53 vcsim) |
-| 20 | .100-.254 | DHCP (lab Wi-Fi) |
-
-### MetalLB service IPs
-- Every LoadBalancer service pins its address so the address plan stays true. New services use the annotation `metallb.io/loadBalancerIPs: 192.168.20.X`; ArgoCD (.50) and vcsim (.52-.53) use the older `spec.loadBalancerIP` field, which still works.
-- ArgoCD's .50 pin was set directly in the cluster, not in this repo; a reinstall of ArgoCD could come back on a different address. To do: add it to the repo.
-- Never give a VM or LXC a static address in .50-.99: MetalLB assumes it owns the whole pool. Next free service IP: .51.
-- How MetalLB works is explained in [architecture.md](architecture.md).
+Static IP assignments and DNS records: see [network-address-plan.md](network-address-plan.md).
 
 ### Power
 Low power draw is a hard requirement. Rated maximums: ONT 24 W (label 16 V x 1.5 A), M920q 65 W adapter (35 W CPU), USW-Lite-8-PoE 52 W PoE budget (includes the U7 Pro, ~21 W). Measure the real total with a smart plug between the wall and the power strip once the rack is built.
@@ -172,9 +138,9 @@ From seller photos:
 - The whole host lives on VLAN 20 (Atlas Lab); nothing on it is tagged.
 - Switch port 3: VLAN 20 untagged, no tagged VLANs (access port).
 - `vmbr0` bridged to the single onboard NIC. VLAN-aware can stay on for flexibility, but no guest uses a tag.
-- Host management: 192.168.20.5/24, gateway 192.168.20.1, DNS 192.168.20.3 then 1.1.1.1.
-- Guests: no VLAN tag. In Terraform, `vlan_id` becomes unset for the Talos VMs; Pi-hole (LXC 102) moves to 192.168.20.3/24, gateway .20.1.
+- Guests: no VLAN tag. In Terraform, `vlan_id` becomes unset for the Talos VMs.
 - Don't mix styles: with VLAN 20 untagged on the port, a guest that sends VLAN 20 tagged frames would be dropped or misdelivered.
+- Host IP and guest IP assignments: see [network-address-plan.md](network-address-plan.md).
 
 ## 7. Workloads
 
@@ -189,11 +155,13 @@ Storage there: `local-zfs` on the 250 GB, plus `CRUCIAL_SSD_512GB`.
 
 Target state:
 - Proxmox on M920q nodes, growing from 1 to 3 Tinys (eventual 3-node Proxmox cluster).
-- Three-node Kubernetes cluster on Talos VMs carrying most workloads: talos-cp (VM 200, 192.168.20.10), talos-worker-01 (VM 201, 192.168.20.11) and a new talos-worker-02 (VM 202, 192.168.20.13, talos-worker-02.atlas.local, 2 vCPU / 6 GB / 75 GB). Added by appending 192.168.20.13 to `worker_ips` in Terraform, which pins its MAC to BC:24:11:00:02:02; also add its Pi-hole DNS record.
-- Red Hat Ansible Automation Platform on its own RHEL 9 VM, `aap.atlas.local` at 192.168.20.12 (VLAN 20, ~4 vCPU / 16 GB / 100 GB), installed with the containerized installer in the growth topology with its bundled Postgres. Not in the Talos cluster: the AAP operator is only supported on OpenShift. Replaces AWX, which was removed on 2026-10-24 along with its awx-postgres LXC (CT 105); its database and secrets are backed up in /root/awx-backup-20261024 on the Proxmox host. Needs the 64 GB RAM upgrade.
-- Pi-hole and other lab services. More Kubernetes services and LXC containers are expected but not decided yet: new cluster services get MetalLB IPs from the free part of the pool (.51, .54-.99), and the 64 GB RAM upgrade leaves roughly 25 GB of headroom for them.
-- Local LLM box: the old gaming PC, on the lab VLAN at `llm.atlas.local`, 192.168.20.14. A physical machine beside the rack, not a Proxmox guest. Static IP set on the machine (not DHCP): gateway 192.168.20.1, DNS 192.168.0.101 then 1.1.1.1 (192.168.20.3 after the cutover), no VLAN tagging (the switch port does it). Wired only: keep its Wi-Fi off so it doesn't also sit on the home network. Today on switch port 3; port 6 in the target layout.
-- No NAS planned (no media/data hoard; personal files live on OneDrive).
+- Three-node Kubernetes cluster on Talos VMs: talos-cp (VM 200), talos-worker-01 (VM 201), and talos-worker-02 (VM 202, planned — pending M920q hardware). 2 vCPU / 6 GB / 75 GB per worker.
+- Red Hat Ansible Automation Platform on its own RHEL 9 VM (`aap.atlas.local`, VLAN 20, ~4 vCPU / 16 GB / 100 GB), containerized installer, growth topology with bundled Postgres. Not in the Talos cluster — the AAP operator is only supported on OpenShift. Replaces AWX (removed 2026-10-24; backup in `/root/awx-backup-20261024` on the Proxmox host). Needs the 64 GB RAM upgrade.
+- Pi-hole and other lab services. More Kubernetes services and LXC containers are expected but not decided yet.
+- Local LLM box (`llm.atlas.local`): the old gaming PC, a physical machine beside the rack on VLAN 20. Not a Proxmox guest. Wired only — Wi-Fi off. Today on switch port 3; port 6 in the target layout.
+- No NAS planned (personal files live on OneDrive).
+
+IP assignments for all workloads: see [network-address-plan.md](network-address-plan.md).
 
 ## Backups (PROPOSED)
 Target: the 500 GB Crucial SSD in a USB 3 enclosure behind Tiny #1, added to Proxmox as backup storage.
@@ -212,13 +180,15 @@ Restore: `pct restore` / `qmrestore` for guests; for the cluster, `terraform app
 ## 8. Migration plan
 
 ### Network cutover (with the M920q install)
-1. UniFi: create the Home network (VLAN 30, 192.168.30.0/24, DHCP .10-.254, DNS 192.168.20.3 then 1.1.1.1) and a HOME firewall zone; enable mDNS across Home and IoT.
-2. UniFi: move the "Atlas Home" and "Atlas Gaming" SSIDs to Home; reserve 192.168.30.58 for austin-mac and an address for the printer. Set switch port 8 to VLAN 1 untagged, Block All tagged (break-glass port), and test it once with the laptop.
-3. Move the LLM box's cable from switch port 3 to port 4 (set port 4 to VLAN 20 untagged first). Install Proxmox on the Tiny at 192.168.20.5 on port 3, already VLAN 20 untagged only.
-4. Move Pi-hole (LXC 102) to 192.168.20.3, untagged; update `proxmox.atlas.local` and other records. Change the LLM box's static DNS from 192.168.0.101 to 192.168.20.3 (it doesn't get DNS from DHCP).
-5. UniFi: set DHCP DNS to 192.168.20.3 + 1.1.1.1 on every network; add the target firewall rules and retire the two lab rules.
-6. Terraform: `proxmox_endpoint` = https://192.168.20.5:8006, `dns_server` = 192.168.20.3, `vlan_id` unset. Kratix `proxmox-vm` promise: update the endpoint in the `proxmox-credentials` secret.
-7. Repo: update `CLAUDE.md` (allowed commands) and `docs/proxmox.md` to the new addresses; run `scripts/check-lab-overview.py`.
+1. UniFi: create the Home network (VLAN 30) and a HOME firewall zone; enable mDNS across Home and IoT.
+2. UniFi: move the "Atlas Home" and "Atlas Gaming" SSIDs to VLAN 30; reserve `austin-mac` and printer addresses. Set switch port 8 to VLAN 1 untagged, Block All tagged (break-glass port), and test it once with the laptop.
+3. Move the LLM box's cable from switch port 3 to port 4 (set port 4 to VLAN 20 untagged first). Install Proxmox on the Tiny on port 3, already VLAN 20 untagged only.
+4. Move Pi-hole (LXC 102) to its target VLAN 20 address; update all DNS records. Update the LLM box's static DNS to point at the new Pi-hole address.
+5. UniFi: set DHCP DNS to Pi-hole + `1.1.1.1` on every network; add the target firewall rules and retire the two old lab rules.
+6. Terraform: update `proxmox_endpoint`, `dns_server`, and unset `vlan_id`. Update the Kratix `proxmox-vm` promise endpoint in the `proxmox-credentials` secret.
+7. Repo: update `CLAUDE.md` (allowed commands) and runbooks to the new addresses; run `scripts/check-lab-overview.py`.
+
+Target IPs for the cutover: see [network-address-plan.md](network-address-plan.md).
 
 ### Hardware migration
 1. Install Proxmox on the 250 GB SATA in the Tiny (or transplant the current 250 GB, still being considered).
