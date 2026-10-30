@@ -615,6 +615,12 @@ vault write pki_int/roles/atlas-lab \
 
 #### 9e — Issue Vault's own cert and replace the bootstrap cert
 
+Right now Vault is serving a self-signed TLS certificate — the one it generated at install time with no CA behind it. That's why `VAULT_SKIP_VERIFY=true` has been set everywhere: nothing trusts it. This step fixes that by using the intermediate CA we just built to issue a proper cert for Vault itself.
+
+The command asks the intermediate to issue a cert for `vault.atlas.local`, saves both the cert and the intermediate CA chain into the file Vault serves for TLS, then restarts Vault so it picks up the new cert. After the restart, any client that trusts the root CA (which you'll install in Step 10) will verify Vault's cert cleanly — no more skip-verify workaround.
+
+The cert file gets both the server cert and the intermediate CA cert concatenated together. That's called a full chain — it lets clients that only have the root CA cert walk the full path to Vault's cert without needing to fetch the intermediate separately.
+
 ```bash
 vault write -format=json pki_int/issue/atlas-lab \
   common_name="vault.atlas.local" \
