@@ -10,7 +10,11 @@ data:
     color: slate
     headerStyle: boxed
     cardBlur: md
-    iconSize: lg
+    iconSize: xl
+    layout:
+      Atlas Lab:
+        columns: 2
+        style: row
 
 
   services.yaml: |
