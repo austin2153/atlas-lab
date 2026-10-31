@@ -73,3 +73,13 @@ Once deployed, open `http://uptime-kuma.atlas.local` and add monitors for:
 | DNS entry | TODO |
 | Monitor configuration | TODO |
 | Homepage widget | TODO |
+
+## Future consideration — full observability stack
+
+Uptime Kuma covers basic up/down health. For deeper observability (metrics over time, alerting, log aggregation) the options to evaluate later are:
+
+- **kube-prometheus-stack** — Prometheus + Grafana + Alertmanager, pre-wired for Kubernetes. The production standard. Heavier but gives CPU/memory graphs, pod restart counts, custom alerts.
+- **TIG stack** — Telegraf + InfluxDB + Grafana. Better for network gear and SNMP metrics, common in homelab setups predating Prometheus.
+- **Grafana LGTM stack** — Loki (logs) + Grafana + Tempo (tracing) + Mimir (metrics). Grafana's own full observability suite.
+
+No decision made yet — revisit once the core lab services are stable.
