@@ -273,7 +273,7 @@ qm start 201    # talos-worker-01
 Wait about 2 minutes for Talos to boot, then check:
 
 ```bash
-TALOSCONFIG=~/.talos/atlas-talos.talosconfig talosctl --nodes 192.168.20.10 health --server=false
+TALOSCONFIG=~/.talos/atlas-lab.talosconfig talosctl --nodes 192.168.20.10 health --server=false
 kubectl get nodes
 ```
 

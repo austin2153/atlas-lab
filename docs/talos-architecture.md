@@ -1,6 +1,6 @@
 # Talos Cluster Architecture
 
-This document describes the design decisions, infrastructure layout, and rationale behind the `atlas-talos` Terraform project.
+This document describes the design decisions, infrastructure layout, and rationale behind the `atlas-lab` Terraform project.
 
 ## References
 
@@ -16,7 +16,7 @@ This document describes the design decisions, infrastructure layout, and rationa
 
 ## Overview
 
-`atlas-talos` provisions a [Talos Linux](https://www.talos.dev/) Kubernetes cluster on a self-hosted [Proxmox VE](https://www.proxmox.com/) server using Terraform. Talos is a minimal, immutable, API-driven Linux distribution built specifically for Kubernetes — there is no SSH, no package manager, and no shell. All configuration is applied via its API.
+`atlas-lab` provisions a [Talos Linux](https://www.talos.dev/) Kubernetes cluster on a self-hosted [Proxmox VE](https://www.proxmox.com/) server using Terraform. Talos is a minimal, immutable, API-driven Linux distribution built specifically for Kubernetes — there is no SSH, no package manager, and no shell. All configuration is applied via its API.
 
 ## Tech Stack
 

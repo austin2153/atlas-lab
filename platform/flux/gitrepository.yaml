@@ -1,11 +1,11 @@
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
-  name: atlas-talos
+  name: atlas-lab
   namespace: flux-system
 spec:
   interval: 1m
-  url: ssh://git@github.com/austin2153/atlas-talos.git
+  url: ssh://git@github.com/austin2153/atlas-lab.git
   ref:
     branch: main
   secretRef:

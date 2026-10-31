@@ -12,4 +12,4 @@ spec:
   secretRef:
     name: kratix-state-writer
     namespace: kratix-platform-system
-  url: https://github.com/austin2153/atlas-talos.git
+  url: https://github.com/austin2153/atlas-lab.git

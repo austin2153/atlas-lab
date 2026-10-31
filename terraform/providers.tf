@@ -1,12 +1,12 @@
 terraform {
   # Terraform Cloud backend — state (.tfstate) is stored remotely under org ACLABORG,
-  # workspace atlas-talos. Workspace is set to Local execution mode: Terraform runs locally
+  # workspace atlas-lab. Workspace is set to Local execution mode: Terraform runs locally
   # but state lives in TF Cloud, so you get remote state without handing
   # TF Cloud your Proxmox credentials.
   cloud {
     organization = "ACLABORG"
     workspaces {
-      name = "atlas-talos"
+      name = "atlas-lab"
     }
   }
 

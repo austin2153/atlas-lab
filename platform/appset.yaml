@@ -8,7 +8,7 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   generators:
     - git:
-        repoURL: git@github.com:austin2153/atlas-talos.git
+        repoURL: git@github.com:austin2153/atlas-lab.git
         revision: main
         directories:
           - path: platform/*
@@ -18,7 +18,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: git@github.com:austin2153/atlas-talos.git
+        repoURL: git@github.com:austin2153/atlas-lab.git
         targetRevision: main
         path: "{{ .path.path }}"
       destination:

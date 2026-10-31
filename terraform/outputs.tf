@@ -13,11 +13,11 @@ output "kubeconfig" {
 output "post_apply_instructions" {
   description = "Run these commands after apply to refresh kubectl access"
   value       = <<-EOT
-    terraform output -raw kubeconfig > ~/.kube/atlas-talos.kubeconfig
-    terraform output -raw talosconfig > ~/.talos/atlas-talos.talosconfig
+    terraform output -raw kubeconfig > ~/.kube/atlas-lab.kubeconfig
+    terraform output -raw talosconfig > ~/.talos/atlas-lab.talosconfig
     kubectl config delete-context admin@atlas 2>/dev/null; kubectl config delete-cluster atlas 2>/dev/null; kubectl config delete-user admin@atlas 2>/dev/null; true
-    KUBECONFIG=~/.kube/config:~/.kube/atlas-talos.kubeconfig kubectl config view --flatten > ~/.kube/config-merged && mv ~/.kube/config-merged ~/.kube/config
+    KUBECONFIG=~/.kube/config:~/.kube/atlas-lab.kubeconfig kubectl config view --flatten > ~/.kube/config-merged && mv ~/.kube/config-merged ~/.kube/config
     kubectl config use-context admin@atlas
-    grep -qxF 'export TALOSCONFIG=~/.talos/atlas-talos.talosconfig' ~/.zshrc || echo '\nexport TALOSCONFIG=~/.talos/atlas-talos.talosconfig' >> ~/.zshrc
+    grep -qxF 'export TALOSCONFIG=~/.talos/atlas-lab.talosconfig' ~/.zshrc || echo '\nexport TALOSCONFIG=~/.talos/atlas-lab.talosconfig' >> ~/.zshrc
   EOT
 }

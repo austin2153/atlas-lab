@@ -5,7 +5,7 @@
 ▐▌ ▐▌ █  ▐▙▄▄▖▐▌ ▐▌▗▄▄▞▘    ▐▙▄▄▖▐▌ ▐▌▐▙▄▞▘   ▐▄▄▄▄▄▄▄▄▄▌
 ```
 
-**[→ Lab Overview](https://austin2153.github.io/atlas-talos/)** — live visualization of the lab: network, hosts, address plan, and Kubernetes platform. Built in vanilla HTML/SVG and automatically validated against the live lab by a Python script.
+**[→ Lab Overview](https://austin2153.github.io/atlas-lab/)** — live visualization of the lab: network, hosts, address plan, and Kubernetes platform. Built in vanilla HTML/SVG and automatically validated against the live lab by a Python script.
 
 A self-hosted homelab built on a single Proxmox VE node, running a Talos Linux Kubernetes cluster, HashiCorp Vault, and a full GitOps platform stack. Built as a hands-on environment for learning and demonstrating enterprise infrastructure patterns at home-lab scale.
 
@@ -54,7 +54,7 @@ A self-hosted homelab built on a single Proxmox VE node, running a Talos Linux K
 
 ## Docs
 
-- [Lab Overview](https://austin2153.github.io/atlas-talos/) — live network and host visualization
+- [Lab Overview](https://austin2153.github.io/atlas-lab/) — live network and host visualization
 - [Talos Architecture](docs/talos-architecture.md) — design decisions and platform details
 - [Network Address Plan](docs/network-address-plan.md) — VLANs, subnets, static IPs, DHCP ranges, MetalLB pool, DNS records
 - [HashiCorp Vault Runbook](docs/runbooks/vault-install.md) — install, PKI, secrets, auth methods

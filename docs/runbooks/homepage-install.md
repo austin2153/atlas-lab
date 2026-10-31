@@ -2,7 +2,7 @@
 
 Homepage is a modern, highly configurable service dashboard. It provides a single starting page for the lab — links and live status widgets for Proxmox, Vault, ArgoCD, Pi-hole, and any other service worth surfacing. All configuration lives in files so it follows the same GitOps pattern as the rest of the platform.
 
-**Target:** `homepage.atlas.local` running in the atlas-talos Kubernetes cluster, managed by ArgoCD, exposed via MetalLB.
+**Target:** `homepage.atlas.local` running in the atlas-lab Kubernetes cluster, managed by ArgoCD, exposed via MetalLB.
 
 ## Reference
 

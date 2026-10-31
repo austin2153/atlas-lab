@@ -7,6 +7,6 @@ spec:
   interval: 1m
   sourceRef:
     kind: GitRepository
-    name: atlas-talos
+    name: atlas-lab
   path: ./state
   prune: true

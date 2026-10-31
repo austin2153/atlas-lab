@@ -2,7 +2,7 @@
 
 Uptime Kuma is a self-hosted uptime monitoring tool. It checks services on a schedule and tracks uptime history, response times, and sends alerts on failures. In this lab it provides the health status badges visible on the Homepage dashboard.
 
-**Target:** `uptime-kuma.atlas.local` running in the atlas-talos Kubernetes cluster, managed by ArgoCD, exposed via MetalLB.
+**Target:** `uptime-kuma.atlas.local` running in the atlas-lab Kubernetes cluster, managed by ArgoCD, exposed via MetalLB.
 
 ## Reference
 
