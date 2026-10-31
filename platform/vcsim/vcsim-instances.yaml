@@ -6,7 +6,7 @@ metadata:
   name: vcenter-01
   namespace: vcsim
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: vcenter-01
@@ -43,7 +43,7 @@ metadata:
   name: vcenter-02
   namespace: vcsim
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: vcenter-02
