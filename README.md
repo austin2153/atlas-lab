@@ -1,4 +1,9 @@
-# Atlas Lab
+```
+ ▗▄▖▗▄▄▄▖▗▖    ▗▄▖  ▗▄▄▖    ▗▖    ▗▄▖ ▗▄▄▖    ▗▄▄▄▄▄▄▄▄▄▖
+▐▌ ▐▌ █  ▐▌   ▐▌ ▐▌▐▌       ▐▌   ▐▌ ▐▌▐▌ ▐▌   ▐▓▓▓▓▓▓▓▓▓▌
+▐▛▀▜▌ █  ▐▌   ▐▛▀▜▌ ▝▀▚▖    ▐▌   ▐▛▀▜▌▐▛▀▚▖   ▐░░░░░░░░░▌
+▐▌ ▐▌ █  ▐▙▄▄▖▐▌ ▐▌▗▄▄▞▘    ▐▙▄▄▖▐▌ ▐▌▐▙▄▞▘   ▐▄▄▄▄▄▄▄▄▄▌
+```
 
 **[→ Lab Overview](https://austin2153.github.io/atlas-talos/)** — live visualization of the lab: network, hosts, address plan, and Kubernetes platform. Built in vanilla HTML/SVG and automatically validated against the live lab by a Python script.
 

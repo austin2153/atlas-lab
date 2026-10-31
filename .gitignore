@@ -34,3 +34,4 @@ platform/kratix/promises/*/workflows/**/scripts/local/output/*
 platform/kratix/promises/*/workflows/**/scripts/local/metadata/*
 !platform/kratix/promises/*/workflows/**/scripts/local/output/.gitkeep
 !platform/kratix/promises/*/workflows/**/scripts/local/metadata/.gitkeep
+.scratch/

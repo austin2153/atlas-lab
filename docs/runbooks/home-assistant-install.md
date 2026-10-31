@@ -23,7 +23,7 @@ Home Assistant is an open-source home automation platform that integrates with t
 | Deployment | Home Assistant OS VM on Proxmox | Full OS flavor gives Supervisor, Add-ons, automatic updates, and backups — the recommended install method |
 | Flavor | Home Assistant OS (HAOS) | Container flavor lacks Supervisor and Add-ons; HAOS is the best-supported path |
 | Network | VLAN 10 (IoT) | Direct layer-2 access to IoT devices; avoids mDNS/discovery issues that occur when crossing VLANs |
-| Provisioning | Manual Proxmox VM + HAOS image | Outside the Kubernetes GitOps flow; same pattern as the Vault VM |
+| Provisioning | Proxmox community script | Handles VM creation, image download, and disk import in one command; VLAN tag set manually after |
 | DNS | `home-assistant.atlas.local` → `192.168.10.10` via Pi-hole | Same pattern as all other `*.atlas.local` names |
 | IP | `192.168.10.10` (static, reserved in network address plan) | Low end of VLAN 10 static range `.2–.49` |
 
@@ -40,52 +40,29 @@ Home Assistant was initially considered for the Kubernetes cluster but a VM is t
 
 ---
 
-## Step 1 — Download the HAOS KVM image
+## Step 1 — Run the community script
 
-On the Proxmox host, download the HAOS `.qcow2` image for KVM/QEMU:
+The [Proxmox VE Helper Scripts](https://community-scripts.org/scripts?q=home+ass&preview=haos-vm) project maintains a HAOS VM installer that handles image download, VM creation, and disk import automatically.
 
-```bash
-# SSH into the Proxmox host first
-ssh -i ~/.ssh/proxmox-claude root@192.168.0.100
-
-# Download the HAOS qcow2 image into Proxmox local image storage
-cd /var/lib/vz/images/
-wget https://github.com/home-assistant/operating-system/releases/download/18.4/haos_ova-18.4.qcow2.xz
-
-# Extract — produces haos_ova-18.4.qcow2 in the same directory
-unxz haos_ova-18.4.qcow2.xz
-```
-
-> To upgrade later, check https://github.com/home-assistant/operating-system/releases for the latest version and update the URL accordingly.
-
-## Step 2 — Create the VM in Proxmox
-
-Recommended specs:
-
-| Setting | Value |
-|---|---|
-| VM ID | `204` |
-| Name | `home-assistant` |
-| OS | Linux 6.x kernel |
-| CPU | 2 cores |
-| RAM | 2 GB |
-| Disk | Import from HAOS qcow2 image |
-| Network | VirtIO NIC, tagged to VLAN 10 |
-| BIOS | OVMF (UEFI) |
-
-Import the disk:
+In the Proxmox shell (via the web UI or SSH), run:
 
 ```bash
-qm importdisk <vmid> /var/lib/vz/images/haos.qcow2 local-lvm
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/haos-vm.sh)"
 ```
 
-Set the imported disk as the boot disk in the VM hardware settings.
+When prompted, choose **Default** settings. The script will:
+- Download the latest HAOS qcow2 image
+- Create the VM with 2 CPU, 4 GB RAM, 32 GB disk, OVMF (UEFI)
+- Import and attach the disk
+- Start the VM
 
-## Step 3 — Configure network for VLAN 10
+> Note the VM ID assigned by the script — you'll need it in the next step.
+
+## Step 2 — Configure network for VLAN 10
 
 In the Proxmox VM network settings, set the NIC's VLAN tag to `10`. This places the VM directly on the IoT network — Home Assistant will get a DHCP address from the VLAN 10 range and have full layer-2 access to IoT devices.
 
-## Step 4 — First boot and onboarding
+## Step 3 — First boot and onboarding
 
 Start the VM and navigate to `http://homeassistant.local:8123` (mDNS) or the DHCP-assigned IP. Complete the onboarding wizard:
 
@@ -93,7 +70,7 @@ Start the VM and navigate to `http://homeassistant.local:8123` (mDNS) or the DHC
 2. Set home location (used for sun-based automations and weather)
 3. Home Assistant will auto-discover devices on VLAN 10
 
-## Step 5 — Set static IP and add DNS entry
+## Step 4 — Set static IP and add DNS entry
 
 After onboarding, set the static IP inside Home Assistant:
 
@@ -102,11 +79,10 @@ After onboarding, set the static IP inside Home Assistant:
 Then add the Pi-hole DNS record:
 
 ```bash
-ssh -i ~/.ssh/proxmox-claude root@192.168.0.100 \
-  "pct exec 102 -- pihole-FTL --config dns.hosts '192.168.10.10 home-assistant.atlas.local'"
+ssh proxmox "pct exec 102 -- pihole-FTL --config dns.hosts '192.168.10.10 home-assistant.atlas.local'"
 ```
 
-## Step 6 — Configure integrations
+## Step 5 — Configure integrations
 
 > TODO: Document specific integrations as they are set up
 
@@ -117,7 +93,7 @@ Planned integrations:
 | Philips Hue | IP (bridge) | Hue bridge on VLAN 10 or reachable from it |
 | UniFi | IP | UniFi controller at `192.168.0.1` — may need VLAN 10 → VLAN 1 firewall rule |
 
-## Step 7 — Add to Homepage dashboard (future)
+## Step 6 — Add to Homepage dashboard (future)
 
 Once Homepage is re-enabled, add a Home Assistant tile. Homepage has a native Home Assistant widget that shows entity counts and optionally specific entity states.
 
