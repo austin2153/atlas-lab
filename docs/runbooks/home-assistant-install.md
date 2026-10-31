@@ -42,16 +42,16 @@ Home Assistant was initially considered for the Kubernetes cluster but a VM is t
 
 ## Step 1 — Download the HAOS KVM image
 
-On the Proxmox host, download the latest HAOS `.qcow2` image for KVM/QEMU:
+On the Proxmox host, download the HAOS `.qcow2` image for KVM/QEMU:
 
 ```bash
-# Check https://github.com/home-assistant/operating-system/releases for latest version
 ssh -i ~/.ssh/proxmox-claude root@192.168.0.100
-wget -O /var/lib/vz/images/haos.qcow2 \
-  https://github.com/home-assistant/operating-system/releases/download/<version>/haos_ova-<version>.qcow2.xz
-# Extract
+wget -O /var/lib/vz/images/haos.qcow2.xz \
+  https://github.com/home-assistant/operating-system/releases/download/18.4/haos_ova-18.4.qcow2.xz
 unxz /var/lib/vz/images/haos.qcow2.xz
 ```
+
+> To upgrade later, check https://github.com/home-assistant/operating-system/releases for the latest version and update the URL accordingly.
 
 ## Step 2 — Create the VM in Proxmox
 
@@ -59,11 +59,12 @@ Recommended specs:
 
 | Setting | Value |
 |---|---|
+| VM ID | `204` |
 | Name | `home-assistant` |
 | OS | Linux 6.x kernel |
 | CPU | 2 cores |
-| RAM | 4 GB |
-| Disk | Import from HAOS qcow2 image (32 GB grows as needed) |
+| RAM | 2 GB |
+| Disk | Import from HAOS qcow2 image |
 | Network | VirtIO NIC, tagged to VLAN 10 |
 | BIOS | OVMF (UEFI) |
 
@@ -87,14 +88,17 @@ Start the VM and navigate to `http://homeassistant.local:8123` (mDNS) or the DHC
 2. Set home location (used for sun-based automations and weather)
 3. Home Assistant will auto-discover devices on VLAN 10
 
-## Step 5 — Pin the IP and add DNS entry
+## Step 5 — Set static IP and add DNS entry
 
-Once the VM has a DHCP address, reserve it in Pi-hole and add a DNS record:
+After onboarding, set the static IP inside Home Assistant:
+
+**Settings → System → Network → IPv4** — set to static, IP `192.168.10.10`, gateway `192.168.10.1`, DNS `192.168.0.101`.
+
+Then add the Pi-hole DNS record:
 
 ```bash
-# Add DNS record
 ssh -i ~/.ssh/proxmox-claude root@192.168.0.100 \
-  "pct exec 102 -- pihole-FTL --config dns.hosts '<IP> home-assistant.atlas.local'"
+  "pct exec 102 -- pihole-FTL --config dns.hosts '192.168.10.10 home-assistant.atlas.local'"
 ```
 
 ## Step 6 — Configure integrations
