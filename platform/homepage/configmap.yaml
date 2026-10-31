@@ -21,14 +21,6 @@ data:
               username: "{{HOMEPAGE_VAR_PROXMOX_TOKEN_ID}}"
               password: "{{HOMEPAGE_VAR_PROXMOX_TOKEN_SECRET}}"
               fields: ["vms", "lxc", "resources.cpu", "resources.mem"]
-        - Vault:
-            href: https://vault.atlas.local:8200
-            description: Secrets and PKI (HashiCorp Vault)
-            icon: vault.png
-        - ArgoCD:
-            href: https://argocd.atlas.local
-            description: GitOps controller
-            icon: argo-cd.png
         - Pi-hole:
             href: http://atlas-pihole.atlas.local/admin
             description: DNS and ad blocking
