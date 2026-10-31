@@ -7,7 +7,7 @@ data:
   settings.yaml: |
     title: Atlas Lab
     theme: dark
-    color: blue
+    color: slate
     headerStyle: boxed
     cardBlur: md
     iconSize: lg
