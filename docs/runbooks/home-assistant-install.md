@@ -45,9 +45,14 @@ Home Assistant was initially considered for the Kubernetes cluster but a VM is t
 On the Proxmox host, download the HAOS `.qcow2` image for KVM/QEMU:
 
 ```bash
+# SSH into the Proxmox host first
 ssh -i ~/.ssh/proxmox-claude root@192.168.0.100
+
+# Download the HAOS qcow2 image (compressed)
 wget -O /var/lib/vz/images/haos.qcow2.xz \
   https://github.com/home-assistant/operating-system/releases/download/18.4/haos_ova-18.4.qcow2.xz
+
+# Extract — produces /var/lib/vz/images/haos.qcow2
 unxz /var/lib/vz/images/haos.qcow2.xz
 ```
 
