@@ -24,8 +24,8 @@ Home Assistant is an open-source home automation platform that integrates with t
 | Flavor | Home Assistant OS (HAOS) | Container flavor lacks Supervisor and Add-ons; HAOS is the best-supported path |
 | Network | VLAN 10 (IoT) | Direct layer-2 access to IoT devices; avoids mDNS/discovery issues that occur when crossing VLANs |
 | Provisioning | Manual Proxmox VM + HAOS image | Outside the Kubernetes GitOps flow; same pattern as the Vault VM |
-| DNS | `home-assistant.atlas.local` → VM IP via Pi-hole | Same pattern as all other `*.atlas.local` names |
-| IP | DHCP from VLAN 10 range, then pin in Pi-hole | Reserve the address in Pi-hole DNS once confirmed |
+| DNS | `home-assistant.atlas.local` → `192.168.10.10` via Pi-hole | Same pattern as all other `*.atlas.local` names |
+| IP | `192.168.10.10` (static, reserved in network address plan) | Low end of VLAN 10 static range `.2–.49` |
 
 ---
 

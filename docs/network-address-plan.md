@@ -38,13 +38,20 @@ DHCP managed by the UniFi gateway. Static assignments for infrastructure gear on
 
 ## VLAN 10 — IoT (`192.168.10.0/24`)
 
-DHCP managed by the UniFi gateway. No static assignments currently.
+DHCP managed by the UniFi gateway.
 
-### DHCP range
+### Address ranges
 
 | Range | Purpose |
 |---|---|
+| `192.168.10.2–.49` | Static — IoT infrastructure (Home Assistant, future) |
 | `192.168.10.100–254` | DHCP — IoT devices (smart speakers, Hue, etc.) |
+
+### Static assignments
+
+| IP | Hostname | Role |
+|---|---|---|
+| `192.168.10.10` | `home-assistant.atlas.local` | Home Assistant OS VM |
 
 ---
 
@@ -109,6 +116,7 @@ All `*.atlas.local` records are local DNS entries managed in Pi-hole. The full l
 | `talos-worker-01.atlas.local` | `192.168.20.11` | |
 | `talos-worker-02.atlas.local` | `192.168.20.13` | Planned |
 | `vault.atlas.local` | `192.168.20.15` | Vault UI and API |
+| `home-assistant.atlas.local` | `192.168.10.10` | Home Assistant |
 
 ---
 
