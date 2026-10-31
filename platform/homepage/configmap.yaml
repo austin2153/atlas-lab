@@ -7,7 +7,11 @@ data:
   settings.yaml: |
     title: Atlas Lab
     theme: dark
-    color: slate
+    color: blue
+    headerStyle: boxed
+    cardBlur: md
+    iconSize: lg
+    statusStyle: dot
 
   services.yaml: |
     - Lab:
@@ -15,6 +19,7 @@ data:
             href: https://proxmox.atlas.local:8006
             description: Hypervisor (Proxmox VE 9.2)
             icon: proxmox.png
+            ping: https://proxmox.atlas.local:8006
             widget:
               type: proxmox
               url: https://proxmox.atlas.local:8006
@@ -25,6 +30,7 @@ data:
             href: http://atlas-pihole.atlas.local/admin
             description: DNS and ad blocking
             icon: pi-hole.png
+            ping: http://atlas-pihole.atlas.local
             widget:
               type: pihole
               url: http://atlas-pihole.atlas.local
