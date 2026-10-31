@@ -14,7 +14,7 @@ data:
     statusStyle: dot
 
   services.yaml: |
-    - Lab:
+    - Atlas Lab:
         - Proxmox:
             href: https://proxmox.atlas.local:8006
             description: Hypervisor (Proxmox VE 9.2)
