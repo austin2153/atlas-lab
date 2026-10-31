@@ -31,6 +31,57 @@ curl -s https://releases.hashicorp.com/vault/ | grep -oE 'vault/[0-9]+\.[0-9]+\.
 
 ---
 
+## After a reboot or power loss — unseal Vault
+
+Vault always comes back **sealed** after the VM or the Proxmox host restarts. It's running but refuses every request until 3 of the 5 unseal keys are provided. This is by design (manual unseal, see [Step 6](#step-6--initialize-and-unseal)).
+
+**1. Confirm the VM and service are up:**
+```bash
+ssh root@192.168.0.100 qm status 203                 # status: running
+ssh root@vault.atlas.local rc-service vault status   # status: started
+```
+If the VM is stopped: `ssh root@192.168.0.100 qm start 203`. If the service is stopped or crashed: `ssh root@vault.atlas.local rc-service vault start`.
+
+**2. Check the seal status:**
+```bash
+vault status   # Sealed: true, Unseal Progress: 0/3
+```
+
+**3. Unseal with any 3 of the 5 keys from `~/.vault-init`:**
+```bash
+vault operator unseal   # paste key 1 at the prompt
+vault operator unseal   # paste key 2
+vault operator unseal   # paste key 3
+```
+Run it with no argument so the key is entered at the hidden prompt. Never pass a key as an argument, since it would end up in shell history.
+
+**4. Verify:**
+```bash
+vault status   # Sealed: false
+vault login -method=userpass username=austin
+```
+
+## Boot reliability fixes (2026-10-31)
+
+An accidental power-off showed that Vault did not come back by itself, and that Proxmox couldn't shut it down cleanly either. All of the issues below are fixed on the VM and in the steps that follow:
+
+| Problem | Cause | Fix |
+|---|---|---|
+| VM 203 stayed **stopped** after the host booted | `qm create` set `--startup order=2` but not `--onboot 1`, so Proxmox's start-all-guests skipped it | `qm set 203 --onboot 1` (now in [Step 1](#step-1--provision-the-vm)) |
+| Vault service **crashed** at boot once the VM did start | OpenRC starts `local` last, so the `local.d` script that recreated `/run/vault` ran *after* Vault tried to write its pidfile there (`fopen '/run/vault/vault.pid': No such file or directory`) | `start_pre()` with `checkpath` in `/etc/init.d/vault` creates the directory just before Vault starts (now in [Step 5](#step-5--configure-and-start-vault)). Backup of the old script: `/etc/init.d/vault.bak-20261031` |
+| `qm shutdown 203` / host shutdown **timed out**, then hard-stopped the VM | No QEMU guest agent, so Proxmox could only send an ACPI power-button event, which Alpine's BusyBox `acpid` ignored under q35/OVMF | Installed `qemu-guest-agent` (Alpine `community` repo) and set `qm set 203 --agent enabled=1`. Proxmox now asks the guest to shut down directly (now in [Steps 1](#step-1--provision-the-vm) and [3](#step-3--install-vault)) |
+| `vault` CLI **on the VM** failed with `x509: certificate signed by unknown authority` | The VM's own trust store didn't include `Atlas Lab Root CA`; the snapshot cron job was working around it with `VAULT_SKIP_VERIFY=true` | Installed the root CA into the VM's trust store and removed `VAULT_SKIP_VERIFY` from the cron job (now in [Steps 8b](#step-8b--configure-automated-snapshots) and [10](#step-10--trust-the-root-ca-on-your-mac-and-the-vault-vm)). Backup of the old crontab: `/etc/crontabs/vault.bak-20261031` |
+
+Verified on 2026-10-31:
+- **Reboot from inside the guest:** Vault started on its own and waited sealed for keys.
+- **`qm shutdown 203` from Proxmox:** clean stop in 6 seconds via the agent (previously a 60-second timeout).
+- **Snapshot test as the `vault` user:** succeeded with full TLS verification.
+- **`vault status` on the VM:** works without skip-verify.
+
+> **Unseal from anywhere that trusts the lab CA.** Your Mac (keychain) and the Vault VM itself (system trust store) both do now.
+
+---
+
 Vault is the lab's secrets store and PKI. It holds credentials, API keys, and certificates so they never live in plaintext in a config file, a Git repo, or an Ansible variable. It also acts as the lab's Certificate Authority — every service in the lab gets a cert from Vault, browser warnings go away, and the whole thing mirrors how Vault PKI is used in enterprise environments.
 
 ## Design decisions
@@ -146,9 +197,15 @@ qm create 203 \
   --machine q35 \
   --bios ovmf \
   --efidisk0 CRUCIAL_SSD_512GB:1,format=raw,pre-enrolled-keys=0 \
+  --onboot 1 \
   --startup order=2,up=30 \
+  --agent enabled=1 \
   --tags vault
 ```
+
+> `--onboot 1` is what makes Proxmox start the VM when the host boots. `--startup` only sets the order and delay *if* it's started. Without `--onboot 1`, Vault stays down after every host reboot.
+>
+> `--agent enabled=1` adds a virtio-serial channel for the QEMU guest agent (installed in Step 3), so `qm shutdown` and host shutdowns stop Vault cleanly instead of timing out on ACPI. If you add it to an existing VM, it only takes effect after a full **power-off and start**, not a reboot.
 
 After install, update boot order to disk: `qm set 203 --boot order=scsi0` and eject ISO: `qm set 203 --ide2 none,media=cdrom`.
 
@@ -181,8 +238,17 @@ ssh root@vault.atlas.local   # should connect
 ### Step 3 — Install Vault
 
 ```sh
-# Install base packages
-apk add curl wget jq tzdata unzip
+# Enable the community repo (setup-alpine leaves it commented out) — needed for qemu-guest-agent
+sed -i -E 's|^#\s*(http.*/v[0-9.]+/community)$|\1|' /etc/apk/repositories
+apk update
+
+# Install base packages (ca-certificates is needed in Step 10 to trust the lab root CA)
+apk add curl wget jq tzdata unzip ca-certificates
+
+# QEMU guest agent — lets Proxmox shut the VM down cleanly (pairs with --agent enabled=1 in Step 1)
+apk add qemu-guest-agent
+rc-update add qemu-guest-agent default
+rc-service qemu-guest-agent start
 
 # Download and install the Vault binary from HashiCorp
 # Check https://releases.hashicorp.com/vault/ for the latest version before running
@@ -264,27 +330,21 @@ command_args="server -config=/etc/vault.d/vault.hcl"
 command_user="vault"
 command_background=true
 pidfile="/run/vault/vault.pid"
+output_log="/var/log/vault.log"
+error_log="/var/log/vault.log"
 
 export VAULT_ADDR="https://vault.atlas.local:8200"
+
+# /run is a tmpfs wiped on every boot. Create the pidfile directory here
+# rather than relying on local.d, which OpenRC runs after vault.
+start_pre() {
+	checkpath -d -m 0755 -o vault:vault /run/vault
+}
 ```
 
+> **Why `start_pre`:** `/run/` is a tmpfs (RAM-based, wiped on reboot) owned by root, so the vault user needs its own subdirectory for the pidfile. On Ubuntu/RHEL the official package handles this with systemd `tmpfiles.d`. On Alpine, OpenRC's `checkpath` in `start_pre` recreates it right before the service starts. An earlier version of this runbook used a `local.d` script instead. That broke on boot, because OpenRC runs `local` *after* `vault` (see [Boot reliability fixes](#boot-reliability-fixes-2026-10-31)). The leftover `/etc/local.d/vault-run.start` on the VM is harmless.
+
 ```sh
-# /run/ is a tmpfs (RAM-based, wiped on reboot) and owned by root.
-# The vault user can't write directly to /run/, so we need a subdirectory it owns.
-# On Ubuntu/RHEL the official Vault package handles this via systemd tmpfiles.d automatically.
-# On Alpine we do it manually with a local.d startup script that recreates the directory on every boot.
-mkdir -p /run/vault
-chown vault:vault /run/vault
-
-# Create the boot script that recreates /run/vault/ after every reboot
-cat > /etc/local.d/vault-run.start << EOF
-#!/bin/sh
-mkdir -p /run/vault
-chown vault:vault /run/vault
-EOF
-chmod +x /etc/local.d/vault-run.start
-rc-update add local default
-
 chmod +x /etc/init.d/vault
 rc-update add vault default
 rc-service vault start
@@ -449,10 +509,11 @@ The file is at `/etc/crontabs/vault` (chmod 600):
 # Note: Vault's built-in snapshot scheduler (sys/storage/raft/snapshot-auto)
 # is enterprise-only. This cron job is the community edition alternative.
 #
-# VAULT_SKIP_VERIFY is set inline because the TLS cert is self-signed until
-# Step 10 replaces it with a Vault-issued cert.
+# TLS is verified against Atlas Lab Root CA, installed in the system trust
+# store (/usr/local/share/ca-certificates/atlas-lab-root-ca.crt) in Step 10.
+# Until then, add VAULT_SKIP_VERIFY=true inline.
 
-0 2 * * * VAULT_ADDR=https://vault.atlas.local:8200 VAULT_SKIP_VERIFY=true vault operator raft snapshot save /opt/vault/snapshots/vault-$(date +%Y%m%d).snap && find /opt/vault/snapshots -name '*.snap' -mtime +7 -delete
+0 2 * * * VAULT_ADDR=https://vault.atlas.local:8200 vault operator raft snapshot save /opt/vault/snapshots/vault-$(date +%Y%m%d).snap && find /opt/vault/snapshots -name '*.snap' -mtime +7 -delete
 ```
 
 #### Snapshot token setup
@@ -486,7 +547,7 @@ vault token create -policy=snapshot -ttl=8760h -no-default-policy -display-name=
 Edit `/etc/crontabs/vault` on the Vault VM to source the token file:
 
 ```sh
-0 2 * * * VAULT_ADDR=https://vault.atlas.local:8200 VAULT_SKIP_VERIFY=true VAULT_TOKEN=$(cat /etc/vault.d/snapshot-token) vault operator raft snapshot save /opt/vault/snapshots/vault-$(date +%Y%m%d).snap && find /opt/vault/snapshots -name '*.snap' -mtime +7 -delete
+0 2 * * * VAULT_ADDR=https://vault.atlas.local:8200 VAULT_TOKEN=$(cat /etc/vault.d/snapshot-token) vault operator raft snapshot save /opt/vault/snapshots/vault-$(date +%Y%m%d).snap && find /opt/vault/snapshots -name '*.snap' -mtime +7 -delete
 ```
 
 Verify snapshots are being created (check after 24 hours):
@@ -652,7 +713,7 @@ Remove `VAULT_SKIP_VERIFY` from `/etc/profile` and from your laptop's shell. Fro
 
 ---
 
-### Step 10 — Trust the root CA on your Mac
+### Step 10 — Trust the root CA on your Mac and the Vault VM
 
 The root CA cert was saved to `/tmp/atlas-lab-root-ca.crt` during Step 9a. Installing it into the macOS System keychain tells every app on your Mac — browsers, curl, the Vault CLI — to trust any certificate signed by this CA. Once done, `VAULT_SKIP_VERIFY` is no longer needed anywhere and Vault's UI will show a green padlock.
 
@@ -662,6 +723,18 @@ sudo security add-trusted-cert -d -r trustRoot \
 ```
 
 After this, every browser on your Mac trusts any cert signed by the intermediate. Services get certs individually as you work through them — see the next section.
+
+**Also trust it on the Vault VM itself.** Without this, the `vault` CLI on the VM (including the snapshot cron job) fails with `x509: certificate signed by unknown authority`, because the VM's own trust store doesn't know the lab CA:
+
+```bash
+# If /tmp/atlas-lab-root-ca.crt is gone, re-export it from the Mac keychain (public cert, safe to copy)
+security find-certificate -c "Atlas Lab Root CA" -p /Library/Keychains/System.keychain > /tmp/atlas-lab-root-ca.crt
+
+scp /tmp/atlas-lab-root-ca.crt root@vault.atlas.local:/usr/local/share/ca-certificates/
+ssh root@vault.atlas.local 'update-ca-certificates && vault status'   # works without VAULT_SKIP_VERIFY
+```
+
+Then remove `VAULT_SKIP_VERIFY` from `/etc/profile` and `/etc/crontabs/vault` on the VM.
 
 ---
 
@@ -793,7 +866,6 @@ For services using cert-manager (cluster Ingresses), renewal is automatic once t
 - [ ] Set up auto-unseal via Azure Key Vault (service principal + `seal "azurekeyvault"` block + master key migration)
 - [ ] Raft snapshot off-VM copy (rsync to Crucial SSD + rclone to OneDrive) once the SSD enclosure arrives — commands are in Step 8b
 - [ ] Home Assistant AppRole when HA joins the lab VLAN
-
 ## Future capabilities to explore
 
 These are Vault features not currently configured in the lab but worth pursuing as the platform matures:
