@@ -19,7 +19,7 @@ data:
             href: https://proxmox.atlas.local:8006
             description: Hypervisor (Proxmox VE 9.2)
             icon: proxmox.png
-            ping: https://proxmox.atlas.local:8006
+            ping: https://192.168.0.100:8006
             widget:
               type: proxmox
               url: https://proxmox.atlas.local:8006
@@ -30,7 +30,7 @@ data:
             href: http://atlas-pihole.atlas.local/admin
             description: DNS and ad blocking
             icon: pi-hole.png
-            ping: http://atlas-pihole.atlas.local
+            ping: http://192.168.0.101
             widget:
               type: pihole
               url: http://atlas-pihole.atlas.local
