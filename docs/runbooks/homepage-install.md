@@ -474,6 +474,24 @@ kubectl create secret generic pihole-widget \
                 name: pihole-widget
 ```
 
+**Network requirement — VLAN routing**
+
+Pi-hole runs on VLAN 1 (`192.168.0.101`). The Homepage pod runs on VLAN 20 (Atlas Lab). By default the UniFi zone-based firewall blocks HTTP/HTTPS from the LAB zone to the Internal zone, so the widget will show dashes even if the secret is correct.
+
+Add a firewall policy in UniFi Network → Security → Policy Table:
+
+| Field | Value |
+|---|---|
+| Policy Type | Firewall |
+| Source Zone | LAB |
+| Source | Any |
+| Action | Allow / Auto Allow Return Traffic |
+| Destination Zone | Internal |
+| Destination IP | `192.168.0.101` |
+| Destination Port | List → HTTP, HTTPS (80, 443) |
+
+Without this rule the pod can reach Proxmox on port 8006 (a separate existing allow rule) but cannot reach Pi-hole on port 80.
+
 ### Step 7c — ArgoCD widget (deferred)
 
 Requires an ArgoCD API token. The widget shows application count and sync status.
