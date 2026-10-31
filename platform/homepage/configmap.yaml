@@ -49,9 +49,6 @@ data:
               fields: ["queries", "blocked", "blocked_percent", "gravity"]
 
   widgets.yaml: |
-    - resources:
-        cpu: true
-        memory: true
     - kubernetes:
         cluster:
           show: true
