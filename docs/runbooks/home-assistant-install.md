@@ -4,6 +4,25 @@ Home Assistant is an open-source home automation platform that integrates with t
 
 **Target:** `home-assistant.atlas.local` running as a VM on Proxmox, on VLAN 10 (IoT network).
 
+## Status — paused 2026-11-02
+
+Base install is done and working; paused here to work on another project. Pick up at **Next up**.
+
+**Running now**
+- HAOS VM 204: 2 vCPU / 4 GB, starts with the host, guest agent enabled
+- HA Core 2026.10.4, onboarded, admin account created
+- Static IP `192.168.10.10` on VLAN 10, DNS server Pi-hole only
+- UI at **http://home-assistant.atlas.local** (port 80, see below)
+- Pi-hole record `home-assistant.atlas.local` → `192.168.10.10`
+- UniFi policy **Allow Austin MAC to IoT** lets the Mac reach the IoT network
+
+**Next up** (in order)
+1. **Confirm the port.** HA serves on port 80, not the default 8123. `ha core info` reports `"port": 80`, but `configuration.yaml` doesn't set it. Find out where it came from before relying on it.
+2. **SSH access.** Install the *Advanced SSH & Web Terminal* add-on, then add a `home-assistant` host (`192.168.10.10`) to `~/.ssh/config`.
+3. **Integrations** ([Step 5](#step-5--configure-integrations)): Philips Hue (bridge at `192.168.10.217`), then UniFi.
+4. **Narrow the firewall rule** to TCP to `192.168.10.10` on the HA port only (it currently allows all IoT traffic from the Mac).
+5. Later: Homepage tile ([Step 6](#step-6--add-to-homepage-dashboard-future)) and a Vault AppRole for HA credentials.
+
 ## Reference
 
 | Resource | Link |
@@ -64,6 +83,8 @@ In the Proxmox VM network settings, set the NIC's VLAN tag to `10`. This places 
 
 ## Step 3 — First boot and onboarding
 
+> **Firewall prerequisite:** the Mac is on the Default network (UniFi *Internal* zone), and Internal → IoT is blocked by default. A UniFi policy **Allow Austin MAC to IoT** (source: `austin-mac.atlas.local` client, Internal zone → destination: IoT zone, any, all protocols) lets the Mac reach Home Assistant. It's intentionally broad for now. Narrow it to TCP to `192.168.10.10` on the HA port once things are settled. Return traffic is allowed automatically; IoT devices still can't start connections to the LAN.
+
 Start the VM and navigate to `http://homeassistant.local:8123` (mDNS) or the DHCP-assigned IP. Complete the onboarding wizard:
 
 1. Create admin account
@@ -74,12 +95,30 @@ Start the VM and navigate to `http://homeassistant.local:8123` (mDNS) or the DHC
 
 After onboarding, set the static IP inside Home Assistant:
 
-**Settings → System → Network → IPv4** — set to static, IP `192.168.10.10`, gateway `192.168.10.1`, DNS `192.168.0.101`.
+**Settings → System → Network → Network adapter (`enp6s18`) → IPv4** — set to Static:
 
-Then add the Pi-hole DNS record:
+| Field | Value |
+|---|---|
+| IP address | `192.168.10.10` |
+| Netmask | `255.255.255.0` |
+| Gateway | `192.168.10.1` |
+| DNS server | `192.168.0.101` (Pi-hole) **only** |
+
+> **Don't add `1.1.1.1` as a second DNS server.** Resolvers don't strictly use the second server as a fallback, so some lookups for `*.atlas.local` would randomly go to Cloudflare and fail. HAOS's DNS plugin already falls back to Cloudflare on its own if Pi-hole is down.
+
+Saving drops the browser connection (it's still on the old DHCP address). Reconnect at the new IP.
+
+> **Port:** this install serves the UI on **port 80**, not the default 8123 (`ha core info` shows `"port": 80`). URLs below omit the port.
+
+Then add the Pi-hole DNS record. `dns.hosts` is a **whole-list** setting, so passing a single entry would wipe every other `*.atlas.local` record. Read the current list and append:
 
 ```bash
-ssh proxmox "pct exec 102 -- pihole-FTL --config dns.hosts '192.168.10.10 home-assistant.atlas.local'"
+ssh proxmox 'cur=$(pct exec 102 -- pihole-FTL --config dns.hosts)
+new=$(echo "$cur" | python3 -c "import sys,json; s=sys.stdin.read().strip().strip(\"[]\"); items=[x.strip() for x in s.split(\",\") if x.strip()]; items.append(\"192.168.10.10 home-assistant.atlas.local\"); print(json.dumps(items))")
+pct exec 102 -- pihole-FTL --config dns.hosts "$new"'
+
+dig +short home-assistant.atlas.local      # 192.168.10.10
+curl -sI http://home-assistant.atlas.local/ | head -1
 ```
 
 ## Step 5 — Configure integrations
@@ -101,10 +140,12 @@ Once Homepage is re-enabled, add a Home Assistant tile. Homepage has a native Ho
 
 | Item | Status |
 |---|---|
-| Download HAOS image and create VM | TODO |
-| Configure VLAN 10 NIC | TODO |
-| Onboarding | TODO |
-| Pin IP + DNS entry | TODO |
+| Download HAOS image and create VM | Done — VM 204, onboot + guest agent enabled |
+| Configure VLAN 10 NIC | Done |
+| Firewall: Mac → IoT | Done (broad) — narrow to HA only later |
+| Onboarding | Done (2026-11-01) |
+| Pin IP + DNS entry | Done — `192.168.10.10`, `home-assistant.atlas.local` |
+| SSH access | TODO — HAOS has no SSH by default; needs the Advanced SSH & Web Terminal add-on before adding `home-assistant` to `~/.ssh/config` |
 | Philips Hue integration | TODO |
 | UniFi integration | TODO |
 | Homepage widget | TODO |
