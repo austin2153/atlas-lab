@@ -66,7 +66,7 @@ All `*.atlas.local` DNS records are managed in Pi-hole.
 | Range | Purpose | Capacity | Next available |
 |---|---|---|---|
 | `192.168.20.1` | Gateway (UniFi) | — | — |
-| `192.168.20.2–.49` | VMs and LXC containers (static) | 48 | `.16` |
+| `192.168.20.2–.49` | VMs and LXC containers (static) | 48 | `.18` |
 | `192.168.20.50–.99` | Kubernetes service IPs (MetalLB) | 50 | `.51` |
 | `192.168.20.100–.254` | DHCP — lab Wi-Fi clients | dynamic | — |
 
@@ -79,6 +79,8 @@ All `*.atlas.local` DNS records are managed in Pi-hole.
 | `192.168.20.11` | `talos-worker-01.atlas.local` | VM 201 | Talos worker | Static in Talos machine config |
 | `192.168.20.13` | `talos-worker-02.atlas.local` | VM 202 | Talos worker — planned | Reserved; pending M920q hardware |
 | `192.168.20.15` | `vault.atlas.local` | VM 203 | HashiCorp Vault | Alpine Linux, Raft storage |
+| `192.168.20.16` | `obsidian-mcp.atlas.local` | LXC 103 | Obsidian MCP server | Debian 13 LXC. See `docs/runbooks/obsidian-mcp.md` |
+| `192.168.20.17` | `cloudflared.atlas.local` | LXC 104 | Cloudflare tunnel (cloudflared) | Debian 13 LXC. See `docs/runbooks/obsidian-mcp.md` |
 
 ### MetalLB service IPs (Kubernetes)
 
