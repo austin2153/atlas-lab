@@ -1,13 +1,43 @@
 # Obsidian MCP Server
 
-A self-hosted server that lets Claude read and write my Obsidian notes from any Claude app (Mac, phone, web and voice), without a manual "sync it" step.
-
+A self-hosted server that lets Claude read and write my Obsidian notes from any Claude app (Mac, phone, web and voice).
 **MCP (Model Context Protocol)** is an open standard for connecting AI apps like Claude to outside tools and data. An MCP server publishes tools (for example "search notes" or "write note") that Claude can call. Here, [obsidian-web-mcp](https://github.com/jimprosser/obsidian-web-mcp) is the MCP server, and Claude connects to it as a custom connector.
 
 **What gets built**, all on the existing Proxmox host:
 - **MCP container:** runs obsidian-web-mcp and Syncthing, and holds the lab copy of the vault.
 - **cloudflared container:** holds an outbound Cloudflare tunnel, so Claude can reach the server at `notes.atlaslab.dev` without opening any ports at home.
 - **Syncthing:** keeps the lab copy and the Mac's copy of the vault in sync.
+
+## References
+
+| What | Link |
+|---|---|
+| App (upstream) | https://github.com/jimprosser/obsidian-web-mcp |
+| App (my fork) | https://github.com/austin2153/obsidian-web-mcp |
+| App README: Configuration / Quick Start | [Configuration](https://github.com/austin2153/obsidian-web-mcp#configuration), [Quick Start](https://github.com/austin2153/obsidian-web-mcp#quick-start) |
+| Claude custom connectors (remote MCP) | [Help center](https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp), [Docs](https://claude.com/docs/connectors/custom/remote-mcp) |
+| MCP specification | https://modelcontextprotocol.io |
+| uv | https://docs.astral.sh/uv/ |
+| Syncthing | [Docs](https://docs.syncthing.net), [APT repo](https://apt.syncthing.net) |
+| Cloudflare Tunnel | https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/ |
+| cloudflared | https://github.com/cloudflare/cloudflared |
+| Proxmox community scripts | [Debian](https://community-scripts.org/scripts/debian), [cloudflared](https://community-scripts.org/scripts/cloudflared) |
+
+## Checklist
+
+- [x] [MCP container](#mcp-container) (LXC 103, `obsidian-mcp`)
+- [x] [cloudflared container](#cloudflared-container) (LXC 104, `cloudflared`)
+- [x] [Fork and clone the app repo](#app-repo), `atlas` branch
+- [x] [Install uv and dependencies](#install-uv-and-dependencies)
+- [x] [Vault folder, env file and test run](#vault-folder-env-file-and-test-run) (settings in [Configuration](#configuration))
+- [x] New vault on the Mac (`~/vaults/notes`) + [Syncthing](#syncthing)
+- [x] [systemd service](#systemd-service)
+- [ ] Firewall
+- [ ] Domain (`atlaslab.dev`)
+- [ ] Cloudflare tunnel
+- [ ] Connect Claude and test (Mac, phone, voice)
+- [ ] Make it the main vault
+- [ ] Phone: Syncthing-Fork (F-Droid) + Obsidian on the Moto G
 
 ## MCP container
 
@@ -19,6 +49,7 @@ A self-hosted server that lets Claude read and write my Obsidian notes from any 
 | OS / type | Debian 13, unprivileged |
 | CPU / RAM / disk | 1 core / 2 GB / 8 GB on `CRUCIAL_SSD_512GB` |
 | Network | `vmbr0`, VLAN `20`, static `192.168.20.16/24`, gateway `192.168.20.1`, DNS `192.168.0.101` |
+| Timezone | `America/New_York`, set 2026-11-04 with `timedatectl set-timezone` (built with the Proxmox host's wrong `America/Adak`; the host is fixed too) |
 
 On the Proxmox host, run the community Debian script and choose **Advanced**:
 
@@ -57,6 +88,7 @@ Host obsidian-mcp
 | OS / type | Debian 13, unprivileged |
 | CPU / RAM / disk | 1 core / 512 MB / 4 GB on `CRUCIAL_SSD_512GB` |
 | Network | `vmbr0`, VLAN `20`, static `192.168.20.17/24`, gateway `192.168.20.1`, DNS `192.168.0.101` |
+| Timezone | `America/New_York`, set 2026-11-04 with `timedatectl set-timezone` (built with the Proxmox host's wrong `America/Adak`; the host is fixed too) |
 
 On the Proxmox host, run the community cloudflared script and choose **Advanced**:
 
@@ -98,8 +130,6 @@ Host cloudflared
 
 > **Forked and cloned 2026-11-03.** Git 2.47.3 (Debian's repo) on `obsidian-mcp`.
 
-Order: **fork → clone → review**. The review happens in the clone (in VS Code over Remote-SSH), before anything is installed or run.
-
 ```bash
 # On the Mac: fork into my GitHub account
 gh repo fork jimprosser/obsidian-web-mcp --clone=false
@@ -114,27 +144,267 @@ To pull upstream changes later: **Sync fork** on GitHub, then `git -C /opt/obsid
 
 All settings are environment variables, kept in a root-only env file on `obsidian-mcp`: `/etc/obsidian-web-mcp.env` (`chmod 600`). The password and token also go in Bitwarden.
 
-| Setting | Value |
-|---|---|
-| `VAULT_PATH` | `/srv/vault` |
-| `VAULT_OAUTH_USERNAME` | (choose) |
-| `VAULT_OAUTH_PASSWORD` | Long random password from Bitwarden |
-| `VAULT_MCP_TOKEN` | `python3 -c "import secrets; print(secrets.token_hex(32))"` |
-| `VAULT_MCP_HOST` | `192.168.20.16` (default `127.0.0.1` only works when cloudflared is on the same machine) |
-| `VAULT_MCP_PORT` | `8420` (default) |
-| `VAULT_MCP_FORWARDED_ALLOW_IPS` | `192.168.20.17` (cloudflared) |
-| `VAULT_MCP_PUBLIC_URL` | `https://notes.atlaslab.dev` |
-| `VAULT_MCP_ALLOWED_HOSTS` | `notes.atlaslab.dev` |
+Reference: [README → Configuration](https://github.com/austin2153/obsidian-web-mcp#configuration) and [Quick Start](https://github.com/austin2153/obsidian-web-mcp#quick-start). **Source** says whether a value comes from the README or is our choice for this deployment.
 
-Connector URL in Claude: `https://notes.atlaslab.dev` (the server serves MCP at `/`).
+| Setting | Value | Source |
+|---|---|---|
+| `VAULT_PATH` | `/srv/vault` | README: required. Path is our choice |
+| `VAULT_OAUTH_USERNAME` | `austin` | README: default `obsidian`. Ours |
+| `VAULT_OAUTH_PASSWORD` | 32 letters/digits from Bitwarden | README: required, server refuses all logins without it. README generates one with `secrets.token_urlsafe(24)`; we used Bitwarden |
+| `VAULT_MCP_TOKEN` | `python3 -c "import secrets; print(secrets.token_hex(32))"` | README Quick Start method (256-bit hex). Format isn't enforced |
+| `VAULT_MCP_HOST` | `192.168.20.16` | README: default `127.0.0.1`, which assumes cloudflared on the same machine. Ours, because cloudflared is a separate container |
+| `VAULT_MCP_PORT` | `8420` | README default |
+| `VAULT_MCP_FORWARDED_ALLOW_IPS` | `192.168.20.17` | README: default `127.0.0.1`, "never set this to `*`". Ours: cloudflared's IP |
+| `VAULT_MCP_PUBLIC_URL` | `https://notes.atlaslab.dev` | README: recommended for any reverse-proxy deployment |
+| `VAULT_MCP_ALLOWED_HOSTS` | `notes.atlaslab.dev` | README: set to the tunnel hostname for any remote deployment |
+
+Connector URL in Claude: `https://notes.atlaslab.dev`. README: MCP is served at `/`, and clients connect to the base URL.
 
 ## Setup
 
-1. Review the code (auth, path handling, deletes)
-2. Install `uv` and the app's dependencies
-3. Create `/srv/vault` and the env file
-4. Syncthing: get the new vault from the Mac into `/srv/vault`
-5. systemd service so the app starts on boot
-6. Firewall: port 8420 only from `192.168.20.17`
-7. Domain and tunnel: `notes.atlaslab.dev` → `http://192.168.20.16:8420`
-8. Add the connector in Claude and test (Mac, phone, voice)
+| | Task | Status |
+|---|---|---|
+| 1 | Install `uv` and the app's dependencies | Done 2026-11-03 |
+| 2 | Create `/srv/vault` and the env file, test run | Done 2026-11-03 |
+| 3 | Syncthing: get the new vault from the Mac into `/srv/vault` | Done 2026-11-04 |
+| 4 | systemd service so the app starts on boot | Done 2026-11-04 |
+| 5 | Firewall: port 8420 only from `192.168.20.17` | Next |
+| 6 | Domain and tunnel: `notes.atlaslab.dev` → `http://192.168.20.16:8420` | |
+| 7 | Add the connector in Claude and test (Mac, phone, voice) | |
+
+### Install uv and dependencies
+
+README → Prerequisites: Python 3.12+ and [uv](https://docs.astral.sh/uv/) (recommended). The install command is from uv's own docs.
+
+On `obsidian-mcp`:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source $HOME/.local/bin/env
+
+cd /opt/obsidian-web-mcp
+uv sync --python 3.13
+```
+
+- uv 0.13.7, installed to `/root/.local/bin`.
+- **Deviation from the README:** `--python 3.13` uses Debian's Python. The repo's `.python-version` asks for 3.14, which uv would otherwise download; `pyproject.toml` only needs 3.12+.
+- **Deviation from the README:** the README runs the app with `uv run vault-mcp`. We run `.venv/bin/vault-mcp` so uv doesn't switch to 3.14.
+- Upstream has no `uv.lock`, so dependency versions aren't pinned. Installed: obsidian-web-mcp 0.4.0, mcp 1.30.0, pydantic 2.14.2.
+
+### Vault folder, env file and test run
+
+```bash
+mkdir -p /srv/vault          # plus a throwaway _index.md and "Test note.md"
+touch /etc/obsidian-web-mcp.env
+chmod 600 /etc/obsidian-web-mcp.env
+vi /etc/obsidian-web-mcp.env # settings from the Configuration table
+```
+
+- Password and token were generated as described in Configuration, saved in Bitwarden, then pasted into the file.
+- Debian's `vi` is vim-tiny: arrow keys in Insert mode type letters, and it doesn't show `-- INSERT --`. Install `vim` for normal behaviour.
+
+Test run (foreground, then Ctrl+C). The README's Quick Start uses `export` and `uv run vault-mcp`; this loads the env file instead:
+
+```bash
+cd /opt/obsidian-web-mcp
+set -a; . /etc/obsidian-web-mcp.env; set +a
+.venv/bin/vault-mcp
+```
+
+From a second terminal:
+
+```bash
+curl http://192.168.20.16:8420/health   # {"status":"ok","audit":{"enabled":false}}
+curl http://192.168.20.16:8420/         # {"error":"Missing or malformed Authorization header"}
+```
+
+Close the test shell afterwards; `set -a` leaves the secrets in its environment.
+
+
+## Syncthing
+
+[Syncthing](https://syncthing.net) is open-source, peer-to-peer file sync. Devices sync a shared folder directly with each other; there's no cloud service holding the files, and every device keeps a full local copy that works offline.
+
+Here it keeps the vault in sync between the Mac and `obsidian-mcp:/srv/vault`, so notes Claude writes on the server show up in Obsidian on the Mac, and edits on the Mac reach the server.
+
+- Devices pair by exchanging **device IDs**, and all traffic is encrypted.
+- At home, the two sync directly over the LAN. Away from home, Syncthing's public discovery and relay servers help them find each other; relays only see encrypted traffic.
+- Ports: **22000** (sync, TCP/UDP), **21027** (local discovery, UDP), **8384** (web UI).
+
+References:
+- [Syncthing docs](https://docs.syncthing.net) and [getting started](https://docs.syncthing.net/intro/getting-started.html)
+- [Official APT repository](https://apt.syncthing.net) (install instructions used below)
+- [Firewall and ports](https://docs.syncthing.net/users/firewall.html)
+- [Running as a service with systemd](https://docs.syncthing.net/users/autostart.html#linux)
+- [Ignoring files (`.stignore`)](https://docs.syncthing.net/users/ignoring.html) and [file versioning](https://docs.syncthing.net/users/versioning.html)
+- Phone: the official Android app was [discontinued in Dec 2024](https://forum.syncthing.net/t/discontinuing-syncthing-android/23002); use [Syncthing-Fork on F-Droid](https://f-droid.org/en/packages/com.github.catfriend1.syncthingfork)
+
+### Install
+
+> **Installed 2026-11-03:** Syncthing v2.1.7 from `apt.syncthing.net` (stable-v2).
+
+From [apt.syncthing.net](https://apt.syncthing.net), run as root (no `sudo`):
+
+```bash
+mkdir -p /etc/apt/keyrings
+curl -L -o /etc/apt/keyrings/syncthing-archive-keyring.gpg https://syncthing.net/release-key.gpg
+echo "deb [signed-by=/etc/apt/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable-v2" > /etc/apt/sources.list.d/syncthing.list
+
+# Prefer Syncthing's packages over Debian's own (from the site's troubleshooting section)
+cat > /etc/apt/preferences.d/syncthing.pref <<'PREF'
+Package: *
+Pin: origin apt.syncthing.net
+Pin-Priority: 990
+PREF
+
+apt update
+apt install -y syncthing
+apt policy syncthing   # installed version should come from apt.syncthing.net
+```
+
+### Service user and service
+
+Syncthing and the app both run as a dedicated system user `vault`, not root. A compromised app or Syncthing only gets `vault`'s permissions. (Our choice; Syncthing's docs advise against running as root.)
+
+```bash
+useradd --system --create-home --home-dir /var/lib/vault --shell /usr/sbin/nologin vault
+chown -R vault:vault /srv/vault
+systemctl enable --now syncthing@vault
+```
+
+- `syncthing@.service` ships with the package ([autostart on Linux](https://docs.syncthing.net/users/autostart.html#linux)); the part after `@` is the user.
+- Config: `/var/lib/vault/.local/state/syncthing/config.xml`.
+- Server device ID: `BTAELK6-ICVBTYW-K4HSLGE-SBDZ5GQ-AOGUMQ3-V3XREMT-CLMW7Z6-WVJK2AM`.
+- Listening: `22000` TCP/UDP (sync), `21027` UDP (local discovery).
+
+### Web UI
+
+Reachable from the Mac at **http://obsidian-mcp.atlas.local:8384**, with a username and password (in Bitwarden: *Syncthing (obsidian-mcp)*). Our choice over an SSH tunnel; it's lab-internal like the other services.
+
+```bash
+su -s /bin/sh vault -c "syncthing cli config gui raw-address set 192.168.20.16:8384"
+```
+
+- Listen address is the IP, not the FQDN, so the UI doesn't depend on DNS at boot. The FQDN works in the browser because Syncthing only checks the Host header when bound to localhost.
+- Password is set in the UI (**Actions → Settings → GUI**), not on the command line, so it stays out of shell history. Syncthing stores only a hash.
+
+### Mac
+
+> **Set up 2026-11-04:** Syncthing v2.1.7 from Homebrew. Vault at `~/vaults/notes`.
+
+- **Vault:** `~/vaults/notes`, outside OneDrive so two sync tools don't fight over the same files. Opened in Obsidian with **Manage vaults → Open folder as vault**, which creates `.obsidian/`.
+- **Install:** Homebrew rather than the menu bar app (our choice). `brew services` runs it as a launchd agent for the user, started at every login.
+
+```bash
+brew install syncthing
+brew services start syncthing
+```
+
+- Web UI at **http://127.0.0.1:8384** (localhost only). Username `austin`, password in Bitwarden: *Syncthing (Mac)*, set in **Actions → Settings → GUI**.
+- Mac device ID starts `QBYJF22`; device name `austin-mac.atlas.local`.
+
+### Pairing
+
+| Side | Device added | Addresses |
+|---|---|---|
+| Mac | `obsidian-mcp` (`BTAELK6…`) | `tcp://192.168.20.16:22000` (the server's IP is static) |
+| Server | `austin-mac.atlas.local` (`QBYJF22…`), accepted from the new-device prompt | `dynamic` (the Mac's IP changes; the Mac opens the connection) |
+
+All other device settings left at their defaults. Paired and connected 2026-11-04.
+
+### Folder share
+
+> **Shared and synced 2026-11-04.**
+
+| Setting | Mac | Server |
+|---|---|---|
+| Folder label / ID | `notes` / `notes` | `notes` / `notes` (accepted from the Mac's share prompt) |
+| Path | `~/vaults/notes` | `/srv/vault` (the default would be under `/var/lib/vault`) |
+| Type | Send & Receive | Send & Receive |
+| Versioning | Staggered, defaults (365 days, in `.stversions/`) | Staggered, defaults |
+
+Everything else left at its defaults. Each side keeps old versions of files changed by the *other* side, so the Mac keeps what Claude edits on the server, and the server keeps what's edited on the Mac.
+
+`.stignore` doesn't sync, so it was created on both sides. It went in **before** sharing, so the ignored files never went across:
+
+```
+// Obsidian's per-device UI state (open tabs, pane layout)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+
+// macOS clutter
+.DS_Store
+```
+
+On the server it's `/srv/vault/.stignore`, owned by `vault`.
+
+## systemd service
+
+> **Created 2026-11-04.** Running as `vault`, enabled at boot.
+
+Runs the app the same way as the [test run](#vault-folder-env-file-and-test-run), but started by systemd at boot and restarted if it crashes.
+
+**Source:** the README only ships **launchd** templates for macOS (`scripts/launchd/`), not a systemd unit. This unit is our own, modelled on those: start at boot, restart on failure, env vars from outside the repo.
+
+### Unit file
+
+`/etc/systemd/system/obsidian-web-mcp.service`. Hand-written units go in `/etc/systemd/system/`; package-installed ones (like Syncthing's) live in `/lib/systemd/system/`.
+
+```ini
+[Unit]
+Description=Obsidian Web MCP server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=vault
+Group=vault
+EnvironmentFile=/etc/obsidian-web-mcp.env
+ExecStart=/opt/obsidian-web-mcp/.venv/bin/vault-mcp
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+| Line | Why |
+|---|---|
+| `After=` / `Wants=network-online.target` | The app binds to `192.168.20.16`, so the network must be up first |
+| `User=vault` / `Group=vault` | Same user as Syncthing, so both can read and write `/srv/vault` |
+| `EnvironmentFile=` | The [Configuration](#configuration) settings. systemd reads it as root before switching user, so it stays `root` / `600` and `vault` can't read it |
+| `ExecStart=` | The venv's entry-point launcher (not `uv run`; see [Install uv and dependencies](#install-uv-and-dependencies)) |
+| `Restart=on-failure`, `RestartSec=5` | Restart 5 seconds after a crash; a clean `systemctl stop` stays stopped |
+| `WantedBy=multi-user.target` | `enable` hooks it into normal boot |
+
+`/opt/obsidian-web-mcp` stays owned by root; `vault` only needs to read and run it.
+
+### Enable and check
+
+```bash
+systemd-analyze verify /etc/systemd/system/obsidian-web-mcp.service   # no output = OK
+systemctl daemon-reload
+systemctl enable --now obsidian-web-mcp
+
+systemctl status obsidian-web-mcp
+journalctl -u obsidian-web-mcp -n 30 --no-pager
+```
+
+Expected:
+- Log shows `Starting server on 192.168.20.16:8420 with bearer auth + OAuth` and `Vault: /srv/vault`.
+- `ps -o user= -C vault-mcp` → `vault`.
+- `curl -s http://192.168.20.16:8420/health` → `{"status":"ok",...}`.
+- `curl -s -o /dev/null -w "%{http_code}\n" http://192.168.20.16:8420/` → `401` (no token).
+
+### State directory
+
+OAuth clients and tokens go in `~/.local/share/vault-mcp/` (README, *OAuth* section), which for `vault` is `/var/lib/vault/.local/share/vault-mcp/`. It's outside the vault, as the README requires, and is created when the first client connects. `vault`'s home is `/var/lib/vault` (system-user convention), not `/home`.
+
+### Day to day
+
+```bash
+systemctl restart obsidian-web-mcp   # after editing the env file or pulling app updates
+journalctl -u obsidian-web-mcp -f    # follow the log
+```
+
+After editing the unit file itself, run `systemctl daemon-reload` first.
