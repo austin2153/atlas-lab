@@ -5,7 +5,7 @@ A self-hosted server that lets Claude read and write my Obsidian notes from any 
 
 **What gets built**, all on the existing Proxmox host:
 - **MCP container:** runs obsidian-web-mcp and Syncthing, and holds the lab copy of the vault.
-- **cloudflared container:** holds an outbound Cloudflare tunnel, so Claude can reach the server at `notes.atlaslab.dev` without opening any ports at home.
+- **cloudflared container:** holds an outbound Cloudflare tunnel, so Claude can reach the server at `notes.atlaskeep.dev` without opening any ports at home.
 - **Syncthing:** keeps the lab copy and the Mac's copy of the vault in sync.
 
 ## References
@@ -32,9 +32,9 @@ A self-hosted server that lets Claude read and write my Obsidian notes from any 
 - [x] [Vault folder, env file and test run](#vault-folder-env-file-and-test-run) (settings in [Configuration](#configuration))
 - [x] New vault on the Mac (`~/vaults/notes`) + [Syncthing](#syncthing)
 - [x] [systemd service](#systemd-service)
-- [ ] Firewall
-- [ ] Domain (`atlaslab.dev`)
-- [ ] Cloudflare tunnel
+- [x] [Firewall](#firewall) (CT 103 only; logging on while testing)
+- [x] [Domain](#domain) (`atlaskeep.dev`)
+- [x] [Cloudflare tunnel](#cloudflare-tunnel)
 - [ ] Connect Claude and test (Mac, phone, voice)
 - [ ] Make it the main vault
 - [ ] Phone: Syncthing-Fork (F-Droid) + Obsidian on the Moto G
@@ -155,10 +155,10 @@ Reference: [README → Configuration](https://github.com/austin2153/obsidian-web
 | `VAULT_MCP_HOST` | `192.168.20.16` | README: default `127.0.0.1`, which assumes cloudflared on the same machine. Ours, because cloudflared is a separate container |
 | `VAULT_MCP_PORT` | `8420` | README default |
 | `VAULT_MCP_FORWARDED_ALLOW_IPS` | `192.168.20.17` | README: default `127.0.0.1`, "never set this to `*`". Ours: cloudflared's IP |
-| `VAULT_MCP_PUBLIC_URL` | `https://notes.atlaslab.dev` | README: recommended for any reverse-proxy deployment |
-| `VAULT_MCP_ALLOWED_HOSTS` | `notes.atlaslab.dev` | README: set to the tunnel hostname for any remote deployment |
+| `VAULT_MCP_PUBLIC_URL` | `https://notes.atlaskeep.dev` | README: recommended for any reverse-proxy deployment |
+| `VAULT_MCP_ALLOWED_HOSTS` | `notes.atlaskeep.dev` | README: set to the tunnel hostname for any remote deployment |
 
-Connector URL in Claude: `https://notes.atlaslab.dev`. README: MCP is served at `/`, and clients connect to the base URL.
+Connector URL in Claude: `https://notes.atlaskeep.dev`. README: MCP is served at `/`, and clients connect to the base URL.
 
 ## Setup
 
@@ -168,9 +168,9 @@ Connector URL in Claude: `https://notes.atlaslab.dev`. README: MCP is served at 
 | 2 | Create `/srv/vault` and the env file, test run | Done 2026-11-03 |
 | 3 | Syncthing: get the new vault from the Mac into `/srv/vault` | Done 2026-11-04 |
 | 4 | systemd service so the app starts on boot | Done 2026-11-04 |
-| 5 | Firewall: port 8420 only from `192.168.20.17` | Next |
-| 6 | Domain and tunnel: `notes.atlaslab.dev` → `http://192.168.20.16:8420` | |
-| 7 | Add the connector in Claude and test (Mac, phone, voice) | |
+| 5 | Firewall: port 8420 only from `192.168.20.17` | Done 2026-11-05 |
+| 6 | Domain and tunnel: `notes.atlaskeep.dev` → `http://192.168.20.16:8420` | Done 2026-11-05 |
+| 7 | Add the connector in Claude and test (Mac, phone, voice) | Next |
 
 ### Install uv and dependencies
 
@@ -408,3 +408,87 @@ journalctl -u obsidian-web-mcp -f    # follow the log
 ```
 
 After editing the unit file itself, run `systemctl daemon-reload` first.
+
+## Firewall
+
+> **Enabled 2026-11-05.** Proxmox firewall on CT 103 only. Logging of drops is on while testing.
+
+Port 8420 only accepts connections from `cloudflared`, so the app is reachable only through the tunnel. The UniFi LAB zone already blocks other VLANs, but it can't filter traffic *within* VLAN 20 (e.g. from the Talos cluster); the Proxmox firewall can, because it filters at each guest's bridge port.
+
+**Source:** [Proxmox VE firewall docs](https://pve.proxmox.com/wiki/Firewall). The README doesn't cover this (its design runs everything on one Mac); the rules are our design.
+
+### How it's set up
+
+A guest is only filtered when **all three** are on: the datacenter switch, the guest's firewall option, and the **Firewall** flag on its network interface. Other guests are unaffected until they're opted in.
+
+| Level | Setting | GUI / file |
+|---|---|---|
+| Datacenter | **On** (master switch); aliases defined here | Datacenter → Firewall · `/etc/pve/firewall/cluster.fw` |
+| Host | **Off**, so the Proxmox host isn't filtered (no lockout risk; revisit once we know what talks to the API) | proxmox → Firewall → Options · `/etc/pve/nodes/proxmox/host.fw` |
+| CT 103 | **On**, input policy **DROP**, output **ACCEPT**, log level `info` | 103 → Firewall · `/etc/pve/firewall/103.fw` |
+| CT 103 `net0` | `firewall=1` | 103 → Network → net0 → Firewall ✓ |
+
+Standard (iptables) firewall, not the nftables `proxmox-firewall`, which Proxmox's docs call a tech preview.
+
+**Aliases** (Datacenter → Firewall → Alias), so rules read by name and can be reused for other guests:
+
+| Alias | Address |
+|---|---|
+| `admin_mac` | `192.168.0.58` (Mac, DHCP reservation) |
+| `cloudflared` | `192.168.20.17` (LXC 104) |
+
+**CT 103 rules** (incoming; everything else is dropped):
+
+| Proto | Port | Source | For |
+|---|---|---|---|
+| tcp | 8420 | `cloudflared` | MCP app, tunnel only |
+| tcp | 22 | `admin_mac` | SSH / VS Code |
+| tcp | 8384 | `admin_mac` | Syncthing web UI |
+| tcp + udp | 22000 | `admin_mac` | Syncthing sync |
+| icmp | | `admin_mac` | ping |
+
+Syncthing's local discovery (21027/udp) isn't allowed: it's broadcast-based and can't cross from the Mac's network to VLAN 20 anyway.
+
+## Domain
+
+> **Registered 2026-11-05:** `atlaskeep.dev` with Cloudflare Registrar, 1 year, auto-renew on (expires 2027-11-05, renews at $12.20/yr).
+>
+> **Cloudflare login:** Sign in with Google (personal Gmail).
+
+A base domain for lab services (`notes.` first; others like `ha.` later). The tunnel's public hostname must be in a domain whose DNS is on Cloudflare. The plan's `atlaslab.dev` was already taken (registered by someone else in 2020), as were `atlas-lab.dev`, `atlaslabs.dev` and `atlaslab.com` / `.net` / `.org`.
+
+Registering with Cloudflare Registrar (our choice) means the domain uses Cloudflare's nameservers from the start, so there's no nameserver move. Registrar domains can't switch to another DNS provider while registered there.
+
+`.dev` is on the browser HSTS preload list, so it only works over HTTPS; the tunnel provides that.
+
+References:
+- [Create a Cloudflare account](https://developers.cloudflare.com/fundamentals/account/create-account/)
+- [Two-factor authentication](https://developers.cloudflare.com/fundamentals/user-profiles/2fa/)
+- [Register a new domain](https://developers.cloudflare.com/registrar/get-started/register-domain/) (Cloudflare Registrar)
+- [WHOIS redaction](https://developers.cloudflare.com/registrar/account-options/whois-redaction/)
+- App README: *Remote Access with Cloudflare Tunnel* section (used in the tunnel step)
+
+[Configuration](#configuration) updated to `notes.atlaskeep.dev` (`VAULT_MCP_PUBLIC_URL`, `VAULT_MCP_ALLOWED_HOSTS`), then `systemctl restart obsidian-web-mcp`.
+
+## Cloudflare tunnel
+
+> **Live 2026-11-05.** `https://notes.atlaskeep.dev/health` returns OK from the internet; `/` without a token returns `401`; OAuth discovery advertises `https://notes.atlaskeep.dev`.
+
+`cloudflared` on CT 104 keeps an outbound connection to Cloudflare. Requests to `https://notes.atlaskeep.dev` arrive at Cloudflare and come down that connection to `http://192.168.20.16:8420`. Nothing at home accepts inbound connections from the internet.
+
+**Deviation from the README:** the README uses `scripts/setup-tunnel.sh` (`cloudflared login`, a locally-managed tunnel and config file, on the same Mac as the app). We use a **remotely-managed tunnel** from Cloudflare's docs instead (our choice): the tunnel and its route live in the dashboard, and CT 104 only holds a token. The README's other requirement still applies: `VAULT_MCP_ALLOWED_HOSTS` is set to the hostname (see [Configuration](#configuration)).
+
+Pre-checks (2026-11-05): `cloudflared` 2026.10.7 on CT 104 (from Cloudflare's APT repo); outbound TCP 7844 to Cloudflare OK; `atlaskeep.dev` on Cloudflare nameservers.
+
+| Setting | Value |
+|---|---|
+| Tunnel name / ID | `atlas-lab` / `3cf91843-bd25-49cb-82ba-222dfec762cb` |
+| Connector | CT 104 `cloudflared` (`192.168.20.17`), as a systemd service |
+| Token | In Bitwarden: *Cloudflare tunnel (atlas-lab)*. Installed with `cloudflared service install <token>` (the dashboard's Debian command; package-install lines skipped, `cloudflared` was already installed). The token is in the unit file, so `chmod 600 /etc/systemd/system/cloudflared.service` (our choice) |
+| Published application | `notes.atlaskeep.dev` → `http://192.168.20.16:8420`. Cloudflare created the DNS record (CNAME to `<tunnel-id>.cfargotunnel.com`). Additional application settings left at defaults (the original Host header is passed through, which `VAULT_MCP_ALLOWED_HOSTS` checks) |
+
+References:
+- [Create a remotely-managed tunnel (dashboard)](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/get-started/create-remote-tunnel/)
+- [Cloudflare Tunnel overview](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)
+- [Tunnel connectivity pre-checks](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/troubleshoot-tunnels/connectivity-prechecks/) (port 7844)
+- App README: *Remote Access with Cloudflare Tunnel*; *Cloudflare Access mode (opt-in)* for optional SSO in front, not used for now
