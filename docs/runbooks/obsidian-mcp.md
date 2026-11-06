@@ -306,7 +306,8 @@ A guest is only filtered when **all three** are on: the datacenter switch, the g
 | Host | **Off**, so the Proxmox host isn't filtered | proxmox → Firewall → Options · `/etc/pve/nodes/proxmox/host.fw` |
 | CT 103 | **On**, input **DROP**, output **ACCEPT**, log level `nolog` | 103 → Firewall · `/etc/pve/firewall/103.fw` |
 | CT 103 `net0` | `firewall=1` | 103 → Network → net0 → Firewall ✓ |
-| CT 104 | Not filtered (see [Open items](#open-items)) | |
+| CT 104 | **On**, input **DROP**, output **ACCEPT**, log level `nolog` | 104 → Firewall · `/etc/pve/firewall/104.fw` |
+| CT 104 `net0` | `firewall=1` | 104 → Network → net0 → Firewall ✓ |
 
 | Alias | Address |
 |---|---|
@@ -325,7 +326,14 @@ A guest is only filtered when **all three** are on: the datacenter switch, the g
 | tcp + udp | 22000 | `motog` | Syncthing sync |
 | icmp | | `admin_mac` | ping |
 
-To debug drops, set CT 103's log level to `info` (103 → Firewall → Options) and read `/var/log/pve-firewall.log` on the host.
+**CT 104 rules** (incoming; everything else is dropped). cloudflared needs no inbound ports: its connections to Cloudflare and to CT 103 are outbound, and replies are allowed as established traffic. The rules protect the tunnel token on CT 104.
+
+| Proto | Port | Source | For |
+|---|---|---|---|
+| tcp | 22 | `admin_mac` | SSH |
+| icmp | | `admin_mac` | ping |
+
+To debug drops, set the container's log level to `info` (→ Firewall → Options) and read `/var/log/pve-firewall.log` on the host.
 
 ### UniFi
 
@@ -414,8 +422,6 @@ On CT 104: `systemctl status cloudflared`; `journalctl -u cloudflared -f`. The t
 ## Open items
 
 - [ ] Make it the main vault (vault structure in progress); then point `~/.claude/CLAUDE.md` at its `_index.md`
-- [ ] Test the connector with Claude voice
-- [ ] Firewall on CT 104 (outbound only, so the rules are short)
 - [ ] Revisit the Proxmox host firewall (off)
 
 ## References
