@@ -4,7 +4,7 @@ A self-hosted server that lets Claude read and write my Obsidian notes from any 
 
 **MCP (Model Context Protocol)** is an open standard for connecting AI apps like Claude to outside tools and data. An MCP server publishes tools (for example "search notes" or "write note") that Claude can call. Here, [obsidian-web-mcp](https://github.com/jimprosser/obsidian-web-mcp) is the MCP server, and Claude connects to it as a custom connector.
 
-**Status:** in service since 2026-11-05 (built 2026-11-02 to 2026-11-05). See [Open items](#open-items).
+**Status:** in service since 2026-11-05 (built 2026-11-02 to 2026-11-05).
 
 ## How it fits together
 
@@ -418,10 +418,6 @@ On CT 104: `systemctl status cloudflared`; `journalctl -u cloudflared -f`. The t
 - **Don't rename by changing only capitalisation** (`20_Lab` → `20_lab`). macOS is case-insensitive and Linux isn't, so Syncthing aborts the scan with "uses different upper or lowercase characters" until it settles. Rename via a temporary name instead.
 - **Conflicts:** if the same note changes on two devices before they sync (e.g. on the phone away from home, and by Claude), Syncthing keeps both as `Note.sync-conflict-<date>-….md`. Merge by hand and delete the conflict file.
 - **Debian's `vi` is vim-tiny:** arrow keys in Insert mode type letters and there's no `-- INSERT --` indicator. Install `vim` for normal behaviour.
-
-## Open items
-
-- [ ] Make it the main vault (vault structure in progress); then point `~/.claude/CLAUDE.md` at its `_index.md`
 
 ## References
 
