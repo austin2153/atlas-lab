@@ -303,7 +303,7 @@ A guest is only filtered when **all three** are on: the datacenter switch, the g
 | Level | Setting | GUI / file |
 |---|---|---|
 | Datacenter | **On**; aliases defined here | Datacenter → Firewall · `/etc/pve/firewall/cluster.fw` |
-| Host | **Off**, so the Proxmox host isn't filtered | proxmox → Firewall → Options · `/etc/pve/nodes/proxmox/host.fw` |
+| Host | **Off** by design: firewalls are per guest; UniFi limits what reaches the host | proxmox → Firewall → Options · `/etc/pve/nodes/proxmox/host.fw` |
 | CT 103 | **On**, input **DROP**, output **ACCEPT**, log level `nolog` | 103 → Firewall · `/etc/pve/firewall/103.fw` |
 | CT 103 `net0` | `firewall=1` | 103 → Network → net0 → Firewall ✓ |
 | CT 104 | **On**, input **DROP**, output **ACCEPT**, log level `nolog` | 104 → Firewall · `/etc/pve/firewall/104.fw` |
@@ -422,7 +422,6 @@ On CT 104: `systemctl status cloudflared`; `journalctl -u cloudflared -f`. The t
 ## Open items
 
 - [ ] Make it the main vault (vault structure in progress); then point `~/.claude/CLAUDE.md` at its `_index.md`
-- [ ] Revisit the Proxmox host firewall (off)
 
 ## References
 
