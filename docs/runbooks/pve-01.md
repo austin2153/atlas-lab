@@ -56,12 +56,13 @@ To do.
 | Hostname | `pve-01.atlas.local` |
 | Management interface | onboard Intel I219 |
 | IP / gateway | `192.168.20.5/24` / `192.168.20.1` |
-| DNS | `192.168.0.101` |
+| DNS | `192.168.0.101` (Pi-hole). The installer takes only one server |
 
 ## Post-install
 
 To do. Same steps as the old host where they apply ([proxmox-install.md → Post-install steps](proxmox-install.md#post-install-steps)): SSH keys, no-subscription repositories, `dist-upgrade` and `intel-microcode`, then:
 - `vmbr0` VLAN-aware
+- DNS: add `1.1.1.1` as the second server (pve-01 → System → DNS). Debian only uses it if Pi-hole doesn't answer. Switch the first server to Technitium (`192.168.20.3`) once it's running
 - API token
 - Pi-hole record `pve-01.atlas.local` → `192.168.20.5`; address plan; `~/.ssh/config` host
 
