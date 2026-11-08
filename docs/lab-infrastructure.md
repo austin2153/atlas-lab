@@ -18,8 +18,8 @@ Consolidate the basement network and lab gear (currently loose on a desk next to
 | Front jumpers | 24-pack white 0.5 ft patch cables (patch panel front to switch) |
 | Rear cabling | Existing longer cables already on hand |
 | Panel screws | 20x chrome knurled #10-32 x 5/8" thumb screws |
-| Power | Reuse existing power strip, mounted on the side of the rack so it takes no U (no rack PDU, decided against on cost). Power bricks hidden behind |
-| Side mounts | Power strip on a side panel, near the rear edge so its cables stay short |
+| Power | Reuse existing power strip (no rack PDU, decided against on cost). Sits loose behind the rack for now; plan is to mount it on a side panel so it takes no U. Power bricks hidden behind |
+| Side mounts | Planned: power strip on a side panel, near the rear edge so its cables stay short. Not mounted yet (as of 2026-11-07) |
 | Included with T1 | 1U vented rack shelf (holds the Hue bridge in slot 8), 2x 1U blank panels, 1x 1U venting blank panel, 2x acrylic side plates, acrylic top cover (fan-ready), handles, feet, #10-32 rack screws |
 | Still to buy | 10-inch mounts for UCG Ultra, USW-Lite-8-PoE, and M920q |
 
@@ -34,9 +34,9 @@ Consolidate the basement network and lab gear (currently loose on a desk next to
 | 5 | 1U | Blank (included 1U blank panel) | Spare slot |
 | 6 | 1U | M920q Tiny #2 | Future. Included 1U blank panel until then |
 | 7 | 1U | M920q Tiny #3 | Future. Included 1U blank panel until then |
-| 8 | 1.5U | Philips Hue bridge | On the included 1U vented shelf, + 0.5U open. Power strip is side-mounted, not in a slot |
+| 8 | 1.5U | Philips Hue bridge | On the included 1U vented shelf, + 0.5U open |
 
-**Space note:** 8U total: 4.5U used (patch panel, switch, gateway, Tiny #1, Hue shelf), 3.5U free (slot 5, slots 6–7 reserved for Tiny #2 and #3, and 0.5U under the shelf). The ONT sits on top and the power strip is side-mounted, so neither takes a U.
+**Space note:** 8U total: 4.5U used (patch panel, switch, gateway, Tiny #1, Hue shelf), 3.5U free (slot 5, slots 6–7 reserved for Tiny #2 and #3, and 0.5U under the shelf). The ONT sits on top and the power strip sits behind the rack, so neither takes a U.
 
 **Outside the rack:** the old Proxmox host, a tower (the old gaming PC, see [proxmox-install.md](runbooks/proxmox-install.md)), stands beside the rack until its guests move to Tiny #1. Its cable goes into patch panel rear port 8.
 
@@ -204,7 +204,7 @@ Target IPs for the cutover: see [network-address-plan.md](network-address-plan.m
 5. Retire the old box from switch port 6 once it's empty.
 
 ## 9. Open decisions
-- Which side panel takes the power strip, and whether that side keeps its acrylic plate.
+- Mounting the power strip (loose behind the rack today): which side panel, and whether that side keeps its acrylic plate.
 - 10-inch mount models for UCG Ultra, switch, and M920q.
 - RAM upgrade to 64 GB (2 x 32 GB SO-DIMM) for AAP.
 
