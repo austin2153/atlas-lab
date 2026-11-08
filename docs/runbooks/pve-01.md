@@ -48,7 +48,7 @@ Power on and press **F1** for the BIOS setup; **F12** opens the one-time boot me
 
 | Where | Setting | Why |
 |---|---|---|
-| Main → System Summary | Check **32 GB RAM** and the disks listed. Note if a 2.5" SATA drive is still in the caddy | So you pick the right disk in the installer |
+| Main → System Summary | Check **32 GB RAM** and that the **1 TB NVMe** is listed (the only drive; the 2.5" bay is empty) | Confirms the hardware before installing |
 | Advanced → CPU Setup | **Intel Virtualization Technology: Enabled** | VMs need VT-x |
 | Advanced → CPU Setup | **VT-d: Enabled** | PCI/USB passthrough later |
 | Power | **After Power Loss: Power On** | Comes back by itself after a power cut |
@@ -64,7 +64,7 @@ Choose **Install Proxmox VE (Graphical)**. Source: [Proxmox VE installation](htt
 | Screen | Setting |
 |---|---|
 | EULA | I agree |
-| Target harddisk | Click **Options** → Filesystem **zfs (RAID0)** (a single disk; RAID0 is just the installer's name for it). Harddisk 0: **the 1 TB NVMe**; set any other disk to **-- do not use --** |
+| Target harddisk | Click **Options** → Filesystem **zfs (RAID0)** (a single disk; RAID0 is just the installer's name for it). Harddisk 0: **the 1 TB NVMe** (the only disk, besides the USB stick, which isn't offered) |
 | ZFS advanced options | Leave the defaults (ashift 12, compress on, checksum on, copies 1; ARC max size defaults to 10% of RAM, about 3.2 GB) |
 | Location and time zone | Country **United States**, time zone **America/New_York**, keyboard **U.S. English** |
 | Password and email | Root password from Bitwarden *Proxmox (pve-01)*; email: your personal address (system notifications) |
