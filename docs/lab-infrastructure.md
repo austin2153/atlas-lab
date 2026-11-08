@@ -47,27 +47,29 @@ Consolidate the basement network and lab gear (currently loose on a desk next to
 ### Physical
 - Frontier XGS-PON fiber into FRX523 ONT (no ISP router). ONT to UCG Ultra WAN (2.5 GbE) with a short direct cable (1 ft Cat6) down the back of the rack, from the ONT's network port to the gateway's rear WAN port. It does not go through the patch panel: it's the internet link between two devices in the rack and never touches the switch. The link runs at 2.5 Gb/s (the gateway's WAN port), which only matters for a plan faster than 2.5 Gig. Leave the wall fiber a gentle loop into the back of the ONT; the ONT's power plug ("Fiber Service, DO NOT REMOVE") goes to the side-mounted strip.
 - UCG Ultra LAN port 4 to USW-Lite-8-PoE port 5 (1 GbE uplink).
-- Three U7 Pro APs: Basement (wired, PoE from switch port 4, 192.168.0.3). Main and Office mesh wirelessly off Basement. House has no ethernet runs (has coax). The Basement AP sits on a stand beside the rack, cabled into patch panel rear port 4 (PoE). Keep it about 1 m from the rack (metal and the ONT block signal) and as high as practical, face toward the house: it is also the wireless mesh uplink for Main and Office. Ceiling-mounting it centrally with one cable back to port 4 would give the best coverage later.
+- Three U7 Pro APs: Basement (wired, PoE from switch port 4, 192.168.0.3). Main and Office mesh wirelessly off Basement. House has no ethernet runs (has coax). The Basement AP sits on a stand beside the rack, cabled into patch panel rear port 6 (PoE), jumpered to switch port 4. Keep it about 1 m from the rack (metal and the ONT block signal) and as high as practical, face toward the house: it is also the wireless mesh uplink for Main and Office. Ceiling-mounting it centrally with one cable back to panel port 6 would give the best coverage later.
 - Old eero Pro 6E retired.
 
 ### Switch port map
 
 **Actual** layout checked in UniFi on 2026-11-07. **Target** is the network redesign. No port profiles are set; ports 3, 6 and 7 have per-port overrides, and every other port still uses UniFi's defaults (native Default/1, all tagged VLANs allowed).
 
-| Port | Actual device | Actual VLANs | Target |
-|---|---|---|---|
-| 1 | Empty | default | |
-| 2 | Empty | default | |
-| 3 | M920q Tiny #1 (`pve-01`, port named `pve-01`) | native 20, tagged Block All, PoE off | Same (VLAN 20 access port) |
-| 4 | U7 Pro Basement (PoE) | native 1, all tagged | AP trunk: native 1, tagged 10, 20, 30 |
-| 5 | Uplink to UCG Ultra LAN port 4 | native 1, all tagged | Same |
-| 6 | Old Proxmox box (`proxmox`, 192.168.0.100) | native 1, all tagged | Retired after migration; then free |
-| 7 | Philips Hue bridge (side-mounted) | native 10 (IoT), all tagged | VLAN 10 access port (Block All tagged) |
-| 8 | Empty (break-glass) | default | VLAN 1 access port, Block All tagged; not set up yet |
+| Switch port | Patch panel | Actual device | Actual VLANs | Target |
+|---|---|---|---|---|
+| 1 | — | Empty | default | |
+| 2 | — | Empty | default | |
+| 3 | 5 | M920q Tiny #1 (`pve-01`, port named `pve-01`) | native 20, tagged Block All, PoE off | Same (VLAN 20 access port) |
+| 4 | 6 | U7 Pro Basement (PoE) | native 1, all tagged | AP trunk: native 1, tagged 10, 20, 30 |
+| 5 | 7 | Uplink to UCG Ultra LAN port 4 | native 1, all tagged | Same |
+| 6 | 8 | Old Proxmox box (`proxmox`, 192.168.0.100) | native 1, all tagged | Retired after migration; then free |
+| 7 | 9 | Philips Hue bridge (side-mounted) | native 10 (IoT), all tagged | VLAN 10 access port (Block All tagged) |
+| 8 | — | Empty (break-glass; plug straight into the switch) | default | VLAN 1 access port, Block All tagged; not set up yet |
+
+Patch panel ports 1–4 and 10–12 are empty.
 
 **UCG Ultra ports:** 5 (2.5 GbE) WAN to the ONT, 4 to the switch, 1–3 empty.
 
-Cable path for every cable that reaches the switch, including the gateway uplink (panel 5) and the Basement AP (panel 4): device -> patch panel rear port N -> patch panel front port N -> 0.5 ft jumper -> switch port N. Keep panel and switch numbers matched so only the short jumpers show at the front. The side-mounted Hue bridge follows the same path: a short (1-2 ft) cable around the rear edge into patch panel rear port 7. The only cable that skips the panel is ONT -> gateway WAN.
+Cable path for every cable that reaches the switch, including the gateway uplink and the Basement AP: device -> patch panel rear port -> patch panel front port -> 0.5 ft jumper -> switch port. The switch sits under the middle of the wider panel, so **panel port N+2 jumpers to switch port N** (panel 5–9 to switch 3–7; checked on the rack 2026-11-07). The side-mounted Hue bridge follows the same path: a short (1-2 ft) cable around the rear edge into patch panel rear port 9. The only cable that skips the panel is ONT -> gateway WAN.
 
 ### Network redesign (agreed 2026-10-25, done with the M920q install)
 Goal: stronger isolation. VLAN 1 becomes a management network for network gear only; everyday devices move to a new Home VLAN; the whole Proxmox host, Pi-hole included, lives on the lab VLAN.
