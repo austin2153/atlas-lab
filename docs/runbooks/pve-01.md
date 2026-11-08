@@ -10,13 +10,13 @@ The new Proxmox host: a Lenovo M920q Tiny that lives directly on the lab VLAN (V
 |---|---|
 | Hostname | `pve-01` (`pve-01.atlas.local`) |
 | IP | `192.168.20.5/24` (reserved in the address plan), gateway `192.168.20.1` |
-| DNS | Pi-hole `192.168.0.101`, then `1.1.1.1`, `9.9.9.9` as fallbacks; Technitium `192.168.20.3` replaces Pi-hole later |
+| DNS | Pi-hole `192.168.0.101`, then `1.1.1.1`, `9.9.9.9` as fallbacks; a replacement DNS server later |
 | Network | VLAN 20 untagged on the switch port; nothing on the host is tagged |
 | Switch / patch panel | USW-Lite-8-PoE port 3 (named `pve-01`: native VLAN 20, tagged Block All, PoE off) ← patch panel 5 |
 | Rack | Slot 4, directly below the gateway |
 | Hardware | Intel i5-8500T (6 cores, 35 W), 32 GB RAM (to verify), 1 GbE Intel I219 |
 | Storage | 1 TB NVMe, ZFS: Proxmox OS and all guests on one disk |
-| Proxmox | Latest Proxmox VE 9.x ISO |
+| Proxmox | Proxmox VE 9.2-1 ISO (checksum verified 2026-11-07), on the 16 GB Cruzer Glide |
 
 ## Decisions
 
@@ -30,41 +30,170 @@ The new Proxmox host: a Lenovo M920q Tiny that lives directly on the lab VLAN (V
 
 ## Credentials
 
-- **Root password:** Bitwarden (item to be created at install).
-- **SSH:** the Mac key and Claude's key (`~/.ssh/proxmox-claude`), same as the old host.
-- **API token:** new token after install, stored like the old host's (see [lab-credentials.md](../lab-credentials.md)).
+- **Root password:** Bitwarden item *Proxmox (pve-01)*. Create it and generate the password **before** the install; you type it in the installer.
+- **SSH:** the Mac key (`~/.ssh/id_ed25519`) and Claude's key (`~/.ssh/proxmox-claude`), same as the old host.
+- **API token:** created after install; saved on the Mac in `~/.proxmox-pve01-credentials` (same variable names as `~/.proxmox-credentials`, see [lab-credentials.md](../lab-credentials.md)).
+
+## Before you start
+
+- [ ] USB stick with the Proxmox VE 9.2-1 installer
+- [ ] Monitor (HDMI or DisplayPort) and a USB keyboard on the M920q
+- [ ] Network cable in (switch port 3 should show a link)
+- [ ] Bitwarden item *Proxmox (pve-01)* created, password generated
+- [ ] Mac on the home network (it reaches VLAN 20 through *Allow Austin MAC to LAB*)
 
 ## BIOS
 
-To do. Check before installing:
-- Virtualisation: Intel VT-x and VT-d enabled
-- Power: on after AC power loss
-- Boot: USB boot allowed; boot order
-- Confirm RAM (32 GB) and which disks are installed (only the 1 TB NVMe should be selected in the installer)
+Power on and press **F1** for the BIOS setup; **F12** opens the one-time boot menu (Lenovo's keys for the M920q). Menu names below are from Lenovo's ThinkCentre BIOS and may differ slightly by BIOS version.
+
+| Where | Setting | Why |
+|---|---|---|
+| Main → System Summary | Check **32 GB RAM** and the disks listed. Note if a 2.5" SATA drive is still in the caddy | So you pick the right disk in the installer |
+| Advanced → CPU Setup | **Intel Virtualization Technology: Enabled** | VMs need VT-x |
+| Advanced → CPU Setup | **VT-d: Enabled** | PCI/USB passthrough later |
+| Power | **After Power Loss: Power On** | Comes back by itself after a power cut |
+| Startup | **CSM: Disabled** (UEFI only) | Proxmox installs in UEFI mode |
+| Security → Secure Boot | Leave as is. If the installer won't boot, set it to **Disabled** | Proxmox VE supports Secure Boot since 8.1 |
+
+Save and exit (**F10**), then boot the USB stick from the **F12** menu.
 
 ## Install
 
-To do.
+Choose **Install Proxmox VE (Graphical)**. Source: [Proxmox VE installation](https://pve.proxmox.com/pve-docs/chapter-pve-installation.html).
 
-**Installer USB (Mac):** as in [proxmox-install.md → Create the installer USB](proxmox-install.md#create-the-installer-usb-mac).
-
-| Installer setting | Value |
+| Screen | Setting |
 |---|---|
-| Target disk | 1 TB NVMe only |
-| Filesystem | ZFS (RAID0, single disk) |
-| Country / timezone | United States / `America/New_York` |
-| Hostname | `pve-01.atlas.local` |
-| Management interface | onboard Intel I219 |
-| IP / gateway | `192.168.20.5/24` / `192.168.20.1` |
-| DNS | `192.168.0.101` (Pi-hole). The installer takes only one server; the fallbacks are added after install |
+| EULA | I agree |
+| Target harddisk | Click **Options** → Filesystem **zfs (RAID0)** (a single disk; RAID0 is just the installer's name for it). Harddisk 0: **the 1 TB NVMe**; set any other disk to **-- do not use --** |
+| ZFS advanced options | Leave the defaults (ashift 12, compress on, checksum on, copies 1; ARC max size defaults to 10% of RAM, about 3.2 GB) |
+| Location and time zone | Country **United States**, time zone **America/New_York**, keyboard **U.S. English** |
+| Password and email | Root password from Bitwarden *Proxmox (pve-01)*; email: your personal address (system notifications) |
+| Management network | Interface: the onboard Intel I219 (likely `enp0s31f6`) · Hostname (FQDN) **`pve-01.atlas.local`** · IP **`192.168.20.5/24`** · Gateway **`192.168.20.1`** · DNS **`192.168.0.101`** (the installer takes one; fallbacks come later) |
+| Summary | Check everything, leave *Automatically reboot after successful installation* ticked, **Install** |
+
+When it reboots, **remove the USB stick**. The console shows `https://192.168.20.5:8006/` when it's up.
 
 ## Post-install
 
-To do. Same steps as the old host where they apply ([proxmox-install.md → Post-install steps](proxmox-install.md#post-install-steps)): SSH keys, no-subscription repositories, `dist-upgrade` and `intel-microcode`, then:
-- `vmbr0` VLAN-aware
-- DNS (pve-01 → System → DNS): `192.168.0.101`, `1.1.1.1`, `9.9.9.9`. Debian moves to the next server only when one doesn't answer, so the fallbacks keep apt working if Pi-hole is down (local names then won't resolve). Quad9 is a different provider from Cloudflare. When Technitium is running, replace `192.168.0.101` with `192.168.20.3`
-- API token
-- Pi-hole record `pve-01.atlas.local` → `192.168.20.5`; address plan; `~/.ssh/config` host
+From the Mac unless noted.
+
+**1. First login:** open **https://192.168.20.5:8006**, accept the self-signed certificate warning, log in as `root`, realm *Linux PAM*. The "No valid subscription" popup is cosmetic.
+
+**2. SSH keys and config**
+
+```bash
+# Clear any old host key for this IP, then install both keys (asks for the root password once each)
+ssh-keygen -R 192.168.20.5
+ssh-copy-id -i ~/.ssh/id_ed25519.pub -o StrictHostKeyChecking=accept-new root@192.168.20.5
+ssh-copy-id -i ~/.ssh/proxmox-claude.pub root@192.168.20.5
+```
+
+Add to `~/.ssh/config`, then `ssh pve-01`:
+
+```text
+Host pve-01
+    HostName 192.168.20.5
+    User root
+    IdentityFile ~/.ssh/id_ed25519
+    SetEnv TERM=xterm-256color
+```
+
+**3. Repositories** (on pve-01). A fresh install enables the paid **enterprise** repos, so `apt-get update` fails with `401 Unauthorized`. Switch to the free ones ([Package Repositories](https://pve.proxmox.com/wiki/Package_Repositories)):
+
+```bash
+cd /etc/apt/sources.list.d
+grep Components debian.sources          # should include non-free-firmware
+
+# Disable enterprise (keeps the files, easy to revert)
+echo "Enabled: no" >> pve-enterprise.sources
+echo "Enabled: no" >> ceph.sources
+
+cat > proxmox.sources <<EOF
+Types: deb
+URIs: http://download.proxmox.com/debian/pve
+Suites: trixie
+Components: pve-no-subscription
+Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+EOF
+
+cat > ceph-no-subscription.sources <<EOF
+Types: deb
+URIs: http://download.proxmox.com/debian/ceph-squid
+Suites: trixie
+Components: no-subscription
+Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+EOF
+
+apt-get update                          # must finish with no errors
+```
+
+**4. Updates and microcode** (on pve-01). `dist-upgrade`, not `upgrade`, so new kernel and PVE packages come in:
+
+```bash
+apt-get dist-upgrade -y
+apt-get install -y intel-microcode
+reboot
+```
+
+**5. DNS fallbacks** (on pve-01). Debian moves to the next server only when one doesn't answer:
+
+```bash
+pvesh set /nodes/pve-01/dns --search atlas.local --dns1 192.168.0.101 --dns2 1.1.1.1 --dns3 9.9.9.9
+cat /etc/resolv.conf
+```
+
+**6. VLAN-aware bridge** (on pve-01). UI: pve-01 → System → Network → `vmbr0` → Edit → tick **VLAN aware** → OK → **Apply Configuration**. `/etc/network/interfaces` should then have:
+
+```text
+auto vmbr0
+iface vmbr0 inet static
+        address 192.168.20.5/24
+        gateway 192.168.20.1
+        bridge-ports enp0s31f6
+        bridge-stp off
+        bridge-fd 0
+        bridge-vlan-aware yes
+        bridge-vids 2-4094
+```
+
+**7. Checks** (on pve-01)
+
+```bash
+pveversion                       # pve-manager/9.x
+free -g                          # ~31 total
+zpool status rpool               # ONLINE, the NVMe only
+zfs list                         # rpool, rpool/data, rpool/ROOT
+ip -br a                         # vmbr0 192.168.20.5/24
+ping -c 2 192.168.20.1           # gateway
+getent hosts download.proxmox.com
+timedatectl                      # America/New_York, NTP synchronized
+```
+
+**8. API token.** UI: Datacenter → Permissions → API Tokens → **Add**: user `root@pam`, Token ID `terraform`, **untick Privilege Separation**. Copy the secret (shown once) into `~/.proxmox-pve01-credentials` on the Mac and `chmod 600` it:
+
+```bash
+PROXMOX_URL=https://192.168.20.5:8006
+PROXMOX_TOKEN_ID=root@pam!terraform
+PROXMOX_TOKEN_SECRET=<secret>
+PROXMOX_SSH_KEY=~/.ssh/proxmox-claude
+PROXMOX_SSH_USER=root
+```
+
+Terraform keeps pointing at the old host until the Talos VMs move.
+
+**9. Pi-hole record.** `dns.hosts` is a whole-list setting: read it and append, or every other record is wiped:
+
+```bash
+ssh proxmox 'cur=$(pct exec 102 -- pihole-FTL --config dns.hosts)
+new=$(echo "$cur" | python3 -c "import sys,json; s=sys.stdin.read().strip().strip(\"[]\"); items=[x.strip() for x in s.split(\",\") if x.strip()]; items.append(\"192.168.20.5 pve-01.atlas.local\"); print(json.dumps(items))")
+pct exec 102 -- pihole-FTL --config dns.hosts "$new"'
+
+dig +short pve-01.atlas.local          # 192.168.20.5
+```
+
+Optional: Unbound's old `local-zones.conf` on CT 102 still maps `ubuntu-lxc.atlas.local` to `192.168.20.5`; remove those two lines and restart Unbound.
+
+**10. Docs** (Claude can do these): address plan row for `192.168.20.5`, `CLAUDE.md` allowed commands for `192.168.20.5`, `lab-credentials.md` entry for `~/.proxmox-pve01-credentials`, and set this runbook's status to installed.
 
 ## Migration
 
