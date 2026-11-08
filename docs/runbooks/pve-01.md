@@ -77,10 +77,24 @@ Guests on the old host (2026-11-07). About 30 GB of guest data in total.
 | 203 | `vault` | VM | VLAN 20 tagged, `.20.15` | untagged, same IP | Not started |
 | 200 | `talos-cp` | VM | VLAN 20 tagged, `.20.10` | untagged; Terraform `vlan_id` unset | Not started |
 | 201 | `talos-worker-01` | VM | VLAN 20 tagged, `.20.11` | untagged; Terraform `vlan_id` unset | Not started |
-| 102 | `atlas-pihole` | LXC | VLAN 1, `.0.101` | Not migrated: replaced by Technitium at `.20.3` | Not started |
+| 102 | `atlas-pihole` | LXC | VLAN 1, `.0.101` | Not migrated: stays on the old host until a replacement DNS server exists (not planned yet) | — |
 | 204 | `home-assistant` | VM | VLAN 10 tagged, `.10.10` | VLAN 10 tagged (needs port 3 change) | Not started |
 
-Order and method to be decided. Things to carry over per guest: Proxmox firewall rules (103, 104), `onboot` and startup order, and Vault's "tell Austin before restarting" rule.
+**Method** (one guest at a time; the old copy stays until the new one is tested, so it can roll back):
+
+```bash
+# 1. Old host UI: guest > Backup > Backup now (mode: Stop, compression: zstd)
+
+# 2. Old host shell: copy the backup to pve-01 (containers are vzdump-lxc-*)
+scp /path/to/dump/vzdump-qemu-<id>-*.vma.zst root@192.168.20.5:/var/lib/vz/dump/
+
+# 3. pve-01 UI: local > Backups > select the file > Restore (target: local-zfs)
+# 4. Remove the VLAN 20 tag from the NIC (the port is native VLAN 20), boot, test, then shut down the old copy
+```
+
+**Firewall gap for step 2:** the old host is on Default (Internal zone) and UniFi blocks Internal → LAB, so it can't reach pve-01 today. Add a temporary UniFi policy, old host `192.168.0.100` → `192.168.20.5` TCP 22, and delete it when migration is done. The Mac already reaches VLAN 20 (*Allow Austin MAC to LAB*), so the web UI and SSH need no new rule.
+
+Order to be decided. Things to carry over per guest: Proxmox firewall rules (103, 104), `onboot` and startup order, and Vault's "tell Austin before restarting" rule.
 
 Open: orphaned `vm-100-disk-0/1` (about 8 GB) on the old host's `CRUCIAL_SSD_512GB` with no VM 100 config; confirm before deleting or migrating.
 

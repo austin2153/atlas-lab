@@ -164,7 +164,7 @@ Target state:
 - Three-node Kubernetes cluster on Talos VMs: talos-cp (VM 200), talos-worker-01 (VM 201), and talos-worker-02 (VM 202, planned — pending M920q hardware). 2 vCPU / 6 GB / 75 GB per worker.
 - Red Hat Ansible Automation Platform on its own RHEL 9 VM (`aap.atlas.local`, VLAN 20, ~4 vCPU / 16 GB / 100 GB), containerized installer, growth topology with bundled Postgres. Not in the Talos cluster — the AAP operator is only supported on OpenShift. Replaces AWX (removed 2026-10-24; backup in `/root/awx-backup-20261024` on the Proxmox host). Needs the 64 GB RAM upgrade.
 - Pi-hole and other lab services. More Kubernetes services and LXC containers are expected but not decided yet.
-- Local LLM box (`llm.atlas.local`): the old gaming PC, a physical machine beside the rack on VLAN 20. Not a Proxmox guest. Wired only — Wi-Fi off. Not built yet (as of 2026-11-07); not connected to the switch.
+- Local LLM box (`llm.atlas.local`): the former gaming PC nicknamed **cgrater** ("cheese grater" case; i7-11700KF, RTX 3080), previously a Proxmox host `proxmox-cgrater.atlas.local` (`192.168.0.102`). A physical machine beside the rack on VLAN 20, not a Proxmox guest; wired only, Wi-Fi off. Offline (as of 2026-11-07): it has no RAM and waits until memory is bought.
 - No NAS planned (personal files live on OneDrive).
 
 IP assignments for all workloads: see [network-address-plan.md](network-address-plan.md).

@@ -6,7 +6,7 @@ Home Assistant is an open-source home automation platform that integrates with t
 
 ## Status — paused 2026-11-02
 
-Base install is done and working; paused here to work on another project. Pick up at **Next up**.
+Base install is done and working; paused here to work on another project. Next steps are tracked in my notes, not in this repo; this runbook records what's built.
 
 **Running now**
 - HAOS VM 204: 2 vCPU / 4 GB, starts with the host, guest agent enabled
@@ -15,13 +15,6 @@ Base install is done and working; paused here to work on another project. Pick u
 - UI at **http://home-assistant.atlas.local** (port 80, see below)
 - Pi-hole record `home-assistant.atlas.local` → `192.168.10.10`
 - UniFi policy **Allow Austin MAC to IoT** lets the Mac reach the IoT network
-
-**Next up** (in order)
-1. **Confirm the port.** HA serves on port 80, not the default 8123. `ha core info` reports `"port": 80`, but `configuration.yaml` doesn't set it. Find out where it came from before relying on it.
-2. **SSH access.** Install the *Advanced SSH & Web Terminal* add-on, then add a `home-assistant` host (`192.168.10.10`) to `~/.ssh/config`.
-3. **Integrations** ([Step 5](#step-5--configure-integrations)): Philips Hue (bridge at `192.168.10.217`), then UniFi.
-4. **Narrow the firewall rule** to TCP to `192.168.10.10` on the HA port only (it currently allows all IoT traffic from the Mac).
-5. Later: Homepage tile ([Step 6](#step-6--add-to-homepage-dashboard-future)) and a Vault AppRole for HA credentials.
 
 ## Reference
 
@@ -135,17 +128,3 @@ Planned integrations:
 ## Step 6 — Add to Homepage dashboard (future)
 
 Once Homepage is re-enabled, add a Home Assistant tile. Homepage has a native Home Assistant widget that shows entity counts and optionally specific entity states.
-
-## Open items
-
-| Item | Status |
-|---|---|
-| Download HAOS image and create VM | Done — VM 204, onboot + guest agent enabled |
-| Configure VLAN 10 NIC | Done |
-| Firewall: Mac → IoT | Done (broad) — narrow to HA only later |
-| Onboarding | Done (2026-11-01) |
-| Pin IP + DNS entry | Done — `192.168.10.10`, `home-assistant.atlas.local` |
-| SSH access | TODO — HAOS has no SSH by default; needs the Advanced SSH & Web Terminal add-on before adding `home-assistant` to `~/.ssh/config` |
-| Philips Hue integration | TODO |
-| UniFi integration | TODO |
-| Homepage widget | TODO |
