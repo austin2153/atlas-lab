@@ -10,7 +10,7 @@ The new Proxmox host: a Lenovo M920q Tiny that lives directly on the lab VLAN (V
 |---|---|
 | Hostname | `pve-01` (`pve-01.atlas.local`) |
 | IP | `192.168.20.5/24` (reserved in the address plan), gateway `192.168.20.1` |
-| DNS | Pi-hole `192.168.0.101` (moves to `192.168.20.3` later) |
+| DNS | `1.1.1.1` for now; later Technitium `192.168.20.3` first, `1.1.1.1` as fallback |
 | Network | VLAN 20 untagged on the switch port; nothing on the host is tagged |
 | Switch / patch panel | USW-Lite-8-PoE port 3 (named `pve-01`: native VLAN 20, tagged Block All, PoE off) ← patch panel 5 |
 | Rack | Slot 4, directly below the gateway |
@@ -56,13 +56,13 @@ To do.
 | Hostname | `pve-01.atlas.local` |
 | Management interface | onboard Intel I219 |
 | IP / gateway | `192.168.20.5/24` / `192.168.20.1` |
-| DNS | `192.168.0.101` (Pi-hole). The installer takes only one server |
+| DNS | `1.1.1.1` (Cloudflare). Not Pi-hole: it's being replaced, so the new host shouldn't depend on it |
 
 ## Post-install
 
 To do. Same steps as the old host where they apply ([proxmox-install.md → Post-install steps](proxmox-install.md#post-install-steps)): SSH keys, no-subscription repositories, `dist-upgrade` and `intel-microcode`, then:
 - `vmbr0` VLAN-aware
-- DNS: add `1.1.1.1` as the second server (pve-01 → System → DNS). Debian only uses it if Pi-hole doesn't answer. Switch the first server to Technitium (`192.168.20.3`) once it's running
+- DNS stays `1.1.1.1` only until Technitium is running; then set Technitium (`192.168.20.3`) first and `1.1.1.1` second (pve-01 → System → DNS). Debian only uses the second if the first doesn't answer. Until then, `*.atlas.local` names don't resolve on the host itself; it only needs internet names (apt, NTP)
 - API token
 - Pi-hole record `pve-01.atlas.local` → `192.168.20.5`; address plan; `~/.ssh/config` host
 
@@ -77,7 +77,7 @@ Guests on the old host (2026-11-07). About 30 GB of guest data in total.
 | 203 | `vault` | VM | VLAN 20 tagged, `.20.15` | untagged, same IP | Not started |
 | 200 | `talos-cp` | VM | VLAN 20 tagged, `.20.10` | untagged; Terraform `vlan_id` unset | Not started |
 | 201 | `talos-worker-01` | VM | VLAN 20 tagged, `.20.11` | untagged; Terraform `vlan_id` unset | Not started |
-| 102 | `atlas-pihole` | LXC | VLAN 1, `.0.101` | moves to `.20.3` (DNS cutover) | Not started |
+| 102 | `atlas-pihole` | LXC | VLAN 1, `.0.101` | Not migrated: replaced by Technitium at `.20.3` | Not started |
 | 204 | `home-assistant` | VM | VLAN 10 tagged, `.10.10` | VLAN 10 tagged (needs port 3 change) | Not started |
 
 Order and method to be decided. Things to carry over per guest: Proxmox firewall rules (103, 104), `onboot` and startup order, and Vault's "tell Austin before restarting" rule.
