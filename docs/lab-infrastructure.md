@@ -46,25 +46,28 @@ Consolidate the basement network and lab gear (currently loose on a desk next to
 
 ### Physical
 - Frontier XGS-PON fiber into FRX523 ONT (no ISP router). ONT to UCG Ultra WAN (2.5 GbE) with a short direct cable (1 ft Cat6) down the back of the rack, from the ONT's network port to the gateway's rear WAN port. It does not go through the patch panel: it's the internet link between two devices in the rack and never touches the switch. The link runs at 2.5 Gb/s (the gateway's WAN port), which only matters for a plan faster than 2.5 Gig. Leave the wall fiber a gentle loop into the back of the ONT; the ONT's power plug ("Fiber Service, DO NOT REMOVE") goes to the side-mounted strip.
-- UCG Ultra to USW-Lite-8-PoE (1 GbE uplink).
-- Three U7 Pro APs: Basement (wired, PoE from switch port 2, 192.168.0.3). Main and Office mesh wirelessly off Basement. House has no ethernet runs (has coax). The Basement AP sits on a stand beside the rack, cabled into patch panel rear port 2 (PoE). Keep it about 1 m from the rack (metal and the ONT block signal) and as high as practical, face toward the house: it is also the wireless mesh uplink for Main and Office. Ceiling-mounting it centrally with one cable back to port 2 would give the best coverage later.
+- UCG Ultra LAN port 4 to USW-Lite-8-PoE port 5 (1 GbE uplink).
+- Three U7 Pro APs: Basement (wired, PoE from switch port 4, 192.168.0.3). Main and Office mesh wirelessly off Basement. House has no ethernet runs (has coax). The Basement AP sits on a stand beside the rack, cabled into patch panel rear port 4 (PoE). Keep it about 1 m from the rack (metal and the ONT block signal) and as high as practical, face toward the house: it is also the wireless mesh uplink for Main and Office. Ceiling-mounting it centrally with one cable back to port 4 would give the best coverage later.
 - Old eero Pro 6E retired.
 
-### Switch port map (PROPOSED)
-| Port | Device | VLANs (target) |
-|---|---|---|
-| 1 | UCG Ultra uplink | Uplink, all VLANs |
-| 2 | U7 Pro Basement (PoE) | AP trunk: native 1 (management), tagged 10, 20, 30 for the SSIDs |
-| 3 | M920q Tiny #1 | VLAN 20 only, untagged (access port) |
-| 4 | Tiny #2 (future) | VLAN 20 only, untagged |
-| 5 | Tiny #3 (future) | VLAN 20 only, untagged |
-| 6 | Old Proxmox box (temporary, during migration), then the LLM box | Native 1, tagged 20 (as today); then VLAN 20 only, untagged, for the LLM box |
-| 7 | Philips Hue bridge (side-mounted, via patch panel port 7) | VLAN 10 only, untagged (access port) |
-| 8 | Break-glass management port (no jumper; plug a laptop straight into the switch) | VLAN 1 only, untagged (access port) |
+### Switch port map
 
-Cable path for every cable that reaches the switch, including the gateway uplink (panel 1) and the Basement AP (panel 2): device -> patch panel rear port N -> patch panel front port N -> 0.5 ft jumper -> switch port N. Keep panel and switch numbers matched so only the short jumpers show at the front. The side-mounted Hue bridge follows the same path: a short (1-2 ft) cable around the rear edge into patch panel rear port 7. The only cable that skips the panel is ONT -> gateway WAN.
+**Actual** layout checked in UniFi on 2026-11-07. **Target** is the network redesign. No port profiles are set; ports 3, 6 and 7 have per-port overrides, and every other port still uses UniFi's defaults (native Default/1, all tagged VLANs allowed).
 
-**Port VLAN settings today (verified 2026-10-24, port 3 added 2026-10-27).** No port profiles are set; ports 3, 6 and 7 have per-port overrides. Port 3 is the LLM box for now: VLAN 20 untagged, Block All tagged, PoE off. Every other port's native VLAN is Default (1) except port 7 (IoT, 10), and every other port still allows **all** tagged VLANs (the UniFi default), which is how VLAN 20 reaches Proxmox today. The target settings in the table above replace this as part of the network redesign: in UniFi, set each port's native VLAN and tagged VLAN management (Block All for access ports, Custom for the AP and uplink).
+| Port | Actual device | Actual VLANs | Target |
+|---|---|---|---|
+| 1 | Empty | default | |
+| 2 | Empty | default | |
+| 3 | M920q Tiny #1 (`pve-01`, port named `pve-01`) | native 20, tagged Block All, PoE off | Same (VLAN 20 access port) |
+| 4 | U7 Pro Basement (PoE) | native 1, all tagged | AP trunk: native 1, tagged 10, 20, 30 |
+| 5 | Uplink to UCG Ultra LAN port 4 | native 1, all tagged | Same |
+| 6 | Old Proxmox box (`proxmox`, 192.168.0.100) | native 1, all tagged | Retired after migration; then free |
+| 7 | Philips Hue bridge (side-mounted) | native 10 (IoT), all tagged | VLAN 10 access port (Block All tagged) |
+| 8 | Empty (break-glass) | default | VLAN 1 access port, Block All tagged; not set up yet |
+
+**UCG Ultra ports:** 5 (2.5 GbE) WAN to the ONT, 4 to the switch, 1–3 empty.
+
+Cable path for every cable that reaches the switch, including the gateway uplink (panel 5) and the Basement AP (panel 4): device -> patch panel rear port N -> patch panel front port N -> 0.5 ft jumper -> switch port N. Keep panel and switch numbers matched so only the short jumpers show at the front. The side-mounted Hue bridge follows the same path: a short (1-2 ft) cable around the rear edge into patch panel rear port 7. The only cable that skips the panel is ONT -> gateway WAN.
 
 ### Network redesign (agreed 2026-10-25, done with the M920q install)
 Goal: stronger isolation. VLAN 1 becomes a management network for network gear only; everyday devices move to a new Home VLAN; the whole Proxmox host, Pi-hole included, lives on the lab VLAN.
@@ -129,14 +132,13 @@ From seller photos:
 ### Storage plan
 | Device | Role |
 |---|---|
-| 250 GB 2.5" SATA SSD (in caddy) | Proxmox OS |
-| 1 TB NVMe in SSD1 (to buy, used OEM; future pick WD_Black SN7100) | VM storage |
+| 1 TB NVMe (installed 2026-11) | Proxmox OS and all guests, one ZFS pool (decided 2026-11-07) |
 | SSD2 | Free for later |
 | Old 500 GB Crucial SSD in USB 3 enclosure (on a 10 Gbps port) | VM backup target / import source |
 
 ## 6. Proxmox networking (PROPOSED)
 - The whole host lives on VLAN 20 (Atlas Lab); nothing on it is tagged.
-- Switch port 3: VLAN 20 untagged, no tagged VLANs (access port).
+- Switch port 3: VLAN 20 untagged, Block All tagged (access port). Set; port named `pve-01`.
 - `vmbr0` bridged to the single onboard NIC. VLAN-aware can stay on for flexibility, but no guest uses a tag.
 - Guests: no VLAN tag. In Terraform, `vlan_id` becomes unset for the Talos VMs.
 - Don't mix styles: with VLAN 20 untagged on the port, a guest that sends VLAN 20 tagged frames would be dropped or misdelivered.
@@ -158,7 +160,7 @@ Target state:
 - Three-node Kubernetes cluster on Talos VMs: talos-cp (VM 200), talos-worker-01 (VM 201), and talos-worker-02 (VM 202, planned — pending M920q hardware). 2 vCPU / 6 GB / 75 GB per worker.
 - Red Hat Ansible Automation Platform on its own RHEL 9 VM (`aap.atlas.local`, VLAN 20, ~4 vCPU / 16 GB / 100 GB), containerized installer, growth topology with bundled Postgres. Not in the Talos cluster — the AAP operator is only supported on OpenShift. Replaces AWX (removed 2026-10-24; backup in `/root/awx-backup-20261024` on the Proxmox host). Needs the 64 GB RAM upgrade.
 - Pi-hole and other lab services. More Kubernetes services and LXC containers are expected but not decided yet.
-- Local LLM box (`llm.atlas.local`): the old gaming PC, a physical machine beside the rack on VLAN 20. Not a Proxmox guest. Wired only — Wi-Fi off. Today on switch port 3; port 6 in the target layout.
+- Local LLM box (`llm.atlas.local`): the old gaming PC, a physical machine beside the rack on VLAN 20. Not a Proxmox guest. Wired only — Wi-Fi off. Not built yet (as of 2026-11-07); not connected to the switch.
 - No NAS planned (personal files live on OneDrive).
 
 IP assignments for all workloads: see [network-address-plan.md](network-address-plan.md).
@@ -182,7 +184,7 @@ Restore: `pct restore` / `qmrestore` for guests; for the cluster, `terraform app
 ### Network cutover (with the M920q install)
 1. UniFi: create the Home network (VLAN 30) and a HOME firewall zone; enable mDNS across Home and IoT.
 2. UniFi: move the "Atlas Home" and "Atlas Gaming" SSIDs to VLAN 30; reserve `austin-mac` and printer addresses. Set switch port 8 to VLAN 1 untagged, Block All tagged (break-glass port), and test it once with the laptop.
-3. Move the LLM box's cable from switch port 3 to port 4 (set port 4 to VLAN 20 untagged first). Install Proxmox on the Tiny on port 3, already VLAN 20 untagged only.
+3. Install Proxmox on the Tiny (`pve-01`, `192.168.20.5`) on switch port 3, already VLAN 20 untagged only. Runs in parallel with the old host.
 4. Move Pi-hole (LXC 102) to its target VLAN 20 address; update all DNS records. Update the LLM box's static DNS to point at the new Pi-hole address.
 5. UniFi: set DHCP DNS to Pi-hole + `1.1.1.1` on every network; add the target firewall rules and retire the two old lab rules.
 6. Terraform: update `proxmox_endpoint`, `dns_server`, and unset `vlan_id`. Update the Kratix `proxmox-vm` promise endpoint in the `proxmox-credentials` secret.
@@ -191,17 +193,15 @@ Restore: `pct restore` / `qmrestore` for guests; for the cluster, `terraform app
 Target IPs for the cutover: see [network-address-plan.md](network-address-plan.md).
 
 ### Hardware migration
-1. Install Proxmox on the 250 GB SATA in the Tiny (or transplant the current 250 GB, still being considered).
-2. Attach old Crucial via USB to import existing VMs/CTs.
-3. Fix NIC name in `/etc/network/interfaces` if moving the existing install.
+1. Fresh install of Proxmox on the Tiny's 1 TB NVMe (ZFS, OS and guests on one disk), standalone, in parallel with the old host (decided 2026-11-07).
+2. Move guests one at a time (backup on the old host, restore on `pve-01`), re-addressing or re-tagging each for VLAN 20.
+3. Attach the old Crucial via USB if needed as an import source.
 4. Repurpose the Crucial as the backup target.
-5. Retire the old box from switch port 6; set port 6 to VLAN 20 untagged, Block All tagged, and move the LLM box there from port 4.
+5. Retire the old box from switch port 6 once it's empty.
 
 ## 9. Open decisions
-- Fresh install on the Tiny vs. transplanting the current 250 GB drive.
 - Which side panel takes the power strip and Hue bridge, and whether that side keeps its acrylic plate.
 - 10-inch mount models for UCG Ultra, switch, and M920q.
-- 1 TB NVMe purchase timing.
 - RAM upgrade to 64 GB (2 x 32 GB SO-DIMM) for AAP.
 
 Lab notes are kept in Obsidian.

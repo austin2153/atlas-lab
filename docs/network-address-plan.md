@@ -11,7 +11,7 @@ IP address reference for the atlas lab — subnets, DHCP ranges, static assignme
 | 1 | Management | `192.168.0.0/24` | `192.168.0.1` | Network gear only — gateway, switch, APs. No Wi-Fi. |
 | 10 | IoT | `192.168.10.0/24` | `192.168.10.1` | Smart speakers, Hue lighting, 2.4 GHz only |
 | 20 | Atlas Lab | `192.168.20.0/24` | `192.168.20.1` | Proxmox host, VMs, Kubernetes cluster, MetalLB |
-| 30 | Home | `192.168.30.0/24` | `192.168.30.1` | Phones, laptops, TVs, consoles, printer |
+| 30 | Home | `192.168.30.0/24` | `192.168.30.1` | **Planned, not built** (network redesign). Phones, laptops, TVs, consoles, printer |
 
 ---
 
@@ -96,7 +96,7 @@ MetalLB pool: `192.168.20.50–192.168.20.99`. IPs are pinned in each service ma
 
 ## VLAN 30 — Home (`192.168.30.0/24`)
 
-DHCP managed by the UniFi gateway. No static assignments currently.
+**Planned, not built yet** (no VLAN 30 network exists in UniFi as of 2026-11-07). Home devices are on the Default network (VLAN 1) until the redesign.
 
 ### DHCP range
 
@@ -124,9 +124,9 @@ All `*.atlas.local` records are local DNS entries managed in Pi-hole. The full l
 
 ## Planned network redesign
 
-Pending arrival of the M920q, the plan is to move the entire Proxmox host (and Pi-hole) onto VLAN 20 untagged:
+Started 2026-11-07 with the M920q (`pve-01`), built in parallel with the old host. Target: the entire Proxmox host (and Pi-hole) on VLAN 20 untagged:
 
-- Proxmox host moves from `192.168.0.100` → `192.168.20.5`
+- Proxmox moves from `192.168.0.100` (old host) → `192.168.20.5` (`pve-01`, new host)
 - Pi-hole moves from `192.168.0.101` → `192.168.20.3`
 - VLAN 1 becomes management-only (gateway, switch, APs only)
 - Home devices move to VLAN 30
