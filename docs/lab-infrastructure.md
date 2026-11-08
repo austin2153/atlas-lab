@@ -19,8 +19,8 @@ Consolidate the basement network and lab gear (currently loose on a desk next to
 | Rear cabling | Existing longer cables already on hand |
 | Panel screws | 20x chrome knurled #10-32 x 5/8" thumb screws |
 | Power | Reuse existing power strip, mounted on the side of the rack so it takes no U (no rack PDU, decided against on cost). Power bricks hidden behind |
-| Side mounts | Power strip and Philips Hue bridge on the same side panel, near the rear edge so their cables stay short. Hue attached with Velcro/Dual Lock (or its wall-mount keyhole); keep it on acrylic, not metal, and away from the Basement AP (Zigbee shares 2.4 GHz) |
-| Included with T1 | 1U vented rack shelf (kept as a spare), 2x 1U blank panels, 1x 1U venting blank panel, 2x acrylic side plates, acrylic top cover (fan-ready), handles, feet, #10-32 rack screws |
+| Side mounts | Power strip on a side panel, near the rear edge so its cables stay short |
+| Included with T1 | 1U vented rack shelf (holds the Hue bridge in slot 8), 2x 1U blank panels, 1x 1U venting blank panel, 2x acrylic side plates, acrylic top cover (fan-ready), handles, feet, #10-32 rack screws |
 | Still to buy | 10-inch mounts for UCG Ultra, USW-Lite-8-PoE, and M920q |
 
 ## 3. Rack elevation (top to bottom)
@@ -30,13 +30,15 @@ Consolidate the basement network and lab gear (currently loose on a desk next to
 | 1 | 0.5U | 12-port patch panel | Pass-through. Front jumpers to switch |
 | 2 | 1U | UniFi USW-Lite-8-PoE | 1 GbE |
 | 3 | 1U | UniFi UCG Ultra | Gateway/router, 2.5 GbE WAN |
-| 4 | 1U | Blank (included 1U blank panel) | Not needed for a shelf: the ONT sits on top of the rack and the Hue bridge is side-mounted |
-| 5 | 1U | Lenovo M920q Tiny #1 | Proxmox node. **VM backup drive:** old 500 GB Crucial SSD in a USB 3 enclosure, sitting behind the Tiny (import source during migration, then the backup target) |
+| 4 | 1U | Lenovo M920q Tiny #1 | Proxmox node `pve-01`, directly below the gateway. **VM backup drive:** old 500 GB Crucial SSD in a USB 3 enclosure, sitting behind the Tiny (import source during migration, then the backup target) |
+| 5 | 1U | Blank (included 1U blank panel) | Spare slot |
 | 6 | 1U | M920q Tiny #2 | Future. Included 1U blank panel until then |
 | 7 | 1U | M920q Tiny #3 | Future. Included 1U blank panel until then |
-| 8 | 1.5U | Spare | Included 1U venting blank + 0.5U open. Power strip is side-mounted, not in a slot |
+| 8 | 1.5U | Philips Hue bridge | On the included 1U vented shelf, + 0.5U open. Power strip is side-mounted, not in a slot |
 
-**Space note:** 8U total, 5.5U used, 2.5U spare (slot 4 and slot 8). The ONT sits on top, and the Hue bridge and power strip are side-mounted, so none of them take a U.
+**Space note:** 8U total: 4.5U used (patch panel, switch, gateway, Tiny #1, Hue shelf), 3.5U free (slot 5, slots 6–7 reserved for Tiny #2 and #3, and 0.5U under the shelf). The ONT sits on top and the power strip is side-mounted, so neither takes a U.
+
+**Outside the rack:** the old Proxmox host, a tower (the old gaming PC, see [proxmox-install.md](runbooks/proxmox-install.md)), stands beside the rack until its guests move to Tiny #1. Its cable goes into patch panel rear port 8.
 
 **ONT placement: on top of the rack.** The ONT (Optical Network Terminal, Frontier FRX523) is the box where the fiber comes in; it converts the fiber's light signal into Ethernet for the UCG Ultra's WAN port. It measures ~9.7 x 7 x 1.25 in (W x D x H) and sits on the acrylic top cover (~11 x 7.9 in). It won't fit inside: the RackMate opening between the rails is ~222 mm / 8.75 in (DeskPi T0 spec, same 280 x 200 mm frame as the T1), about 1 in narrower than the ONT. Keep the fiber's bend gentle where it drops to the wall.
 
@@ -61,15 +63,15 @@ Consolidate the basement network and lab gear (currently loose on a desk next to
 | 3 | 5 | M920q Tiny #1 (`pve-01`, port named `pve-01`) | native 20, tagged Block All, PoE off | Same (VLAN 20 access port) |
 | 4 | 6 | U7 Pro Basement (PoE) | native 1, all tagged | AP trunk: native 1, tagged 10, 20, 30 |
 | 5 | 7 | Uplink to UCG Ultra LAN port 4 | native 1, all tagged | Same |
-| 6 | 8 | Old Proxmox box (`proxmox`, 192.168.0.100) | native 1, all tagged | Retired after migration; then free |
-| 7 | 9 | Philips Hue bridge (side-mounted) | native 10 (IoT), all tagged | VLAN 10 access port (Block All tagged) |
+| 6 | 8 | Old Proxmox tower, outside the rack (`proxmox`, 192.168.0.100) | native 1, all tagged | Retired after migration; then free |
+| 7 | 9 | Philips Hue bridge (bottom shelf, slot 8) | native 10 (IoT), all tagged | VLAN 10 access port (Block All tagged) |
 | 8 | — | Empty (break-glass; plug straight into the switch) | default | VLAN 1 access port, Block All tagged; not set up yet |
 
 Patch panel ports 1–4 and 10–12 are empty.
 
 **UCG Ultra ports:** 5 (2.5 GbE) WAN to the ONT, 4 to the switch, 1–3 empty.
 
-Cable path for every cable that reaches the switch, including the gateway uplink and the Basement AP: device -> patch panel rear port -> patch panel front port -> 0.5 ft jumper -> switch port. The switch sits under the middle of the wider panel, so **panel port N+2 jumpers to switch port N** (panel 5–9 to switch 3–7; checked on the rack 2026-11-07). The side-mounted Hue bridge follows the same path: a short (1-2 ft) cable around the rear edge into patch panel rear port 9. The only cable that skips the panel is ONT -> gateway WAN.
+Cable path for every cable that reaches the switch, including the gateway uplink and the Basement AP: device -> patch panel rear port -> patch panel front port -> 0.5 ft jumper -> switch port. The switch sits under the middle of the wider panel, so **panel port N+2 jumpers to switch port N** (panel 5–9 to switch 3–7; checked on the rack 2026-11-07). The Hue bridge on the bottom shelf follows the same path, up the back of the rack into patch panel rear port 9. The only cable that skips the panel is ONT -> gateway WAN.
 
 ### Network redesign (agreed 2026-10-25, done with the M920q install)
 Goal: stronger isolation. VLAN 1 becomes a management network for network gear only; everyday devices move to a new Home VLAN; the whole Proxmox host, Pi-hole included, lives on the lab VLAN.
@@ -202,7 +204,7 @@ Target IPs for the cutover: see [network-address-plan.md](network-address-plan.m
 5. Retire the old box from switch port 6 once it's empty.
 
 ## 9. Open decisions
-- Which side panel takes the power strip and Hue bridge, and whether that side keeps its acrylic plate.
+- Which side panel takes the power strip, and whether that side keeps its acrylic plate.
 - 10-inch mount models for UCG Ultra, switch, and M920q.
 - RAM upgrade to 64 GB (2 x 32 GB SO-DIMM) for AAP.
 

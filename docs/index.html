@@ -481,11 +481,12 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <button type="button" data-trace-btn="ap" aria-pressed="false">U7 Pro Basement</button>
       <button type="button" data-trace-btn="tiny1" aria-pressed="false">Tiny #1</button>
       <button type="button" data-trace-btn="hue" aria-pressed="false">Hue bridge</button>
+      <button type="button" data-trace-btn="oldpx" aria-pressed="false">Old Proxmox</button>
       <button type="button" data-trace-btn="ont" aria-pressed="false">ONT</button>
     </div>
   </div>
   <div id="rack-front">
-  <div class="diagram rack trace" id="rack-front-diagram" aria-label="Front elevation of an 8U 10-inch rack, top to bottom: 0.5U 12-port patch panel, 1U USW-Lite-8-PoE switch, 1U UCG Ultra gateway, 1U blank panel, 1U Lenovo M920q Tiny number 1 (Proxmox node), two 1U slots for future Tiny 2 and 3, and 1.5U spare. The ONT sits on top of the rack, the power strip and Hue bridge are mounted on its side, and the Basement access point stands on a stand to the left; its cable runs round the back into patch panel port 6, and a front jumper connects it to switch port 4.">
+  <div class="diagram rack trace" id="rack-front-diagram" aria-label="Front elevation of an 8U 10-inch rack, top to bottom: 0.5U 12-port patch panel, 1U USW-Lite-8-PoE switch, 1U UCG Ultra gateway, 1U Lenovo M920q Tiny number 1 (Proxmox node pve-01), 1U blank panel, two 1U slots for future Tiny 2 and 3, and a 1U shelf holding the Hue bridge with 0.5U open below. The ONT sits on top of the rack, the power strip is mounted on its side, and the Basement access point stands on a stand to the left; its cable runs round the back into patch panel port 6, and a front jumper connects it to switch port 4.">
     <svg viewBox="-64 -44 764 474" xmlns="http://www.w3.org/2000/svg">
       <!-- Basement U7 Pro on a stand beside the rack (left from the front); its cable enters the rack at patch-panel height and plugs into the back of panel port 2 -->
       <line data-trace="ap" class="d-link" x1="-30" y1="69" x2="-30" y2="396"/>
@@ -540,7 +541,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <g class="r-port">
         <rect x="200" y="46" width="12" height="10" rx="1"/><rect x="216" y="46" width="12" height="10" rx="1"/><rect x="232" y="46" width="12" height="10" rx="1"/>
         <rect x="248" y="46" width="12" height="10" rx="1"/><rect data-trace="tiny1" x="264" y="46" width="12" height="10" rx="1"/><rect data-trace="ap" x="280" y="46" width="12" height="10" rx="1"/>
-        <rect data-trace="gw" x="296" y="46" width="12" height="10" rx="1"/><rect x="312" y="46" width="12" height="10" rx="1"/><rect data-trace="hue" x="328" y="46" width="12" height="10" rx="1"/>
+        <rect data-trace="gw" x="296" y="46" width="12" height="10" rx="1"/><rect data-trace="oldpx" x="312" y="46" width="12" height="10" rx="1"/><rect data-trace="hue" x="328" y="46" width="12" height="10" rx="1"/>
         <rect x="344" y="46" width="12" height="10" rx="1"/><rect x="360" y="46" width="12" height="10" rx="1"/><rect x="376" y="46" width="12" height="10" rx="1"/>
       </g>
       <text class="t-plate" x="88" y="55">Patch panel</text>
@@ -549,15 +550,15 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <rect class="r-mount" x="78" y="63" width="324" height="42" rx="3"/>
       <text class="t-plate" x="88" y="89">USW-Lite-8-PoE</text>
       <g class="r-port">
-        <rect x="199" y="76" width="14" height="14" rx="1"/><rect x="215" y="76" width="14" height="14" rx="1"/><rect data-trace="tiny1" x="231" y="76" width="14" height="14" rx="1"/><rect data-trace="ap" x="247" y="76" width="14" height="14" rx="1"/><rect data-trace="gw" x="263" y="76" width="14" height="14" rx="1"/><rect x="279" y="76" width="14" height="14" rx="1"/><rect data-trace="hue" x="295" y="76" width="14" height="14" rx="1"/><rect x="311" y="76" width="14" height="14" rx="1"/>
+        <rect x="199" y="76" width="14" height="14" rx="1"/><rect x="215" y="76" width="14" height="14" rx="1"/><rect data-trace="tiny1" x="231" y="76" width="14" height="14" rx="1"/><rect data-trace="ap" x="247" y="76" width="14" height="14" rx="1"/><rect data-trace="gw" x="263" y="76" width="14" height="14" rx="1"/><rect data-trace="oldpx" x="279" y="76" width="14" height="14" rx="1"/><rect data-trace="hue" x="295" y="76" width="14" height="14" rx="1"/><rect x="311" y="76" width="14" height="14" rx="1"/>
       </g>
-      <g class="t-u"><text x="206" y="101" text-anchor="middle">1</text><text x="222" y="101" text-anchor="middle">2</text><text data-trace="tiny1" x="238" y="101" text-anchor="middle">3</text><text data-trace="ap" x="254" y="101" text-anchor="middle">4</text><text data-trace="gw" x="270" y="101" text-anchor="middle">5</text><text x="286" y="101" text-anchor="middle">6</text><text data-trace="hue" x="302" y="101" text-anchor="middle">7</text><text x="318" y="101" text-anchor="middle">8</text></g>
+      <g class="t-u"><text x="206" y="101" text-anchor="middle">1</text><text x="222" y="101" text-anchor="middle">2</text><text data-trace="tiny1" x="238" y="101" text-anchor="middle">3</text><text data-trace="ap" x="254" y="101" text-anchor="middle">4</text><text data-trace="gw" x="270" y="101" text-anchor="middle">5</text><text data-trace="oldpx" x="286" y="101" text-anchor="middle">6</text><text data-trace="hue" x="302" y="101" text-anchor="middle">7</text><text x="318" y="101" text-anchor="middle">8</text></g>
       <!-- 0.5 ft jumpers: panel port N+2 down to switch port N (panel 5-9 to switch 3-7) -->
       <g>
         <line data-trace="tiny1" class="r-jumper" x1="270" y1="56" x2="238" y2="77"/>
         <line data-trace="ap" class="r-jumper" x1="286" y1="56" x2="254" y2="77"/>
         <line data-trace="gw" class="r-jumper" x1="302" y1="56" x2="270" y2="77"/>
-        <line class="r-jumper" x1="318" y1="56" x2="286" y2="77"/>
+        <line data-trace="oldpx" class="r-jumper" x1="318" y1="56" x2="286" y2="77"/>
         <line data-trace="hue" class="r-jumper" x1="334" y1="56" x2="302" y2="77"/>
       </g>
 
@@ -569,14 +570,14 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
         <rect x="362" y="120" width="16" height="14" rx="1"/><rect x="381" y="120" width="16" height="14" rx="1"/>
       </g>
 
-      <!-- 4. blank, 1U: y 150–194 -->
-      <rect class="r-future" x="78" y="151" width="324" height="42" rx="3"/>
-      <text class="t-u" x="88" y="176">blank</text>
+      <!-- 4. Tiny #1, 1U: y 150–194 -->
+      <rect data-trace="tiny1" class="r-mount" x="78" y="151" width="324" height="42" rx="3"/>
+      <rect data-trace="tiny1" class="r-tiny" x="150" y="156" width="180" height="32" rx="2"/>
+      <text data-trace="tiny1" class="t-plate" x="88" y="177">Tiny #1</text>
 
-      <!-- 5. Tiny #1, 1U: y 194–238 -->
-      <rect data-trace="tiny1" class="r-mount" x="78" y="195" width="324" height="42" rx="3"/>
-      <rect data-trace="tiny1" class="r-tiny" x="150" y="200" width="180" height="32" rx="2"/>
-      <text data-trace="tiny1" class="t-plate" x="88" y="221">Tiny #1</text>
+      <!-- 5. blank, 1U: y 194–238 -->
+      <rect class="r-future" x="78" y="195" width="324" height="42" rx="3"/>
+      <text class="t-u" x="88" y="220">blank</text>
 
       <!-- 6. Tiny #2, future: y 238–282 -->
       <rect class="r-future" x="78" y="239" width="324" height="42" rx="3"/>
@@ -588,9 +589,12 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <rect class="r-tiny-future" x="150" y="288" width="180" height="32" rx="2"/>
       <text class="t-plate-muted" x="88" y="309">Tiny #3</text>
 
-      <!-- 8. spare, 1.5U: y 326–392 (power strip is side-mounted) -->
-      <rect class="r-future" x="78" y="327" width="324" height="64" rx="3"/>
-      <text class="t-u" x="88" y="363">spare / blank</text>
+      <!-- 8. 1U vented shelf with the Hue bridge, then 0.5U open: y 326–392 -->
+      <rect data-trace="hue" class="r-plate" x="78" y="327" width="324" height="42" rx="3"/>
+      <rect data-trace="hue" class="r-port" x="150" y="334" width="60" height="28" rx="6"/>
+      <text data-trace="hue" class="t-u" x="180" y="352" text-anchor="middle">Hue</text>
+      <text data-trace="hue" class="t-plate" x="88" y="352">Shelf</text>
+      <rect class="r-future" x="78" y="371" width="324" height="20" rx="3"/>
 
       <!-- callouts -->
       <g class="r-lead">
@@ -611,15 +615,15 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <text class="t-body" x="458" y="97">192.168.0.2 · 1 GbE · PoE</text>
       <text data-trace="gw ont" class="t-title" x="458" y="126">Gateway · 1U</text>
       <text class="t-body" x="458" y="141">192.168.0.1 · 2.5 GbE WAN</text>
-      <text class="t-title" x="458" y="170">Blank · 1U</text>
-      <text class="t-body" x="458" y="185">Spare slot, included blank panel</text>
-      <text data-trace="tiny1" class="t-title" x="458" y="214">M920q Tiny #1 · 1U</text>
-      <text data-trace="tiny1" class="t-body" x="458" y="229">Proxmox node</text>
-      <text data-trace="tiny1" class="t-body t-accent" x="458" y="244">+ 500 GB USB SSD behind: VM backups</text>
+      <text data-trace="tiny1" class="t-title" x="458" y="164">M920q Tiny #1 · 1U</text>
+      <text data-trace="tiny1" class="t-body" x="458" y="179">Proxmox node pve-01</text>
+      <text data-trace="tiny1" class="t-body t-accent" x="458" y="194">+ 500 GB USB SSD behind: VM backups</text>
+      <text class="t-title" x="458" y="214">Blank · 1U</text>
+      <text class="t-body" x="458" y="229">Spare slot, included blank panel</text>
       <text class="t-title" x="458" y="280">Tiny #2, #3 · 2U</text>
       <text class="t-body" x="458" y="295">Future; blank panels until then</text>
-      <text class="t-title" x="458" y="357">Spare · 1.5U</text>
-      <text class="t-body" x="458" y="372">1U vented blank · strip on the side</text>
+      <text data-trace="hue" class="t-title" x="458" y="357">Shelf · 1U + 0.5U open</text>
+      <text data-trace="hue" class="t-body" x="458" y="372">Hue bridge on the included vented shelf</text>
       <!-- U7 Pro Basement cable into the back of panel port 6 (drawn last so it shows over the frame) -->
       <polyline data-trace="ap" class="r-cable" points="-11,40 -2,37 286,37 286,46"/>
     </svg>
@@ -627,28 +631,32 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
   </div>
   <div id="rack-rear" hidden>
   <p class="muted">From behind, so left and right are mirrored: patch panel port 1 is on the right. Every device cable plugs into the back of the patch panel; only short jumpers show at the front.</p>
-  <div class="diagram rack rear trace" aria-label="Rear view of the rack with cables: A, ONT on top to the gateway WAN port; B, gateway LAN port 4 to patch panel port 7; C, the Basement access point cable to patch panel port 6; D, Tiny 1 network port to patch panel port 5; E, the side-mounted Hue bridge to patch panel port 9; F, Tiny 1 USB to the backup SSD. The Basement access point stands on a stand beside the rack. The power strip and Hue bridge are on the side panel.">
-    <svg viewBox="-12 -50 492 480" xmlns="http://www.w3.org/2000/svg">
+  <div class="diagram rack rear trace" aria-label="Rear view of the rack with cables: A, ONT on top to the gateway WAN port; B, gateway LAN port 4 to patch panel port 7; C, the Basement access point cable to patch panel port 6; D, Tiny 1 network port to patch panel port 5; E, the Hue bridge on the bottom shelf to patch panel port 9; F, Tiny 1 USB to the backup SSD; G, the old Proxmox tower beside the rack to patch panel port 8. Panel ports 5 to 9 are in use side by side. The Basement access point stands on a stand beside the rack.">
+    <svg viewBox="-84 -50 564 480" xmlns="http://www.w3.org/2000/svg">
       <text class="t-label" x="52" y="-36">REAR VIEW · MIRRORED</text>
       <!-- ONT on top -->
       <rect data-trace="ont gw" class="r-tiny" x="70" y="-6" width="340" height="32" rx="4"/>
       <text data-trace="ont gw" class="t-plate t-on-dark" x="84" y="15">ONT</text>
-      <!-- side panel: power strip + Hue -->
+      <!-- old Proxmox tower, outside the rack (left from behind) -->
+      <rect data-trace="oldpx" class="r-plate" x="-78" y="160" width="46" height="232" rx="4"/>
+      <text data-trace="oldpx" class="t-u" transform="translate(-50,276) rotate(-90)" text-anchor="middle">old Proxmox tower · 192.168.0.100</text>
+      <line data-trace="oldpx" class="d-link" x1="-82" y1="398" x2="-28" y2="398"/>
+      <!-- side panel: power strip -->
       <rect class="r-plate" x="-6" y="70" width="14" height="300" rx="2"/>
       <g class="r-port"><rect x="-3" y="90" width="8" height="8"/><rect x="-3" y="130" width="8" height="8"/><rect x="-3" y="170" width="8" height="8"/><rect x="-3" y="210" width="8" height="8"/><rect x="-3" y="250" width="8" height="8"/><rect x="-3" y="290" width="8" height="8"/><rect x="-3" y="330" width="8" height="8"/></g>
-      <text class="t-u" transform="translate(40,300) rotate(-90)" text-anchor="middle">power strip (side)</text>
-      <rect data-trace="hue" class="r-port" x="16" y="150" width="32" height="28" rx="6"/>
-      <text data-trace="hue" class="t-u" x="32" y="168" text-anchor="middle">Hue</text>
+      <text class="t-u" transform="translate(22,300) rotate(-90)" text-anchor="middle">power strip (side)</text>
       <!-- frame -->
       <rect class="r-frame" x="52" y="28" width="376" height="376" rx="6"/>
       <rect class="r-rail" x="60" y="40" width="16" height="352"/>
       <rect class="r-rail" x="404" y="40" width="16" height="352"/>
-      <!-- 1 patch panel rear -->
+      <!-- 1 patch panel rear (mirrored: port N at x = 268 - 16*(N-1)) -->
       <rect class="r-plate" x="78" y="41" width="324" height="20" rx="2"/>
-      <g class="r-port"><rect x="268" y="46" width="12" height="10" rx="1"/><rect x="252" y="46" width="12" height="10" rx="1"/><rect x="236" y="46" width="12" height="10" rx="1"/><rect x="220" y="46" width="12" height="10" rx="1"/><rect data-trace="tiny1" x="204" y="46" width="12" height="10" rx="1"/><rect data-trace="ap" x="188" y="46" width="12" height="10" rx="1"/><rect data-trace="gw" x="172" y="46" width="12" height="10" rx="1"/><rect x="156" y="46" width="12" height="10" rx="1"/><rect data-trace="hue" x="140" y="46" width="12" height="10" rx="1"/><rect x="124" y="46" width="12" height="10" rx="1"/><rect x="108" y="46" width="12" height="10" rx="1"/><rect x="92" y="46" width="12" height="10" rx="1"/></g>
+      <g class="r-port"><rect x="268" y="46" width="12" height="10" rx="1"/><rect x="252" y="46" width="12" height="10" rx="1"/><rect x="236" y="46" width="12" height="10" rx="1"/><rect x="220" y="46" width="12" height="10" rx="1"/><rect data-trace="tiny1" x="204" y="46" width="12" height="10" rx="1"/><rect data-trace="ap" x="188" y="46" width="12" height="10" rx="1"/><rect data-trace="gw" x="172" y="46" width="12" height="10" rx="1"/><rect data-trace="oldpx" x="156" y="46" width="12" height="10" rx="1"/><rect data-trace="hue" x="140" y="46" width="12" height="10" rx="1"/><rect x="124" y="46" width="12" height="10" rx="1"/><rect x="108" y="46" width="12" height="10" rx="1"/><rect x="92" y="46" width="12" height="10" rx="1"/></g>
       <text class="t-u" x="396" y="55" text-anchor="end">panel</text>
       <text class="t-u" x="274" y="39" text-anchor="middle">1</text>
-      <text class="t-u" x="92" y="39" text-anchor="middle">12</text>
+      <text class="t-u" x="210" y="39" text-anchor="middle">5</text>
+      <text class="t-u" x="146" y="39" text-anchor="middle">9</text>
+      <text class="t-u" x="98" y="39" text-anchor="middle">12</text>
       <!-- 2 switch rear -->
       <rect class="r-mount" x="78" y="63" width="324" height="42" rx="3"/>
       <circle class="r-port" cx="100" cy="84" r="4"/>
@@ -658,43 +666,48 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <g class="r-port"><rect x="300" y="122" width="14" height="12" rx="1"/><rect x="319" y="122" width="14" height="12" rx="1"/><rect x="338" y="122" width="14" height="12" rx="1"/><rect data-trace="gw" x="357" y="122" width="14" height="12" rx="1"/><rect data-trace="gw ont" x="376" y="122" width="14" height="12" rx="1"/></g>
       <circle class="r-port" cx="100" cy="128" r="4"/>
       <text data-trace="gw ont" class="t-u" x="88" y="145">gateway</text>
-      <text data-trace="gw ont" class="t-u" x="383" y="146" text-anchor="middle">WAN</text>
-      <text data-trace="gw" class="t-u" x="364" y="146" text-anchor="middle">LAN 4</text>
-      <!-- 4 blank -->
-      <rect class="r-future" x="78" y="151" width="324" height="42" rx="3"/>
-      <text class="t-u" x="388" y="176" text-anchor="end">blank</text>
-      <!-- 5 Tiny #1 + USB SSD -->
-      <rect data-trace="tiny1" class="r-mount" x="78" y="195" width="324" height="42" rx="3"/>
-      <rect data-trace="tiny1" class="r-tiny" x="150" y="200" width="180" height="32" rx="2"/>
-      <rect data-trace="tiny1" class="r-plate" x="236" y="208" width="12" height="10" rx="1"/>
-      <rect data-trace="tiny1" class="r-plate" x="302" y="211" width="8" height="5"/>
-      <circle data-trace="tiny1" class="r-plate" cx="170" cy="216" r="3"/>
-      <rect data-trace="tiny1" class="r-port" x="340" y="203" width="56" height="26" rx="3"/>
-      <text data-trace="tiny1" class="t-u" x="368" y="220" text-anchor="middle">SSD</text>
-      <text data-trace="tiny1" class="t-u" x="88" y="221">Tiny #1</text>
-      <!-- 6, 7 future Tinys; 8 spare -->
+      <text data-trace="gw" class="t-u" x="369" y="146" text-anchor="end">LAN 4</text>
+      <text data-trace="gw ont" class="t-u" x="374" y="146">WAN</text>
+      <!-- 4 Tiny #1 + USB SSD -->
+      <rect data-trace="tiny1" class="r-mount" x="78" y="151" width="324" height="42" rx="3"/>
+      <rect data-trace="tiny1" class="r-tiny" x="150" y="156" width="180" height="32" rx="2"/>
+      <rect data-trace="tiny1" class="r-plate" x="236" y="164" width="12" height="10" rx="1"/>
+      <rect data-trace="tiny1" class="r-plate" x="302" y="167" width="8" height="5"/>
+      <circle data-trace="tiny1" class="r-plate" cx="170" cy="172" r="3"/>
+      <rect data-trace="tiny1" class="r-port" x="340" y="159" width="56" height="26" rx="3"/>
+      <text data-trace="tiny1" class="t-u" x="368" y="176" text-anchor="middle">SSD</text>
+      <text data-trace="tiny1" class="t-u" x="88" y="177">Tiny #1</text>
+      <!-- 5 blank; 6, 7 future Tinys -->
+      <rect class="r-future" x="78" y="195" width="324" height="42" rx="3"/>
+      <text class="t-u" x="388" y="220" text-anchor="end">blank</text>
       <rect class="r-future" x="78" y="239" width="324" height="42" rx="3"/>
-      <text class="t-u" x="88" y="264">Tiny #2</text>
+      <text class="t-u" x="388" y="264" text-anchor="end">Tiny #2</text>
       <rect class="r-future" x="78" y="283" width="324" height="42" rx="3"/>
-      <text class="t-u" x="88" y="308">Tiny #3</text>
-      <rect class="r-future" x="78" y="327" width="324" height="64" rx="3"/>
-      <text class="t-u" x="88" y="363">spare</text>
+      <text class="t-u" x="388" y="308" text-anchor="end">Tiny #3</text>
+      <!-- 8 shelf with the Hue bridge, then 0.5U open -->
+      <rect data-trace="hue" class="r-plate" x="78" y="327" width="324" height="42" rx="3"/>
+      <rect data-trace="hue" class="r-port" x="270" y="334" width="60" height="28" rx="6"/>
+      <text data-trace="hue" class="t-u" x="300" y="352" text-anchor="middle">Hue</text>
+      <text data-trace="hue" class="t-u" x="388" y="352" text-anchor="end">shelf</text>
+      <rect class="r-future" x="78" y="371" width="324" height="20" rx="3"/>
       <!-- cables -->
       <polyline data-trace="ont gw" class="r-cable" points="383,26 383,122"/>
       <polyline data-trace="gw" class="r-cable" points="364,122 364,72 178,72 178,56"/>
+      <polyline data-trace="tiny1" class="r-cable" points="242,164 242,140 210,140 210,56"/>
+      <polyline data-trace="tiny1" class="r-cable" points="310,169 340,169"/>
+      <polyline data-trace="hue" class="r-cable" points="270,348 120,348 120,66 146,66 146,56"/>
+      <polyline data-trace="oldpx" class="r-cable" points="162,46 162,34 -55,34 -55,160"/>
       <!-- Basement U7 Pro on a stand beside the rack -->
       <line data-trace="ap" class="d-link" x1="457" y1="156" x2="457" y2="396"/>
       <line data-trace="ap" class="d-link" x1="440" y1="398" x2="474" y2="398"/>
       <rect data-trace="ap" class="r-plate" x="438" y="120" width="38" height="36" rx="9"/>
       <text data-trace="ap" class="t-u" transform="translate(470,276) rotate(-90)" text-anchor="middle">U7 Pro Basement · 192.168.0.3</text>
       <text data-trace="ap" class="t-u" x="457" y="416" text-anchor="middle">AP</text>
-      <polyline data-trace="ap" class="r-cable" points="457,120 457,34 194,34 194,46"/>
-      <polyline data-trace="tiny1" class="r-cable" points="242,208 242,190 210,190 210,56"/>
-      <polyline data-trace="hue" class="r-cable" points="48,164 86,164 86,66 146,66 146,56"/>
-      <polyline data-trace="tiny1" class="r-cable" points="310,213 340,213"/>
+      <polyline data-trace="ap" class="r-cable" points="457,120 457,30 194,30 194,46"/>
       <g class="t-label t-accent" font-weight="700">
-        <text data-trace="ont gw" x="388" y="40">A</text><text data-trace="gw" x="369" y="100">B</text><text data-trace="ap" x="462" y="100">C</text>
-        <text data-trace="tiny1" x="247" y="180">D</text><text data-trace="hue" x="91" y="150">E</text><text data-trace="tiny1" x="318" y="207">F</text>
+        <text data-trace="ont gw" x="388" y="44">A</text><text data-trace="gw" x="358" y="96" text-anchor="end">B</text><text data-trace="ap" x="462" y="100">C</text>
+        <text data-trace="tiny1" x="247" y="160">D</text><text data-trace="hue" x="125" y="250">E</text><text data-trace="tiny1" x="318" y="163">F</text>
+        <text data-trace="oldpx" x="-50" y="100">G</text>
       </g>
     </svg>
   </div>
@@ -703,9 +716,9 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     <li><b>B</b> Gateway LAN port 4 → panel 7 → switch port 5</li>
     <li><b>C</b> Basement AP, on a stand beside the rack → panel 6 → switch port 4 (PoE)</li>
     <li><b>D</b> Tiny #1 (<code>pve-01</code>) network port → panel 5 → switch port 3</li>
-    <li>Old Proxmox host (temporary, during migration) → panel 8 → switch port 6</li>
-    <li><b>E</b> Hue bridge on the side panel → panel 9 → switch port 7</li>
+    <li><b>E</b> Hue bridge on the bottom shelf → panel 9 → switch port 7</li>
     <li><b>F</b> Tiny #1 USB → 500 GB backup SSD, sitting behind the Tiny</li>
+    <li><b>G</b> Old Proxmox tower (the old gaming PC), outside the rack until its guests move → panel 8 → switch port 6</li>
   </ul>
   </div>
   <div class="legend">
@@ -716,7 +729,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
     <span><i class="jumper future"></i>Future jumper</span>
   </div>
 
-  <p class="muted">Not in a slot: the ONT sits on top of the rack (it's 9.7″ wide and the rails leave about 8¾″; if it ever fits the included 1U tray, it can move to slot 4). The power strip and Hue bridge are on the side panel, the power bricks sit behind the devices, and the Basement AP stands about a metre from the rack.</p>
+  <p class="muted">Not in a slot: the ONT sits on top of the rack (it's 9.7″ wide and the rails leave about 8¾″). The power strip is on the side panel, the power bricks sit behind the devices, and the Basement AP stands about a metre from the rack. The old Proxmox host is a tower (the old gaming PC) standing outside the rack until its guests move to Tiny #1.</p>
 
   <h3>Power</h3>
   <p class="muted">Low power draw is a hard requirement. The biggest loads are the ONT (24 W maximum, from its label) and the Tiny (35 W CPU). Measure the whole rack with a smart plug between the wall and the power strip once it's built, and record the number here.</p>
@@ -744,9 +757,9 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <text data-pcol="5" data-trace="gw" class="t-label" x="518" y="37" text-anchor="middle">7</text>
       <rect data-pcol="5" data-trace="gw" class="sw-port" x="498" y="44" width="40" height="30" rx="3"/>
       <rect data-pcol="5" data-trace="gw" class="sw-jack" x="506" y="51" width="24" height="16" rx="2"/>
-      <text data-pcol="6" class="t-label" x="594" y="37" text-anchor="middle">8</text>
-      <rect data-pcol="6" class="sw-port" x="574" y="44" width="40" height="30" rx="3"/>
-      <rect data-pcol="6" class="sw-jack" x="582" y="51" width="24" height="16" rx="2"/>
+      <text data-pcol="6" data-trace="oldpx" class="t-label" x="594" y="37" text-anchor="middle">8</text>
+      <rect data-pcol="6" data-trace="oldpx" class="sw-port" x="574" y="44" width="40" height="30" rx="3"/>
+      <rect data-pcol="6" data-trace="oldpx" class="sw-jack" x="582" y="51" width="24" height="16" rx="2"/>
       <text data-pcol="7" data-trace="hue" class="t-label" x="670" y="37" text-anchor="middle">9</text>
       <rect data-pcol="7" data-trace="hue" class="sw-port" x="650" y="44" width="40" height="30" rx="3"/>
       <rect data-pcol="7" data-trace="hue" class="sw-jack" x="658" y="51" width="24" height="16" rx="2"/>
@@ -759,7 +772,7 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <line data-pcol="3" data-trace="tiny1" class="r-jumper" x1="366" y1="74" x2="214" y2="146"/>
       <line data-pcol="4" data-trace="ap" class="r-jumper" x1="442" y1="74" x2="290" y2="146"/>
       <line data-pcol="5" data-trace="gw" class="r-jumper" x1="518" y1="74" x2="366" y2="146"/>
-      <line data-pcol="6" class="r-jumper" x1="594" y1="74" x2="442" y2="146"/>
+      <line data-pcol="6" data-trace="oldpx" class="r-jumper" x1="594" y1="74" x2="442" y2="146"/>
       <line data-pcol="7" data-trace="hue" class="r-jumper" x1="670" y1="74" x2="518" y2="146"/>
       <text class="t-label" x="644" y="161">USW-LITE-8-POE</text>
       <rect class="sw-face" x="20" y="118" width="616" height="78" rx="6"/>
@@ -790,19 +803,19 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <text data-pcol="5" data-trace="gw" class="t-body" x="366" y="214" text-anchor="middle" font-weight="600">Gateway</text>
       <text data-pcol="5" data-trace="gw" class="t-body" x="366" y="228" text-anchor="middle">LAN port 4</text>
       <text data-pcol="5" data-trace="gw" class="t-label" x="366" y="243" text-anchor="middle">uplink</text>
-      <text data-pcol="6" class="t-label" x="442" y="133" text-anchor="middle">6</text>
-      <rect data-pcol="6" class="sw-port" x="414" y="140" width="56" height="36" rx="3"/>
-      <rect data-pcol="6" class="sw-jack" x="426" y="148" width="32" height="18" rx="2"/>
-      <rect data-pcol="6" class="sw-jack" x="436" y="166" width="12" height="4"/>
-      <text data-pcol="6" class="t-body" x="442" y="214" text-anchor="middle" font-weight="600">Old Proxmox</text>
-      <text data-pcol="6" class="t-body" x="442" y="228" text-anchor="middle">until migrated</text>
-      <text data-pcol="6" class="t-label" x="442" y="243" text-anchor="middle">1 + tagged</text>
+      <text data-pcol="6" data-trace="oldpx" class="t-label" x="442" y="133" text-anchor="middle">6</text>
+      <rect data-pcol="6" data-trace="oldpx" class="sw-port" x="414" y="140" width="56" height="36" rx="3"/>
+      <rect data-pcol="6" data-trace="oldpx" class="sw-jack" x="426" y="148" width="32" height="18" rx="2"/>
+      <rect data-pcol="6" data-trace="oldpx" class="sw-jack" x="436" y="166" width="12" height="4"/>
+      <text data-pcol="6" data-trace="oldpx" class="t-body" x="442" y="214" text-anchor="middle" font-weight="600">Old Proxmox</text>
+      <text data-pcol="6" data-trace="oldpx" class="t-body" x="442" y="228" text-anchor="middle">until migrated</text>
+      <text data-pcol="6" data-trace="oldpx" class="t-label" x="442" y="243" text-anchor="middle">1 + tagged</text>
       <text data-pcol="7" data-trace="hue" class="t-label" x="518" y="133" text-anchor="middle">7</text>
       <rect data-pcol="7" data-trace="hue" class="sw-port" x="490" y="140" width="56" height="36" rx="3"/>
       <rect data-pcol="7" data-trace="hue" class="sw-jack" x="502" y="148" width="32" height="18" rx="2"/>
       <rect data-pcol="7" data-trace="hue" class="sw-jack" x="512" y="166" width="12" height="4"/>
       <text data-pcol="7" data-trace="hue" class="t-body" x="518" y="214" text-anchor="middle" font-weight="600">Hue bridge</text>
-      <text data-pcol="7" data-trace="hue" class="t-body" x="518" y="228" text-anchor="middle">side</text>
+      <text data-pcol="7" data-trace="hue" class="t-body" x="518" y="228" text-anchor="middle">shelf</text>
       <text data-pcol="7" data-trace="hue" class="t-label" x="518" y="243" text-anchor="middle">10 IoT</text>
       <text data-pcol="8" class="t-label" x="594" y="133" text-anchor="middle">8</text>
       <rect data-pcol="8" class="sw-port-empty" x="566" y="140" width="56" height="36" rx="3"/>
@@ -814,9 +827,9 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
       <rect data-pcol="4" data-trace="ap" class="vb-v10" x="280.7" y="182" width="18.7" height="6"/>
       <rect data-pcol="4" data-trace="ap" class="vb-v20" x="299.3" y="182" width="18.7" height="6"/>
       <rect data-pcol="5" data-trace="gw" class="vb-accent" x="338.0" y="182" width="56.0" height="6"/>
-      <rect data-pcol="6" class="vb-v1" x="414.0" y="182" width="18.7" height="6"/>
-      <rect data-pcol="6" class="vb-v10" x="432.7" y="182" width="18.7" height="6"/>
-      <rect data-pcol="6" class="vb-v20" x="451.3" y="182" width="18.7" height="6"/>
+      <rect data-pcol="6" data-trace="oldpx" class="vb-v1" x="414.0" y="182" width="18.7" height="6"/>
+      <rect data-pcol="6" data-trace="oldpx" class="vb-v10" x="432.7" y="182" width="18.7" height="6"/>
+      <rect data-pcol="6" data-trace="oldpx" class="vb-v20" x="451.3" y="182" width="18.7" height="6"/>
       <rect data-pcol="7" data-trace="hue" class="vb-v10" x="490.0" y="182" width="56.0" height="6"/>
       <rect data-pcol="8" class="vb-v1" x="566.0" y="182" width="56.0" height="6" opacity="0.45"/>
     </svg>
@@ -956,7 +969,7 @@ spec:
       <h2>Open decisions</h2>
       <ul class="notes open">
         <li><b>RAM upgrade for AAP</b><span class="muted">2 × 32 GB SO-DIMMs; works in the M920q per community reports, above Lenovo's official 32 GB</span></li>
-        <li><b>Side for the power strip and Hue</b><span class="muted">Pick the side panel, and whether it keeps its acrylic plate</span></li>
+        <li><b>Side for the power strip</b><span class="muted">Pick the side panel, and whether it keeps its acrylic plate</span></li>
         <li><b>10-inch mounts</b><span class="muted">Models for the gateway, switch and Tiny</span></li>
         <li><b>1 TB NVMe</b><span class="muted">When to buy it</span></li>
       </ul>
@@ -1054,8 +1067,8 @@ spec:
     3: ["M920q Tiny #1 (pve-01)", "panel 5", "VLAN 20 only, untagged; tagged Block All", "PoE off", "1 GbE"],
     4: ["U7 Pro Basement", "panel 6", "native VLAN 1, all tagged VLANs (10, 20) for the SSIDs", "PoE", "1 GbE"],
     5: ["Gateway uplink (UCG Ultra LAN port 4)", "panel 7", "native VLAN 1, all tagged VLANs", "no PoE", "1 GbE"],
-    6: ["Old Proxmox host (proxmox, 192.168.0.100), until guests move to pve-01", "panel 8", "native VLAN 1, all tagged VLANs (10, 20)", "no PoE", "1 GbE"],
-    7: ["Hue bridge (side panel)", "panel 9", "native VLAN 10 (IoT)", "no PoE", "100 Mb"],
+    6: ["Old Proxmox host (tower outside the rack; proxmox, 192.168.0.100), until guests move to pve-01", "panel 8", "native VLAN 1, all tagged VLANs (10, 20)", "no PoE", "1 GbE"],
+    7: ["Hue bridge (bottom shelf)", "panel 9", "native VLAN 10 (IoT)", "no PoE", "100 Mb"],
     8: ["Break-glass management port (planned)", "no jumper: plug a laptop straight into the switch", "target VLAN 1 only, untagged; not configured yet", "use only when locked out", "1 GbE"]
   };
   var VLANS = { v1: [4, 5, 6, 8], v10: [4, 5, 6, 7], v20: [3, 4, 5, 6], uplink: [5] };
