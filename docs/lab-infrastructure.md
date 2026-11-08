@@ -114,6 +114,8 @@ Other UniFi settings: Nord VPN policy route for IoT (disabled); QoS rule for gam
 
 Every machine uses Pi-hole (`atlas-pihole.atlas.local`, on the lab VLAN) first and Cloudflare `1.1.1.1` as a fallback. DHCP on all four VLANs hands out both. Pi-hole forwards to local Unbound and Google `8.8.4.4`.
 
+**Requirement:** encrypted DNS for anything that leaves the house (plain DNS to a public resolver crosses Frontier's network readable).
+
 Why Pi-hole lives on the lab VLAN: the lab host has to carry whichever VLAN Pi-hole is on. On VLAN 20, the host carries only the lab VLAN. Home, IoT, and Management reach it through one DNS-only firewall rule.
 
 Static IP assignments and DNS records: see [network-address-plan.md](network-address-plan.md).
@@ -186,6 +188,13 @@ Restore: `pct restore` / `qmrestore` for guests; for the cluster, `terraform app
 ## 8. Migration plan
 
 ### Network cutover (with the M920q install)
+
+**Order:** lab first (pve-01 and its guests sorted on VLAN 20), then move home devices off Default onto the Home VLAN, then lock Default down as management (network gear only).
+
+**Moving clients:** the Home VLAN's DHCP hands out the new DNS server from day one. Other networks move by changing their DHCP DNS setting; clients pick it up at lease renewal (about 12 hours on a 1-day lease), or on reconnect. Only devices with DNS set by hand need fixing one by one.
+
+**The Mac moves last,** keeping lab and management access throughout. Before moving it, pre-stage and test its DHCP reservation on Home and the firewall rule that lets just the Mac reach management and the lab.
+
 1. UniFi: create the Home network (VLAN 30) and a HOME firewall zone; enable mDNS across Home and IoT.
 2. UniFi: move the "Atlas Home" and "Atlas Gaming" SSIDs to VLAN 30; reserve `austin-mac` and printer addresses. Set switch port 8 to VLAN 1 untagged, Block All tagged (break-glass port), and test it once with the laptop.
 3. Install Proxmox on the Tiny (`pve-01`, `192.168.20.5`) on switch port 3, already VLAN 20 untagged only. Runs in parallel with the old host.
