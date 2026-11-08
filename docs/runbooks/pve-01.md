@@ -64,7 +64,7 @@ Choose **Install Proxmox VE (Graphical)**. Source: [Proxmox VE installation](htt
 | Screen | Setting |
 |---|---|
 | EULA | I agree |
-| Target harddisk | Click **Options** → Filesystem **zfs (RAID0)** (a single disk; RAID0 is just the installer's name for it). Harddisk 0: **the 1 TB NVMe** (the only disk, besides the USB stick, which isn't offered) |
+| Target harddisk | Click **Options** → Filesystem **zfs (RAID0)** (a single disk; RAID0 is just the installer's name for it). Harddisk 0: **the 1 TB NVMe**, the only internal disk. If the 16 GB USB stick appears in the list, don't pick it |
 | ZFS advanced options | Leave the defaults (ashift 12, compress on, checksum on, copies 1; ARC max size defaults to 10% of RAM, about 3.2 GB) |
 | Location and time zone | Country **United States**, time zone **America/New_York**, keyboard **U.S. English** |
 | Password and email | Root password from Bitwarden *Proxmox (pve-01)*; email: your personal address (system notifications) |
