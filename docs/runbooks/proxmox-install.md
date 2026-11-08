@@ -40,6 +40,8 @@ The lab runs on a single Proxmox node, `proxmox` (`192.168.0.100`), on Proxmox V
 | 200 | `talos-cp` | VM | `192.168.20.10` | 3 (up=60) | Talos Kubernetes control plane |
 | 201 | `talos-worker-01` | VM | `192.168.20.11` | 4 | Talos Kubernetes worker |
 
+> **CT 102 runs privileged by mistake (found 2026-11-07):** the live `102.conf` lacks the `unprivileged: 1` line shown in [step 7](#7-recreate-the-vm-and-container-configs), so the container runs privileged on files laid out for an unprivileged one (most still owned by shifted IDs, `100000+`). That broke Unbound (fixed by `chown -R unbound:unbound /var/lib/unbound`). Not corrected, since Pi-hole is due to be replaced; a proper fix restores the flag and re-owns files written while privileged.
+
 All guests have `onboot: 1`. The `startup:` order brings DNS up first, then the control plane with a 60-second head start, then the worker. Shutdown runs in reverse.
 
 ## Access
