@@ -89,7 +89,7 @@ Subnets, DHCP ranges, and static IP assignments: see [network-address-plan.md](n
 
 Home gets its own firewall zone (HOME), separate from Management (the existing Internal zone), so the two can be isolated from each other.
 
-No management Wi-Fi (decided 2026-10-25): it would broadcast the management network through the house. The laptop stays on Home and reaches Management through its firewall rule (443, 22). If Wi-Fi or a firewall change ever locks it out, switch port 8 is a **break-glass port**: VLAN 1 untagged, nothing normally plugged in. Plug the laptop's cable straight into switch port 8 (no patch panel jumper) to land on Management. It's only usable by someone at the rack. Label the port.
+No management Wi-Fi (decided 2026-10-25): it would broadcast the management network through the house. If one is ever needed as a way back in during the move, it's temporary and deleted afterwards. The laptop stays on Home and reaches Management through its firewall rule (443, 22). If Wi-Fi or a firewall change ever locks it out, switch port 8 is a **break-glass port**: VLAN 1 untagged, nothing normally plugged in. Plug the laptop's cable straight into switch port 8 (no patch panel jumper) to land on Management. It's only usable by someone at the rack. Label the port.
 
 ### Firewall (target)
 Traffic between zones is blocked by default; replies to allowed connections are let through automatically.
