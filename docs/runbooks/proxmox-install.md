@@ -4,6 +4,8 @@ Everything about the Proxmox host in one place: what's on it, how to reach it, h
 
 The lab runs on a single Proxmox node, `proxmox` (`192.168.0.100`), on Proxmox VE 9.2 / Debian 13 (Trixie). The planned move to a Lenovo M920q Tiny is covered in [lab-infrastructure.md](../lab-infrastructure.md).
 
+> **New host:** the M920q is being built as a separate host, `pve-01` (`192.168.20.5`), in parallel with this one; see [pve-01.md](pve-01.md). Guests move there one at a time, then this host is retired.
+>
 > **Planned network change (with the M920q, not done yet):** the host moves to the lab VLAN at `192.168.20.5` with nothing tagged, and Pi-hole moves to `192.168.20.3`. Everything in this doc describes the current host; update it, including the rebuild runbook, as part of that migration. See the network cutover checklist in [lab-infrastructure.md](../lab-infrastructure.md).
 
 ## Overview
