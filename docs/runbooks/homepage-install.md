@@ -23,14 +23,14 @@ Homepage is a modern, highly configurable service dashboard. It provides a singl
 | GitOps | ArgoCD auto-discovers `platform/homepage/` | No special wiring needed — the root ApplicationSet picks it up |
 | Service IP | MetalLB `.54` (`192.168.20.54`) | Pinned address; outside DHCP range; keeps the address plan accurate |
 | DNS | `homepage.atlas.local` → `192.168.20.54` via Pi-hole | Same pattern as all other `*.atlas.local` names |
-| TLS | None initially; add Vault-issued cert as Step 6 | Get it running first; TLS mirrors the Proxmox cert pattern from vault-install.md |
+| TLS | None initially; add Vault-issued cert as Step 6 | Get it running first; TLS uses the same Vault PKI pattern as the Proxmox cert (see `docs/vault-architecture.md`) |
 | Configuration | ConfigMap mounted at `/app/config/` | Homepage reads its config files from a ConfigMap; all config lives in Git |
 | Namespace | `homepage` | Isolated from platform services |
 | Service widgets | Proxmox, Vault, ArgoCD, Pi-hole | Start with what we already have running; add more as services come online |
 
 ## PKI / TLS note
 
-Homepage will eventually get a Vault-issued cert for `homepage.atlas.local`. That step is deferred until after the service is verified running. The pattern is the same as Step 11 in `vault-install.md` — issue a cert from the `atlas-lab` role, deploy it to a Kubernetes Secret, and reference it in the Ingress or service TLS config.
+Homepage will eventually get a Vault-issued cert for `homepage.atlas.local`. That step is deferred until after the service is verified running. The pattern is the same as the other lab service certs — issue a cert from the `atlas-lab` role, deploy it to a Kubernetes Secret, and reference it in the Ingress or service TLS config.
 
 ---
 
@@ -308,7 +308,7 @@ Then open `http://homepage.atlas.local` in the browser. The tiles should render 
 
 ## Step 6 — Add Vault-issued TLS (deferred)
 
-> **Prerequisite:** Step 11 in `vault-install.md` covers the pattern for issuing a service cert. Complete that first (or review the Proxmox cert steps — the process is identical).
+> **Prerequisite:** issuing a service cert from the Vault intermediate CA (see `docs/vault-architecture.md`); the process is the same as for the Proxmox cert.
 
 Once the basic dashboard is working, replace the plain HTTP endpoint with HTTPS:
 
@@ -329,7 +329,7 @@ Homepage's real value comes from live widgets — tiles that show actual status 
 | ArgoCD | `argocd` | App count, sync status | ArgoCD API token |
 | Vault | — | No official widget yet; use plain link | — |
 
-> Once Vault's Kubernetes auth and External Secrets Operator are set up (vault-install.md Steps 12–13), widget secrets can be populated from Vault automatically instead of being created manually.
+> Once Vault's Kubernetes auth and External Secrets Operator are set up, widget secrets can be populated from Vault automatically instead of being created manually.
 
 ### Step 7a — Proxmox widget
 
@@ -506,7 +506,7 @@ Requires an ArgoCD API token. The widget shows application count and sync status
 | Pi-hole widget | Done |
 | Vault-issued TLS cert | Deferred (Step 6 above) |
 | ArgoCD widget | Deferred (Step 7c — needs ArgoCD token) |
-| ESO integration for widget secrets | Deferred (needs Vault K8s auth — vault-install.md Step 12) |
+| ESO integration for widget secrets | Deferred (needs Vault Kubernetes auth) |
 
 ## Troubleshooting
 
