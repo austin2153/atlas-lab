@@ -362,7 +362,7 @@ pveum acl modify / --token 'root@pam!homepage' --role PVEAuditor
 
 **Save the token to `~/.proxmox-credentials`**
 
-The token secret is only shown once. Save it immediately alongside the existing Proxmox credentials (see `docs/lab-credentials.md`):
+The token secret is only shown once. Save it immediately alongside the existing Proxmox credentials (see `docs/credential-map.md`):
 
 ```bash
 echo 'PROXMOX_HOMEPAGE_TOKEN_ID=root@pam!homepage' >> ~/.proxmox-credentials
