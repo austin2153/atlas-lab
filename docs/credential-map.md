@@ -9,6 +9,7 @@ All credentials live in local files on the Mac — never committed to Git. This 
 | `~/.unifi-credentials` | UniFi controller REST API (`UNIFI_URL`, `UNIFI_USER`, `UNIFI_PASSWORD`) — local-only admin account, no Ubiquiti cloud or 2FA required |
 | `~/.proxmox-credentials` | Proxmox API token (`PROXMOX_URL`, `PROXMOX_TOKEN_ID`, `PROXMOX_TOKEN_SECRET`) and SSH access (`PROXMOX_SSH_KEY`, `PROXMOX_SSH_USER`). Also holds `PROXMOX_HOMEPAGE_TOKEN_ID=root@pam!homepage` and `PROXMOX_HOMEPAGE_TOKEN_SECRET` — read-only PVEAuditor token for the Homepage widget |
 | `~/.proxmox-pve01-credentials` | pve-01 (`192.168.20.5`) API token `root@pam!terraform`, privilege separation off (`PROXMOX_URL`, `PROXMOX_TOKEN_ID`, `PROXMOX_TOKEN_SECRET`) and SSH access (`PROXMOX_SSH_KEY`, `PROXMOX_SSH_USER`). Same variable names as `~/.proxmox-credentials` |
+| `~/.technitium-credentials` | Technitium DNS on dns-01 (`192.168.20.3`, CT 110): API token `claude`, created from the admin account (`TECHNITIUM_URL`, `TECHNITIUM_TOKEN`). Revoke under Administration → Sessions |
 | `~/.pihole-credentials` | Pi-hole v6 admin credentials (`PIHOLE_URL`, `PIHOLE_PASSWORD`) — used for the Homepage widget K8s secret |
 | `~/.terraform.d/credentials.tfrc.json` | Terraform Cloud API token |
 | `~/.vault-init` | Vault unseal keys (5 Shamir shares, 3 required), initial root token, and userpass login (`VAULT_USER`, `VAULT_PASSWORD`) — needed after every reboot |
