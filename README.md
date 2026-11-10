@@ -56,7 +56,6 @@ A self-hosted homelab built on a single Proxmox VE node, running a Talos Linux K
 
 - [Lab Overview](https://austin2153.github.io/atlas-lab/) — live network and host visualization
 - [Talos Architecture](docs/talos-architecture.md) — design decisions and platform details
-- [Network Address Plan](docs/network-address-plan.md) — VLANs, subnets, static IPs, DHCP ranges, MetalLB pool, DNS records
 - [HashiCorp Vault Runbook](docs/runbooks/vault-install.md) — install, PKI, secrets, auth methods
 - [Proxmox Runbook](docs/runbooks/proxmox-install.md) — host setup and rebuild guide
 - [Homepage Runbook](docs/runbooks/homepage-install.md) — service dashboard install and configuration

@@ -33,7 +33,7 @@ ArgoCD manages everything under `platform/`, but **ArgoCD itself, the Applicatio
 | Sync policy | Automated, `selfHeal: true`, `prune: true` | Git is the source of truth; manual drift gets reverted and deleted manifests get removed |
 | Repo access | SSH, read-only GitHub deploy key | Scoped to this one repo; can't push |
 | Repo credential | `repository`-type secret `atlas-lab-repo`, created imperatively | Private key must never be committed (the repo is public) |
-| Exposure | `argocd-server` Service patched to `LoadBalancer`, pinned to `192.168.20.50` | MetalLB; see `docs/network-address-plan.md` |
+| Exposure | `argocd-server` Service patched to `LoadBalancer`, pinned to `192.168.20.50` | MetalLB pool `192.168.20.50–.99` |
 | DNS | `argocd.atlas.local` → `192.168.20.50` in Pi-hole | |
 
 ## What lives where
@@ -80,7 +80,7 @@ kubectl rollout status deploy/argocd-server -n argocd
 ### Step 2 — Expose the UI
 
 ```bash
-# LoadBalancer via MetalLB, pinned to the address reserved in docs/network-address-plan.md
+# LoadBalancer via MetalLB, pinned to 192.168.20.50 from the pool .50–.99
 kubectl patch svc argocd-server -n argocd \
   -p '{"spec":{"type":"LoadBalancer","loadBalancerIP":"192.168.20.50"}}'
 

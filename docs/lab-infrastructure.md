@@ -85,8 +85,6 @@ Goal: stronger isolation. VLAN 1 becomes a management network for network gear o
 | 20 | Atlas Lab | Proxmox host, Pi-hole, Talos cluster, AAP, lab services | "Atlas Lab" (5 GHz) |
 | 30 | Home | Everyday devices: phones, laptops, TVs, consoles, printer | "Atlas Home" (5 GHz), "Atlas Gaming" (6 GHz, WPA3 only) |
 
-Subnets, DHCP ranges, and static IP assignments: see [network-address-plan.md](network-address-plan.md).
-
 Home gets its own firewall zone (HOME), separate from Management (the existing Internal zone), so the two can be isolated from each other.
 
 No management Wi-Fi (decided 2026-10-25): it would broadcast the management network through the house. If one is ever needed as a way back in during the move, it's temporary and deleted afterwards. The laptop stays on Home and reaches Management through its firewall rule (443, 22). If Wi-Fi or a firewall change ever locks it out, switch port 8 is a **break-glass port**: VLAN 1 untagged, nothing normally plugged in. Plug the laptop's cable straight into switch port 8 (no patch panel jumper) to land on Management. It's only usable by someone at the rack. Label the port.
@@ -118,8 +116,6 @@ Every machine uses Pi-hole (`atlas-pihole.atlas.local`, on the lab VLAN) first a
 
 Why Pi-hole lives on the lab VLAN: the lab host has to carry whichever VLAN Pi-hole is on. On VLAN 20, the host carries only the lab VLAN. Home, IoT, and Management reach it through one DNS-only firewall rule.
 
-Static IP assignments and DNS records: see [network-address-plan.md](network-address-plan.md).
-
 ### Power
 Low power draw is a hard requirement. Rated maximums: ONT 24 W (label 16 V x 1.5 A), M920q 65 W adapter (35 W CPU), USW-Lite-8-PoE 52 W PoE budget (includes the U7 Pro, ~21 W). Measure the real total with a smart plug between the wall and the power strip once the rack is built.
 
@@ -148,7 +144,6 @@ From seller photos:
 - `vmbr0` bridged to the single onboard NIC. VLAN-aware can stay on for flexibility, but no guest uses a tag.
 - Guests: no VLAN tag. In Terraform, `vlan_id` becomes unset for the Talos VMs.
 - Don't mix styles: with VLAN 20 untagged on the port, a guest that sends VLAN 20 tagged frames would be dropped or misdelivered.
-- Host IP and guest IP assignments: see [network-address-plan.md](network-address-plan.md).
 
 ## 7. Workloads
 
@@ -168,8 +163,6 @@ Target state:
 - Pi-hole and other lab services. More Kubernetes services and LXC containers are expected but not decided yet.
 - Local LLM box (`llm.atlas.local`): the former gaming PC nicknamed **cgrater** ("cheese grater" case; i7-11700KF, RTX 3080), previously a Proxmox host `proxmox-cgrater.atlas.local` (`192.168.0.102`). A physical machine beside the rack on VLAN 20, not a Proxmox guest; wired only, Wi-Fi off. Offline (as of 2026-11-07): it has no RAM and waits until memory is bought.
 - No NAS planned (personal files live on OneDrive).
-
-IP assignments for all workloads: see [network-address-plan.md](network-address-plan.md).
 
 ## Backups (PROPOSED)
 Target: the 500 GB Crucial SSD in a USB 3 enclosure behind Tiny #1, added to Proxmox as backup storage.
@@ -202,8 +195,6 @@ Restore: `pct restore` / `qmrestore` for guests; for the cluster, `terraform app
 5. UniFi: set DHCP DNS to Pi-hole + `1.1.1.1` on every network; add the target firewall rules and retire the two old lab rules.
 6. Terraform: update `proxmox_endpoint`, `dns_server`, and unset `vlan_id`. Update the Kratix `proxmox-vm` promise endpoint in the `proxmox-credentials` secret.
 7. Repo: update `CLAUDE.md` (allowed commands) and runbooks to the new addresses; run `scripts/check-lab-overview.py`.
-
-Target IPs for the cutover: see [network-address-plan.md](network-address-plan.md).
 
 ### Hardware migration
 1. Fresh install of Proxmox on the Tiny's 1 TB NVMe (ZFS, OS and guests on one disk), standalone, in parallel with the old host (decided 2026-11-07).
