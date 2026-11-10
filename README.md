@@ -56,5 +56,6 @@ A self-hosted homelab built on a single Proxmox VE node, running a Talos Linux K
 
 - [Lab Overview](https://austin2153.github.io/atlas-lab/) — live network and host visualization
 - [Talos Architecture](docs/talos-architecture.md) — design decisions and platform details
+- [ArgoCD](docs/argocd.md) — GitOps setup: install, repo credential, ApplicationSet
 - [HashiCorp Vault Architecture](docs/vault-architecture.md) — design, PKI hierarchy, auth methods
 - [Homepage](docs/homepage.md) — service dashboard: manifests, widget secrets, troubleshooting

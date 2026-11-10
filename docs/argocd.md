@@ -43,7 +43,7 @@ ArgoCD manages everything under `platform/`, but **ArgoCD itself, the Applicatio
 | ArgoCD itself | Upstream `install.yaml` (v3.3.7) | `kubectl apply` by hand | No |
 | `argocd-server` LoadBalancer patch | This runbook (Step 2) | `kubectl patch` by hand | No |
 | Repo credential `atlas-lab-repo` | This runbook (Step 3); key at `~/.ssh/argocd-atlas-talos` | `kubectl create secret` by hand | No (not in Git) |
-| ApplicationSet `platform` | [`platform/appset.yaml`](../../platform/appset.yaml) | `kubectl apply` by hand | **No.** Re-apply after every change |
+| ApplicationSet `platform` | [`platform/appset.yaml`](../platform/appset.yaml) | `kubectl apply` by hand | **No.** Re-apply after every change |
 | Everything under `platform/*/` | This repo | ArgoCD | Yes, within ~3 minutes of a push to `main` |
 
 > **Gotcha:** `platform/appset.yaml` sits *inside* `platform/` but is a file, not a folder, so the generator (`platform/*` directories) never picks it up. Editing it in Git does nothing until you `kubectl apply` it. This is how the live ApplicationSet stayed on the old `atlas-talos.git` URL after the repo rename on 2026-10-31.
