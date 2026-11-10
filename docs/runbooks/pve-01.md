@@ -1,6 +1,6 @@
 # pve-01 (Proxmox on the M920q)
 
-The new Proxmox host: a Lenovo M920q Tiny that lives directly on the lab VLAN (VLAN 20). It runs in parallel with the old host (`proxmox`, `192.168.0.100`, see [proxmox-install.md](proxmox-install.md)) while guests move over one at a time. This is the host part of the network redesign in [lab-infrastructure.md](../lab-infrastructure.md).
+The new Proxmox host: a Lenovo M920q Tiny that lives directly on the lab VLAN (VLAN 20). It runs in parallel with the old host (`proxmox`, `192.168.0.100`, see [proxmox-install.md](proxmox-install.md)) while guests move over one at a time. This is the host part of the planned network redesign.
 
 **Status:** being built (started 2026-11-07). Proxmox not installed yet.
 
