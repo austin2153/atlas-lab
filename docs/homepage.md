@@ -21,7 +21,7 @@
 | DNS | `homepage.atlas.local` → `192.168.20.54` | Same pattern as the other lab names |
 | Configuration | ConfigMap mounted at `/app/config/` | All dashboard config lives in Git |
 | Secrets | Kubernetes Secrets created by hand, read through `envFrom` | Credentials never go in the ConfigMap, which is committed to a public repo |
-| TLS | None yet | A Vault-issued certificate is planned (see [vault-architecture.md](vault-architecture.md)) |
+| TLS | None yet | An OpenBao-issued certificate is planned (see [openbao-architecture.md](openbao-architecture.md)) |
 
 ## Manifests
 
@@ -60,9 +60,9 @@ envFrom:
       name: pihole-widget
 ```
 
-The Secrets are created imperatively, not stored in Git. Once Vault's Kubernetes auth and External Secrets Operator are set up, they can be synced from Vault instead.
+The Secrets are created imperatively, not stored in Git. Once OpenBao's Kubernetes auth and External Secrets Operator are set up, they can be synced from OpenBao instead.
 
-**Planned:** an ArgoCD widget (needs an ArgoCD API token). Vault has no official widget, so it gets a plain link.
+**Planned:** an ArgoCD widget (needs an ArgoCD API token). OpenBao has no official widget, so it gets a plain link.
 
 ## Deploy and check
 

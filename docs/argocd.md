@@ -217,6 +217,6 @@ kubectl logs -n argocd deploy/argocd-applicationset-controller --tail=50
 ## Open items
 
 - [ ] Make ArgoCD manage the ApplicationSet (app-of-apps root `Application` pointing at a folder outside `platform/*`), so Git changes to it apply automatically
-- [ ] Move the repo credential into Vault and sync it with External Secrets Operator once Vault's Kubernetes auth and External Secrets Operator are set up
+- [ ] Move the repo credential into OpenBao and sync it with External Secrets Operator once OpenBao's Kubernetes auth and External Secrets Operator are set up
 - [ ] Optionally re-create the GitHub deploy key with an `atlas-lab` title (cosmetic)
-- [ ] Issue a Vault PKI cert for `argocd.atlas.local` (currently ArgoCD's self-signed cert)
+- [ ] Get an OpenBao ACME cert for ArgoCD via cert-manager (currently ArgoCD's self-signed cert)
