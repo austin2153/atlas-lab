@@ -57,4 +57,5 @@ A self-hosted homelab built on a single Proxmox VE node, running a Talos Linux K
 - [Talos Architecture](docs/talos-architecture.md) — design decisions and platform details
 - [ArgoCD](docs/argocd.md) — GitOps setup: install, repo credential, ApplicationSet
 - [OpenBao Architecture](docs/openbao-architecture.md) — design, PKI hierarchy, ACME, auth methods
+- [Obsidian MCP](https://austin2153.github.io/atlas-lab/obsidian-mcp.html) — self-hosted MCP server: Cloudflare tunnel and Syncthing design
 - [Homepage](docs/homepage.md) — service dashboard: manifests, widget secrets, troubleshooting

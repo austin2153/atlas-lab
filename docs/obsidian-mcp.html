@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Obsidian MCP Design</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --surface: #ffffff; --zone: #eef1f5; --zone-2: #e4e9f0;
+    --border: #cfd6df; --text: #1b2430; --muted: #5b6878;
+    --sync: #0f8f84; --claude: #c26a12; --node: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1a22; --surface: #13232e; --zone: #16293a; --zone-2: #1b3346;
+      --border: #2b4558; --text: #e3ebf2; --muted: #8fa3b5;
+      --sync: #3cc4b6; --claude: #f0a24a; --node: #102029;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1a22; --surface: #13232e; --zone: #16293a; --zone-2: #1b3346;
+    --border: #2b4558; --text: #e3ebf2; --muted: #8fa3b5;
+    --sync: #3cc4b6; --claude: #f0a24a; --node: #102029;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+  }
+  main { max-width: 1160px; margin: 0 auto; padding: 40px 16px 64px; }
+  h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -0.02em; }
+  .lede { color: var(--muted); margin: 0 0 28px; max-width: 70ch; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px;
+  }
+  .diagram { overflow-x: auto; }
+  .diagram svg { display: block; width: 100%; min-width: 760px; height: auto; }
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px; color: var(--muted); font-size: 13px; }
+  .legend span::before {
+    content: ""; display: inline-block; width: 22px; height: 3px; border-radius: 2px;
+    margin-right: 8px; vertical-align: middle; background: var(--c);
+  }
+  .paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 20px 0; }
+  .paths h2 { font-size: 16px; margin: 0 0 6px; display: flex; align-items: center; gap: 8px; }
+  .paths h2::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+  .paths p { margin: 0; color: var(--muted); }
+  h2.section { font-size: 18px; margin: 32px 0 12px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+  tr:last-child td { border-bottom: 0; }
+  code { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  /* SVG */
+  .zone { fill: var(--zone); stroke: var(--border); }
+  .zone-2 { fill: var(--zone-2); stroke: var(--border); }
+  .zlabel { fill: var(--muted); font-size: 13px; font-weight: 600; }
+  .node { fill: var(--node); stroke: var(--border); stroke-width: 1.2; }
+  .ntitle { fill: var(--text); font-size: 14px; font-weight: 600; }
+  .nsub { fill: var(--muted); font-size: 12px; }
+  .edge { fill: none; stroke-width: 2; }
+  .edge.sync { stroke: var(--sync); }
+  .edge.claude { stroke: var(--claude); }
+  .elabel { font-size: 12px; font-weight: 600; }
+  .elabel.sync { fill: var(--sync); }
+  .elabel.claude { fill: var(--claude); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Obsidian MCP</h1>
+  <p class="lede">A self-hosted MCP server that lets every Claude app read and write the notes vault. Claude reaches it through an outbound-only Cloudflare tunnel; Syncthing keeps the same vault on the server, the Mac and the phone over the LAN.</p>
+
+  <div class="card diagram">
+    <svg viewBox="0 0 1120 470" role="img" aria-label="Architecture: Mac and phone sync with the server over Syncthing; Claude apps reach the MCP app through Anthropic cloud, Cloudflare and the cloudflared tunnel">
+      <defs>
+        <marker id="a-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--sync)"/></marker>
+        <marker id="a-claude" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--claude)"/></marker>
+      </defs>
+
+      <!-- Zones -->
+      <rect class="zone" x="20" y="60" width="230" height="300" rx="12"/>
+      <text class="zlabel" x="36" y="84">Default network</text>
+
+      <rect class="zone" x="290" y="30" width="490" height="420" rx="12"/>
+      <text class="zlabel" x="306" y="54">pve-01 · VLAN 20 (LAB)</text>
+      <rect class="zone-2" x="310" y="70" width="280" height="360" rx="10"/>
+      <text class="zlabel" x="326" y="94">CT 103 obsidian-mcp (LXC)</text>
+
+      <rect class="zone" x="820" y="60" width="280" height="350" rx="12"/>
+      <text class="zlabel" x="836" y="84">Internet</text>
+
+      <!-- Edges: sync path -->
+      <path class="edge sync" d="M230 150 L330 150" marker-start="url(#a-sync)" marker-end="url(#a-sync)"/>
+      <text class="elabel sync" x="248" y="140">Syncthing</text>
+      <path class="edge sync" d="M230 280 C 285 280, 280 170, 330 165" marker-start="url(#a-sync)" marker-end="url(#a-sync)"/>
+      <text class="elabel sync" x="262" y="222" text-anchor="end">Syncthing · Wi-Fi</text>
+      <path class="edge sync" d="M450 175 L450 205" marker-end="url(#a-sync)"/>
+
+      <!-- Edges: Claude path -->
+      <path class="edge claude" d="M450 268 L450 328" marker-start="url(#a-claude)"/>
+      <path class="edge claude" d="M570 358 L612 358" marker-start="url(#a-claude)" marker-end="url(#a-claude)"/>
+      <text class="elabel claude" x="560" y="400">HTTP :8420</text>
+      <path class="edge claude" d="M762 358 L838 358" marker-end="url(#a-claude)"/>
+      <text class="elabel claude" x="748" y="400">outbound tunnel</text>
+      <path class="edge claude" d="M960 330 L960 262" marker-start="url(#a-claude)" marker-end="url(#a-claude)"/>
+      <text class="elabel claude" x="970" y="300">HTTPS</text>
+      <path class="edge claude" d="M960 210 L960 158" marker-start="url(#a-claude)" marker-end="url(#a-claude)"/>
+
+      <!-- Nodes: home -->
+      <rect class="node" x="40" y="120" width="190" height="60" rx="9"/>
+      <text class="ntitle" x="56" y="146">Mac</text>
+      <text class="nsub" x="56" y="166">~/vaults/notes</text>
+      <rect class="node" x="40" y="250" width="190" height="60" rx="9"/>
+      <text class="ntitle" x="56" y="276">Phone</text>
+      <text class="nsub" x="56" y="296">Documents/notes</text>
+
+      <!-- Nodes: CT 103 -->
+      <rect class="node" x="330" y="125" width="240" height="50" rx="9"/>
+      <text class="ntitle" x="346" y="148">Syncthing</text>
+      <text class="nsub" x="346" y="165">:22000 · UI :8384</text>
+
+      <ellipse class="node" cx="450" cy="262" rx="70" ry="10"/>
+      <rect x="380" y="216" width="140" height="46" fill="var(--node)"/>
+      <line x1="380" y1="216" x2="380" y2="262" stroke="var(--border)" stroke-width="1.2"/>
+      <line x1="520" y1="216" x2="520" y2="262" stroke="var(--border)" stroke-width="1.2"/>
+      <ellipse class="node" cx="450" cy="216" rx="70" ry="10"/>
+      <text class="ntitle" x="450" y="248" text-anchor="middle">/srv/vault</text>
+
+      <rect class="node" x="330" y="330" width="240" height="56" rx="9"/>
+      <text class="ntitle" x="346" y="355">MCP app</text>
+      <text class="nsub" x="346" y="374">obsidian-web-mcp · :8420</text>
+
+      <!-- Node: CT 104 -->
+      <rect class="node" x="612" y="330" width="150" height="56" rx="9"/>
+      <text class="ntitle" x="626" y="355">cloudflared</text>
+      <text class="nsub" x="626" y="374">CT 104 (LXC)</text>
+
+      <!-- Nodes: internet -->
+      <rect class="node" x="840" y="100" width="240" height="58" rx="9"/>
+      <text class="ntitle" x="856" y="125">Claude apps</text>
+      <text class="nsub" x="856" y="144">Mac · phone · web · voice</text>
+      <rect class="node" x="840" y="210" width="240" height="52" rx="9"/>
+      <text class="ntitle" x="856" y="241">Anthropic cloud</text>
+      <rect class="node" x="840" y="330" width="240" height="56" rx="9"/>
+      <text class="ntitle" x="856" y="355">Cloudflare</text>
+      <text class="nsub" x="856" y="374">tunnel · custom domain</text>
+    </svg>
+    <div class="legend">
+      <span style="--c: var(--claude)">Claude path</span>
+      <span style="--c: var(--sync)">Sync path</span>
+    </div>
+  </div>
+
+  <div class="paths">
+    <div class="card">
+      <h2 style="--c: var(--claude)">Claude path</h2>
+      <p>Claude's requests come from Anthropic's cloud to Cloudflare over HTTPS, then down the tunnel that cloudflared holds open from inside the lab. Nothing at home accepts inbound connections from the internet.</p>
+    </div>
+    <div class="card">
+      <h2 style="--c: var(--sync)">Sync path</h2>
+      <p>Syncthing keeps the same vault on the server, the Mac and the phone. It never touches Cloudflare: the Mac and phone sync directly with the server on the LAN.</p>
+    </div>
+  </div>
+
+  <h2 class="section">Components</h2>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Component</th><th>Where</th><th>Details</th></tr></thead>
+      <tbody>
+        <tr><td>MCP app + Syncthing</td><td>CT 103 obsidian-mcp</td><td>app <code>:8420</code>, Syncthing <code>:22000</code>, UI <code>:8384</code></td></tr>
+        <tr><td>Tunnel connector</td><td>CT 104 cloudflared</td><td>outbound-only tunnel, no inbound ports</td></tr>
+        <tr><td>Public URL</td><td>Cloudflare</td><td>HTTPS on a custom domain</td></tr>
+        <tr><td>Vault (server)</td><td>CT 103</td><td><code>/srv/vault</code></td></tr>
+        <tr><td>Vault (Mac)</td><td>Mac</td><td><code>~/vaults/notes</code></td></tr>
+        <tr><td>Vault (phone)</td><td>Android phone</td><td>internal storage <code>Documents/notes</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+</body>
+</html>
